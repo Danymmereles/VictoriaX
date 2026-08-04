@@ -1,132 +1,64 @@
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { LogIn, Mail, Lock, Loader2 } from "lucide-react";
-import AuthLayout from "@/components/AuthLayout";
-import GoogleIcon from "@/components/GoogleIcon";
-import { safeReturnTo } from "@/lib/authReturnTo";
+import React from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
+import { Image } from "@/components/ui/image";
+import Wordmark from "@/components/brand/Wordmark";
+import ThemeToggle from "@/components/theme/ThemeToggle";
+import UtnAccessCard from "@/components/login/UtnAccessCard";
 
 export default function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  // Post-login destination (e.g. the MCP OAuth consent page sends users here
-  // with returnTo so the grant flow can resume). Same-origin paths only.
-  const returnTo = safeReturnTo();
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
-    try {
-      await base44.auth.loginViaEmailPassword(email, password);
-      window.location.href = returnTo;
-    } catch (err) {
-      setError(err.message || "Invalid email or password");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleGoogle = () => {
-    base44.auth.loginWithProvider("google", returnTo);
-  };
+  const navigate = useNavigate();
 
   return (
-    <AuthLayout
-      icon={LogIn}
-      title="Welcome back"
-      subtitle="Log in to your account"
-      footer={
-        <>
-          Don't have an account?{" "}
-          <Link
-            to={"/register" + (returnTo !== "/" ? "?returnTo=" + encodeURIComponent(returnTo) : "")}
-            className="text-primary font-medium hover:underline"
-          >
-            Create one
-          </Link>
-        </>
-      }
-    >
-      <Button
-        variant="outline"
-        className="w-full h-12 text-sm font-medium mb-6"
-        onClick={handleGoogle}
-      >
-        <GoogleIcon className="w-5 h-5 mr-2" />
-        Continue with Google
-      </Button>
-
-      <div className="relative mb-6">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-border" />
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-card px-3 text-muted-foreground">or</span>
+    <div className="min-h-screen bg-background text-foreground lg:grid lg:grid-cols-2">
+      <div className="relative hidden lg:block">
+        <Image
+          src="https://media.base44.com/images/public/6a71341ab9dae936a9cf65a7/5f712e98a_generated_e5aabbd5.png"
+          alt="Nodos de datos translúcidos con patrones de circuito"
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-[#0A0D14]/70" />
+        <div className="relative flex h-full flex-col justify-between p-14">
+          <div className="text-white">
+            <Wordmark withTagline />
+          </div>
+          <div className="max-w-md text-white">
+            <h2 className="font-heading text-4xl font-semibold leading-tight">
+              Modo Estudio
+            </h2>
+            <p className="mt-5 text-lg leading-relaxed text-white/70">
+              Iniciá sesión con tu cuenta institucional para acceder al camino de aprendizaje,
+              resolver los ejercicios de la cátedra y comparar tu solución con la resolución
+              propuesta.
+            </p>
+            <p className="mt-8 text-sm text-white/50">
+              El Modo Libre no requiere cuenta: podés modelar y ejecutar simulaciones sin
+              iniciar sesión.
+            </p>
+          </div>
         </div>
       </div>
 
-      {error && (
-        <div className="mb-4 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
-          {error}
+      <div className="relative flex min-h-screen flex-col items-center justify-center px-6 py-16">
+        <div className="absolute left-6 right-6 top-6 flex items-center justify-between lg:left-auto lg:right-10 lg:top-10">
+          <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground lg:hidden">
+            <ArrowLeft className="w-4 h-4" /> Volver
+          </Link>
+          <ThemeToggle />
         </div>
-      )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
-          <div className="relative">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
-            <Input
-              id="email"
-              type="email"
-              autoComplete="email"
-              autoFocus
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="pl-10 h-12"
-              required
-            />
-          </div>
-        </div>
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="password">Password</Label>
-            <Link to="/forgot-password" className="text-xs text-primary hover:underline">
-              Forgot password?
-            </Link>
-          </div>
-          <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
-            <Input
-              id="password"
-              type="password"
-              autoComplete="current-password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="pl-10 h-12"
-              required
-            />
-          </div>
-        </div>
-        <Button type="submit" className="w-full h-12 font-medium" disabled={loading}>
-          {loading ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Logging in...
-            </>
-          ) : (
-            "Log in"
-          )}
-        </Button>
-      </form>
-    </AuthLayout>
+        <UtnAccessCard onAccess={() => navigate("/modo-estudio")} />
+
+        <Link
+          to="/modo-libre"
+          className="mt-10 text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
+        >
+          Continuar sin iniciar sesión al Modo Libre
+        </Link>
+        <Link to="/" className="mt-4 hidden items-center gap-2 text-sm text-muted-foreground hover:text-foreground lg:inline-flex">
+          <ArrowLeft className="w-4 h-4" /> Volver al inicio
+        </Link>
+      </div>
+    </div>
   );
 }

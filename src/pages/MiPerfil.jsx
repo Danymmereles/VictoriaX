@@ -63,6 +63,7 @@ export default function MiPerfil() {
           <PerfilForm
             usuario={usuario}
             editable={permisos?.puedoEditarPerfil}
+            rolEditable={permisos?.puedoCambiarRol}
             onSave={guardar}
             saving={saving}
           />

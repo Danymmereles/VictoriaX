@@ -125,6 +125,7 @@ export default function Participantes() {
                   <PerfilForm
                     usuario={seleccionado}
                     editable={permisos.puedoEditarOtrosPerfiles}
+                    rolEditable={permisos.puedoCambiarRol}
                     onSave={guardarOtro}
                     saving={saving}
                   />

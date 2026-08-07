@@ -5,7 +5,7 @@ import { Loader2 } from "lucide-react";
 // `editable` se controla con permisos del diagrama de seguridad:
 //   - perfil propio  -> puedoEditarPerfil
 //   - perfil ajeno   -> puedoEditarOtrosPerfiles (solo admin)
-export default function PerfilForm({ usuario, editable = true, onSave, saving = false }) {
+export default function PerfilForm({ usuario, editable = true, rolEditable = editable, onSave, saving = false }) {
   const [form, setForm] = useState({
     nombre_usuario: usuario?.nombre_usuario || "",
     email: usuario?.email || "",
@@ -33,7 +33,7 @@ export default function PerfilForm({ usuario, editable = true, onSave, saving = 
         <select
           value={form.rol}
           onChange={cambiar("rol")}
-          disabled={!editable}
+          disabled={!rolEditable}
           className="mt-2 w-full rounded-lg border border-input bg-background px-4 py-3 text-sm disabled:cursor-not-allowed disabled:opacity-60"
         >
           <option value="ADMINISTRADOR">Administrador</option>

@@ -1,0 +1,36 @@
+{
+  "name": "Usuario",
+  "type": "object",
+  "properties": {
+    "nombre_usuario": {
+      "type": "string",
+      "unique": true,
+      "description": "Nombre de usuario unico (diagrama de seguridad)"
+    },
+    "email": {
+      "type": "string",
+      "format": "email",
+      "unique": true,
+      "description": "Email institucional (diagrama de clases - Persona)"
+    },
+    "nombre_completo": {
+      "type": "string",
+      "description": "Nombre completo (diagrama de clases - Persona)"
+    },
+    "rol": {
+      "type": "string",
+      "enum": [
+        "ADMINISTRADOR",
+        "DOCENTE",
+        "ESTUDIANTE"
+      ],
+      "description": "Rol del usuario (diagrama de seguridad)"
+    }
+  },
+  "required": [
+    "nombre_usuario",
+    "email",
+    "nombre_completo",
+    "rol"
+  ]
+}

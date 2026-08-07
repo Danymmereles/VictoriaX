@@ -10,6 +10,10 @@ import Home from './pages/Home';
 import Login from './pages/Login';
 import ModoLibre from './pages/ModoLibre';
 import ModoEstudio from './pages/ModoEstudio';
+import SeleccionRol from './pages/SeleccionRol';
+import MiPerfil from './pages/MiPerfil';
+import Participantes from './pages/Participantes';
+import { SesionUsuarioProvider } from '@/lib/sesionUsuario';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -41,6 +45,9 @@ const AuthenticatedApp = () => {
       <Route path="/login" element={<Login />} />
       <Route path="/modo-libre" element={<ModoLibre />} />
       <Route path="/modo-estudio" element={<ModoEstudio />} />
+      <Route path="/seleccion-rol" element={<SeleccionRol />} />
+      <Route path="/perfil" element={<MiPerfil />} />
+      <Route path="/participantes" element={<Participantes />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );
@@ -54,7 +61,9 @@ function App() {
       <QueryClientProvider client={queryClientInstance}>
         <Router>
           <ScrollToTop />
-          <AuthenticatedApp />
+          <SesionUsuarioProvider>
+            <AuthenticatedApp />
+          </SesionUsuarioProvider>
         </Router>
         <Toaster />
       </QueryClientProvider>

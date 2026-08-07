@@ -47,7 +47,7 @@ export default function Login() {
           <ThemeToggle />
         </div>
 
-        <UtnAccessCard onAccess={() => navigate("/modo-estudio")} />
+        <UtnAccessCard onAccess={() => navigate("/seleccion-rol")} />
 
         <Link
           to="/modo-libre"

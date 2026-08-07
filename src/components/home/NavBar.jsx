@@ -1,7 +1,9 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { Users, UserCircle, LogOut } from "lucide-react";
 import Wordmark from "@/components/brand/Wordmark";
 import ThemeToggle from "@/components/theme/ThemeToggle";
+import { useSesionUsuario } from "@/lib/sesionUsuario";
 
 const links = [
   { label: "Modos", href: "#modos" },
@@ -11,6 +13,14 @@ const links = [
 ];
 
 export default function NavBar() {
+  const navigate = useNavigate();
+  const { usuario, permisos, cerrarSesion } = useSesionUsuario();
+
+  function salir() {
+    cerrarSesion();
+    navigate("/");
+  }
+
   return (
     <header className="sticky top-0 z-50 border-b border-border/60 bg-background/70 backdrop-blur-xl">
       <div className="mx-auto flex h-20 max-w-[100rem] items-center justify-between px-6 lg:px-12">
@@ -24,12 +34,28 @@ export default function NavBar() {
         </nav>
         <div className="flex items-center gap-3">
           <ThemeToggle />
-          <Link
-            to="/login"
-            className="rounded-full bg-gradient-to-r from-[#73C3EE] via-[#AF9BEF] to-[#EA84B4] px-5 py-2.5 text-sm font-medium text-[#0A0D14] transition-transform hover:scale-[1.03]"
-          >
-            Iniciar sesión
-          </Link>
+          {usuario ? (
+            <>
+              {permisos?.puedoVisualizarOtrosPerfiles && (
+                <Link to="/participantes" className="hidden items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground sm:inline-flex">
+                  <Users className="w-4 h-4" /> Participantes
+                </Link>
+              )}
+              <Link to="/perfil" className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground">
+                <UserCircle className="w-4 h-4" /> Mi perfil
+              </Link>
+              <button onClick={salir} className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground">
+                <LogOut className="w-4 h-4" /> Salir
+              </button>
+            </>
+          ) : (
+            <Link
+              to="/login"
+              className="rounded-full bg-gradient-to-r from-[#73C3EE] via-[#AF9BEF] to-[#EA84B4] px-5 py-2.5 text-sm font-medium text-[#0A0D14] transition-transform hover:scale-[1.03]"
+            >
+              Iniciar sesión
+            </Link>
+          )}
         </div>
       </div>
     </header>

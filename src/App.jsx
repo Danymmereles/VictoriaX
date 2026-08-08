@@ -13,6 +13,7 @@ import ModoEstudio from './pages/ModoEstudio';
 import SeleccionRol from './pages/SeleccionRol';
 import MiPerfil from './pages/MiPerfil';
 import Participantes from './pages/Participantes';
+import Diagrama from './pages/Diagrama';
 import { SesionUsuarioProvider } from '@/lib/sesionUsuario';
 
 const AuthenticatedApp = () => {
@@ -44,6 +45,7 @@ const AuthenticatedApp = () => {
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
       <Route path="/modo-libre" element={<ModoLibre />} />
+      <Route path="/modo-libre/diagrama" element={<Diagrama />} />
       <Route path="/modo-estudio" element={<ModoEstudio />} />
       <Route path="/seleccion-rol" element={<SeleccionRol />} />
       <Route path="/perfil" element={<MiPerfil />} />

@@ -3,8 +3,10 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { Image } from "@/components/ui/image";
+import { useSesionUsuario } from "@/lib/sesionUsuario";
 
 export default function Hero() {
+  const { usuario } = useSesionUsuario();
   return (
     <section className="relative overflow-hidden">
       <div className="pointer-events-none absolute -top-40 left-1/2 h-[38rem] w-[38rem] -translate-x-1/2 rounded-full bg-[#AF9BEF]/20 blur-[140px]" />
@@ -40,10 +42,10 @@ export default function Hero() {
               <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
             </Link>
             <Link
-              to="/login"
+              to={usuario ? "/modo-estudio" : "/login"}
               className="inline-flex items-center gap-2 rounded-full border border-border px-7 py-4 text-base font-medium transition-colors hover:border-[#AF9BEF]"
             >
-              Acceder a Modo Estudio
+              {usuario ? "Ir a Modo Estudio" : "Acceder a Modo Estudio"}
             </Link>
           </div>
           <p className="mt-6 text-sm text-muted-foreground">

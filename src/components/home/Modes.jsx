@@ -2,37 +2,39 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { Lock, PenTool, Route as RouteIcon, Unlock } from "lucide-react";
 import { Image } from "@/components/ui/image";
-
-const modes = [
-  {
-    id: "libre",
-    tag: "Sin cuenta",
-    icon: PenTool,
-    title: "Modo Libre",
-    desc: "Modelado inmediato y sin fricciones: cargá tu tabla de análisis previo, generá el diagrama de flujo, ejecutalo y obtené los gráficos de resultados que necesites.",
-    bullets: ["Análisis previo tabular", "Diagrama de flujo ejecutable", "Gráficos de resultados configurables"],
-    img: "https://media.base44.com/images/public/6a71341ab9dae936a9cf65a7/9d41c6530_generated_ec53f922.png",
-    to: "/modo-libre",
-    cta: "Empezar a modelar",
-    accent: "#73C3EE",
-    state: { icon: Unlock, label: "Acceso libre" },
-  },
-  {
-    id: "estudio",
-    tag: "Requiere sesión",
-    icon: RouteIcon,
-    title: "Modo Estudio",
-    desc: "Un camino de aprendizaje con ejercicios analizados por la cátedra: resolvelos, envialos y compará tu solución con la resolución propuesta.",
-    bullets: ["Ejercicios curados por la cátedra", "Envío y seguimiento del progreso", "Resolución propuesta al finalizar"],
-    img: "https://media.base44.com/images/public/6a71341ab9dae936a9cf65a7/08266ca5c_generated_22613875.png",
-    to: "/login",
-    cta: "Iniciar sesión para acceder",
-    accent: "#AF9BEF",
-    state: { icon: Lock, label: "Sesión requerida" },
-  },
-];
+import { useSesionUsuario } from "@/lib/sesionUsuario";
 
 export default function Modes() {
+  const { usuario } = useSesionUsuario();
+  const modes = [
+    {
+      id: "libre",
+      tag: "Sin cuenta",
+      icon: PenTool,
+      title: "Modo Libre",
+      desc: "Modelado inmediato y sin fricciones: cargá tu tabla de análisis previo, generá el diagrama de flujo, ejecutalo y obtené los gráficos de resultados que necesites.",
+      bullets: ["Análisis previo tabular", "Diagrama de flujo ejecutable", "Gráficos de resultados configurables"],
+      img: "https://media.base44.com/images/public/6a71341ab9dae936a9cf65a7/9d41c6530_generated_ec53f922.png",
+      to: "/modo-libre",
+      cta: "Empezar a modelar",
+      accent: "#73C3EE",
+      state: { icon: Unlock, label: "Acceso libre" },
+    },
+    {
+      id: "estudio",
+      tag: "Requiere sesión",
+      icon: RouteIcon,
+      title: "Modo Estudio",
+      desc: "Un camino de aprendizaje con ejercicios analizados por la cátedra: resolvelos, envialos y compará tu solución con la resolución propuesta.",
+      bullets: ["Ejercicios curados por la cátedra", "Envío y seguimiento del progreso", "Resolución propuesta al finalizar"],
+      img: "https://media.base44.com/images/public/6a71341ab9dae936a9cf65a7/08266ca5c_generated_22613875.png",
+      to: usuario ? "/modo-estudio" : "/login",
+      cta: usuario ? "Ir a Modo Estudio" : "Iniciar sesión para acceder",
+      accent: "#AF9BEF",
+      state: { icon: usuario ? Unlock : Lock, label: usuario ? "Sesión iniciada" : "Sesión requerida" },
+    },
+  ];
+
   return (
     <section id="modos" className="mx-auto max-w-[100rem] px-6 py-24 lg:px-12">
       <div className="max-w-2xl">

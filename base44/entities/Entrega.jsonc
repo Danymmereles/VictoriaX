@@ -1,0 +1,32 @@
+{
+  "name": "Entrega",
+  "type": "object",
+  "properties": {
+    "usuario_id": {
+      "type": "string",
+      "description": "id del registro Usuario (seam de sesi\u00f3n) que resuelve el ejercicio"
+    },
+    "ejercicio_id": {
+      "type": "string",
+      "description": "id del Ejercicio al que corresponde esta entrega"
+    },
+    "analisis_previo": {
+      "type": "object",
+      "description": "Estado completo del an\u00e1lisis previo (metodolog\u00eda, variables, eventos) del usuario para este ejercicio"
+    },
+    "entregado": {
+      "type": "boolean",
+      "default": false,
+      "description": "true una vez que el usuario presion\u00f3 Entregar"
+    },
+    "resolucion_vista": {
+      "type": "boolean",
+      "default": false,
+      "description": "true una vez que el usuario vio la resoluci\u00f3n; a partir de ah\u00ed se bloquea la edici\u00f3n para estudiantes"
+    }
+  },
+  "required": [
+    "usuario_id",
+    "ejercicio_id"
+  ]
+}

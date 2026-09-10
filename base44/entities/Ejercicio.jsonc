@@ -1,0 +1,23 @@
+{
+  "name": "Ejercicio",
+  "type": "object",
+  "properties": {
+    "numero": {
+      "type": "integer",
+      "description": "N\u00famero del ejercicio en la gu\u00eda de trabajos pr\u00e1cticos"
+    },
+    "titulo": {
+      "type": "string",
+      "description": "T\u00edtulo / nombre del sistema descripto en el ejercicio"
+    },
+    "consigna_html": {
+      "type": "string",
+      "description": "Consigna del ejercicio en HTML (puede incluir tablas e im\u00e1genes)"
+    }
+  },
+  "required": [
+    "numero",
+    "titulo",
+    "consigna_html"
+  ]
+}

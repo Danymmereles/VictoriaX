@@ -10,6 +10,7 @@ import Home from './pages/Home';
 import Login from './pages/Login';
 import ModoLibre from './pages/ModoLibre';
 import ModoEstudio from './pages/ModoEstudio';
+import EjercicioEstudio from './pages/EjercicioEstudio';
 import SeleccionRol from './pages/SeleccionRol';
 import MiPerfil from './pages/MiPerfil';
 import Participantes from './pages/Participantes';
@@ -47,6 +48,7 @@ const AuthenticatedApp = () => {
       <Route path="/modo-libre" element={<ModoLibre />} />
       <Route path="/modo-libre/diagrama" element={<Diagrama />} />
       <Route path="/modo-estudio" element={<ModoEstudio />} />
+      <Route path="/modo-estudio/:id" element={<EjercicioEstudio />} />
       <Route path="/seleccion-rol" element={<SeleccionRol />} />
       <Route path="/perfil" element={<MiPerfil />} />
       <Route path="/participantes" element={<Participantes />} />

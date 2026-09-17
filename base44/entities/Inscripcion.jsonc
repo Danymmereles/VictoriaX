@@ -1,0 +1,18 @@
+{
+  "name": "Inscripcion",
+  "type": "object",
+  "properties": {
+    "curso_id": {
+      "type": "string",
+      "description": "id del Curso al que pertenece la inscripci\u00f3n"
+    },
+    "usuario_id": {
+      "type": "string",
+      "description": "id del Usuario (seam de sesi\u00f3n) inscripto en el curso"
+    }
+  },
+  "required": [
+    "curso_id",
+    "usuario_id"
+  ]
+}

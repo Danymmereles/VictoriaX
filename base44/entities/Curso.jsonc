@@ -1,0 +1,45 @@
+{
+  "name": "Curso",
+  "type": "object",
+  "properties": {
+    "codigo": {
+      "type": "string",
+      "unique": true,
+      "description": "C\u00f3digo del curso (ej. K4651)"
+    },
+    "nombre": {
+      "type": "string",
+      "description": "Nombre personalizado opcional; si se omite se arma 'c\u00f3digo - periodo - a\u00f1o'"
+    },
+    "periodo_lectivo": {
+      "type": "string",
+      "enum": [
+        "ANUAL",
+        "CUAT1",
+        "CUAT2"
+      ],
+      "description": "Per\u00edodo lectivo: Anual, 1\u00b0 o 2\u00b0 Cuatrimestre"
+    },
+    "fecha_inicio": {
+      "type": "string",
+      "format": "date",
+      "description": "Fecha de inicio del ciclo lectivo"
+    },
+    "fecha_final": {
+      "type": "string",
+      "format": "date",
+      "description": "Fecha de finalizaci\u00f3n del ciclo lectivo"
+    },
+    "forzar_cierre": {
+      "type": "boolean",
+      "default": false,
+      "description": "true cuando el administrador fuerza el cierre anticipado del curso"
+    }
+  },
+  "required": [
+    "codigo",
+    "periodo_lectivo",
+    "fecha_inicio",
+    "fecha_final"
+  ]
+}

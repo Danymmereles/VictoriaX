@@ -15,6 +15,8 @@ import SeleccionRol from './pages/SeleccionRol';
 import MiPerfil from './pages/MiPerfil';
 import Participantes from './pages/Participantes';
 import Diagrama from './pages/Diagrama';
+import Cursos from './pages/Cursos';
+import CursoDetalle from './pages/CursoDetalle';
 import { SesionUsuarioProvider } from '@/lib/sesionUsuario';
 
 const AuthenticatedApp = () => {
@@ -52,6 +54,8 @@ const AuthenticatedApp = () => {
       <Route path="/seleccion-rol" element={<SeleccionRol />} />
       <Route path="/perfil" element={<MiPerfil />} />
       <Route path="/participantes" element={<Participantes />} />
+      <Route path="/cursos" element={<Cursos />} />
+      <Route path="/cursos/:id" element={<CursoDetalle />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );

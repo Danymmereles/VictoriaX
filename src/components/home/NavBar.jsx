@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Users, UserCircle, LogOut } from "lucide-react";
+import { Users, UserCircle, LogOut, GraduationCap } from "lucide-react";
 import Wordmark from "@/components/brand/Wordmark";
 import ThemeToggle from "@/components/theme/ThemeToggle";
 import { useSesionUsuario } from "@/lib/sesionUsuario";
@@ -36,6 +36,9 @@ export default function NavBar() {
           <ThemeToggle />
           {usuario ? (
             <>
+              <Link to="/cursos" className="hidden items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground sm:inline-flex">
+                <GraduationCap className="w-4 h-4" /> Cursos
+              </Link>
               {permisos?.puedoVisualizarOtrosPerfiles && (
                 <Link to="/participantes" className="hidden items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground sm:inline-flex">
                   <Users className="w-4 h-4" /> Participantes

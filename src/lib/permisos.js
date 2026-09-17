@@ -31,6 +31,10 @@ const estrategias = {
     puedoVisualizarEstadisticas: true,  // [inferido] admin = acceso total
     puedoVisualizarOtrosPerfiles: true, // [diag]
     puedoEditarOtrosPerfiles: true,     // regla de negocio: solo admin
+    puedoEliminarCurso: true,
+    puedoGestionarIntegrantes: true,
+    puedoVerEstadisticasCurso: true,
+    puedoVerTodosLosCursos: true,
   },
   DOCENTE: {
     puedoCambiarRol: false,             // [diag]
@@ -41,6 +45,10 @@ const estrategias = {
     puedoVisualizarEstadisticas: true, // [inferido] docente ve stats de su curso
     puedoVisualizarOtrosPerfiles: true, // [diag]
     puedoEditarOtrosPerfiles: false,    // regla de negocio: solo admin
+    puedoEliminarCurso: false,
+    puedoGestionarIntegrantes: true,
+    puedoVerEstadisticasCurso: true,
+    puedoVerTodosLosCursos: false,
   },
   ESTUDIANTE: {
     puedoCambiarRol: false,              // [diag]
@@ -53,6 +61,10 @@ const estrategias = {
     // de su curso, nunca llegaran al listado". Hoy no hay cursado, => false.
     puedoVisualizarOtrosPerfiles: false,
     puedoEditarOtrosPerfiles: false,    // regla de negocio: solo admin
+    puedoEliminarCurso: false,
+    puedoGestionarIntegrantes: false,
+    puedoVerEstadisticasCurso: false,
+    puedoVerTodosLosCursos: false,
   },
 };
 

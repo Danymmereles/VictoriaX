@@ -41,16 +41,22 @@ export default function SeleccionRol() {
   const navigate = useNavigate();
   const { iniciarSesion } = useSesionUsuario();
   const [cargando, setCargando] = useState(null);
+  const [error, setError] = useState("");
 
   async function elegir(rolKey) {
     setCargando(rolKey);
+    setError("");
     try {
-      const lista = await base44.entities.Usuario.filter({ rol: rolKey }, "-created_date", 1);
-      const usuario = lista && lista[0];
-      if (usuario) {
-        iniciarSesion(usuario);
-        navigate("/");
+      const lista = await base44.entities.Usuario.list();
+      const usuario = (lista || []).find((u) => u.rol === rolKey);
+      if (!usuario) {
+        setError(`No hay un usuario de ejemplo con rol ${rolKey}.`);
+        return;
       }
+      iniciarSesion(usuario);
+      navigate("/");
+    } catch (e) {
+      setError("No se pudo iniciar sesión: " + (e?.message || "error desconocido"));
     } finally {
       setCargando(null);
     }
@@ -82,6 +88,12 @@ export default function SeleccionRol() {
           Este selector es temporal y sera reemplazado por el autenticador institucional de la
           UTN.BA. Cada rol ingresa con un perfil de ejemplo precargado.
         </p>
+
+        {error && (
+          <div className="mt-6 rounded-xl border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive">
+            {error}
+          </div>
+        )}
 
         <div className="mt-12 grid gap-6 md:grid-cols-3">
           {roles.map(({ key, titulo, desc, icon: Icon, color }) => {

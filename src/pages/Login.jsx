@@ -1,64 +1,106 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
-import { Image } from "@/components/ui/image";
-import Wordmark from "@/components/brand/Wordmark";
-import ThemeToggle from "@/components/theme/ThemeToggle";
-import UtnAccessCard from "@/components/login/UtnAccessCard";
+import { Eye, EyeOff, Lock, Mail, Loader2 } from "lucide-react";
+import AuthLayout from "@/components/AuthLayout";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useAuth } from "@/lib/AuthContext";
+
+const UTN_EMAIL = /^[^\s@]+@frba\.utn\.edu\.ar$/i;
 
 export default function Login() {
   const navigate = useNavigate();
+  const { login } = useAuth();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+    setError("");
+    if (!UTN_EMAIL.test(email.trim())) {
+      setError("El Modo Estudio es exclusivo para la comunidad académica de UTN (@frba.utn.edu.ar).");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await login({ email, password });
+      navigate("/modo-estudio");
+    } catch (authError) {
+      setError(authError.message || "No se pudo iniciar sesión.");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
-    <div className="min-h-screen bg-background text-foreground lg:grid lg:grid-cols-2">
-      <div className="relative hidden lg:block">
-        <Image
-          src="https://media.base44.com/images/public/6a71341ab9dae936a9cf65a7/5f712e98a_generated_e5aabbd5.png"
-          alt="Nodos de datos translúcidos con patrones de circuito"
-          className="absolute inset-0 h-full w-full object-cover"
-        />
-        <div className="absolute inset-0 bg-[#0A0D14]/70" />
-        <div className="relative flex h-full flex-col justify-between p-14">
-          <div className="text-white">
-            <Wordmark withTagline />
-          </div>
-          <div className="max-w-md text-white">
-            <h2 className="font-heading text-4xl font-semibold leading-tight">
-              Modo Estudio
-            </h2>
-            <p className="mt-5 text-lg leading-relaxed text-white/70">
-              Iniciá sesión con tu cuenta institucional para acceder al camino de aprendizaje,
-              resolver los ejercicios de la cátedra y comparar tu solución con la resolución
-              propuesta.
-            </p>
-            <p className="mt-8 text-sm text-white/50">
-              El Modo Libre no requiere cuenta: podés modelar y ejecutar simulaciones sin
-              iniciar sesión.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div className="relative flex min-h-screen flex-col items-center justify-center px-6 py-16">
-        <div className="absolute left-6 right-6 top-6 flex items-center justify-between lg:left-auto lg:right-10 lg:top-10">
-          <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground lg:hidden">
-            <ArrowLeft className="w-4 h-4" /> Volver
+    <AuthLayout
+      icon={Lock}
+      title="Iniciar sesión"
+      subtitle="Accedé al Modo Estudio con tu cuenta institucional UTN.BA."
+      footer={
+        <>
+          ¿Todavía no tenés cuenta?{" "}
+          <Link to="/register" className="font-medium text-primary hover:underline">
+            Registrate
           </Link>
-          <ThemeToggle />
+        </>
+      }
+    >
+      {error && (
+        <p role="alert" className="mb-4 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
+          {error}
+        </p>
+      )}
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="email">Email institucional</Label>
+          <div className="relative">
+            <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+            <Input
+              id="email"
+              type="email"
+              autoComplete="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="nombre@frba.utn.edu.ar"
+              className="h-12 pl-10"
+              required
+            />
+          </div>
         </div>
-
-        <UtnAccessCard onAccess={() => navigate("/seleccion-rol")} />
-
-        <Link
-          to="/modo-libre"
-          className="mt-10 text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
-        >
-          Continuar sin iniciar sesión al Modo Libre
-        </Link>
-        <Link to="/" className="mt-4 hidden items-center gap-2 text-sm text-muted-foreground hover:text-foreground lg:inline-flex">
-          <ArrowLeft className="w-4 h-4" /> Volver al inicio
-        </Link>
-      </div>
-    </div>
+        <div className="space-y-2">
+          <Label htmlFor="password">Contraseña</Label>
+          <div className="relative">
+            <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+            <Input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              autoComplete="current-password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              className="h-12 pl-10 pr-12"
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((visible) => !visible)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+              aria-pressed={showPassword}
+            >
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
+        </div>
+        <Button type="submit" className="h-12 w-full font-medium" disabled={loading}>
+          {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Ingresando…</> : "Iniciar sesión"}
+        </Button>
+      </form>
+    </AuthLayout>
   );
 }

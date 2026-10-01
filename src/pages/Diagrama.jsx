@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import NavBar from "@/components/home/NavBar";
 import Footer from "@/components/home/Footer";
+import useTheme from "../hooks/useTheme";
 
 import {
     ReactFlow,
@@ -136,13 +137,13 @@ function Flow() {
         ]
     );
 
+    const theme = useTheme();
 
     return (
         <div className="diagram-flow-container">
 
             {/* Barra lateral */}
             <Sidebar />
-
 
             {/* Área de React Flow */}
             <div className="diagram-flow-area">
@@ -161,6 +162,9 @@ function Flow() {
 
                     nodeTypes={nodeTypes}
 
+                    deleteKeyCode="Delete"
+                    colorMode={theme}
+
                     fitView
                 >
 
@@ -172,6 +176,7 @@ function Flow() {
                         pannable
                         zoomable
                     />
+
 
                 </ReactFlow>
 

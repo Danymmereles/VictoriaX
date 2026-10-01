@@ -1,95 +1,75 @@
 import { localAuth } from "@/api/localAuth";
+import { getSupabaseClient } from "@/utils/supabase";
 
-const API_URL =
-  import.meta.env.VITE_API_BASE_URL ||
-  (import.meta.env.DEV ? "http://localhost:3001" : "");
-const TOKEN_KEY = "victoriax-access-token";
 const USE_LOCAL_AUTH =
   import.meta.env.DEV && import.meta.env.VITE_LOCAL_AUTH !== "false";
+const SUPABASE_ROLES = new Set(["ADMIN", "DOCENTE", "ALUMNO"]);
 export const isLocalAuthEnabled = USE_LOCAL_AUTH;
 
-function getAccessToken() {
-  return localStorage.getItem(TOKEN_KEY);
-}
+function toAppUser(user) {
+  const role = user.app_metadata?.rol;
+  const fullName =
+    user.user_metadata?.full_name ?? user.user_metadata?.nombre_completo ?? "";
 
-function setAccessToken(token) {
-  if (token) localStorage.setItem(TOKEN_KEY, token);
-  else localStorage.removeItem(TOKEN_KEY);
-}
-
-async function request(path, options = {}) {
-  if (!API_URL) {
-    throw new Error("Falta configurar VITE_API_BASE_URL para conectar con VictoriaX API.");
-  }
-  const token = getAccessToken();
-  const response = await fetch(`${API_URL}${path}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options.headers,
-    },
-  });
-  const body = await response.json();
-  if (!response.ok) {
-    const error = new Error(body.error || "No se pudo completar la solicitud.");
-    error.status = response.status;
-    throw error;
-  }
-  return body;
-}
-
-function acceptSession(result) {
-  if (result.accessToken) setAccessToken(result.accessToken);
-  return result.user;
+  return {
+    id_usuario: user.id,
+    email: user.email ?? "",
+    nombre_completo: typeof fullName === "string" ? fullName : "",
+    rol: SUPABASE_ROLES.has(role) ? role : "ALUMNO",
+  };
 }
 
 export const authClient = {
   async register({ email, password, nombreCompleto }) {
     if (USE_LOCAL_AUTH) {
-      setAccessToken(null);
       const user = await localAuth.register({ email, password, nombreCompleto });
       return { user, accessToken: "local-session" };
     }
-    localAuth.logout();
-    const result = await request("/api/auth/register", {
-      method: "POST",
-      body: JSON.stringify({ email, password, nombreCompleto }),
+
+    const { data, error } = await getSupabaseClient().auth.signUp({
+      email: email.trim().toLowerCase(),
+      password,
+      options: {
+        data: { full_name: nombreCompleto.trim() },
+      },
     });
-    if (result.accessToken) acceptSession(result);
-    else setAccessToken(null);
-    return result;
+    if (error) throw error;
+    if (!data.user) throw new Error("Supabase no devolvió el usuario creado.");
+
+    return {
+      user: toAppUser(data.user),
+      accessToken: data.session?.access_token ?? null,
+    };
   },
 
   async login({ email, password }) {
     if (USE_LOCAL_AUTH) {
-      setAccessToken(null);
-      return await localAuth.login({ email, password });
+      return localAuth.login({ email, password });
     }
-    localAuth.logout();
-    return acceptSession(
-      await request("/api/auth/login", {
-        method: "POST",
-        body: JSON.stringify({ email, password }),
-      }),
-    );
+
+    const { data, error } = await getSupabaseClient().auth.signInWithPassword({
+      email: email.trim().toLowerCase(),
+      password,
+    });
+    if (error) throw error;
+    if (!data.user) throw new Error("Supabase no devolvió el usuario autenticado.");
+    return toAppUser(data.user);
   },
 
   async me() {
     if (USE_LOCAL_AUTH) return localAuth.me();
-    if (!getAccessToken()) return null;
-    try {
-      const result = await request("/api/auth/me");
-      return result.user;
-    } catch (error) {
-      if (error.status === 401) setAccessToken(null);
-      throw error;
-    }
+    const { data, error } = await getSupabaseClient().auth.getSession();
+    if (error) throw error;
+    return data.session ? toAppUser(data.session.user) : null;
   },
 
-  logout() {
-    localAuth.logout();
-    setAccessToken(null);
+  async logout() {
+    if (USE_LOCAL_AUTH) {
+      localAuth.logout();
+      return;
+    }
+    const { error } = await getSupabaseClient().auth.signOut();
+    if (error) throw error;
   },
 
   async listUsers() {

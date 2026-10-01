@@ -4,6 +4,7 @@ import { Users, UserCircle, LogOut, GraduationCap } from "lucide-react";
 import Wordmark from "@/components/brand/Wordmark";
 import ThemeToggle from "@/components/theme/ThemeToggle";
 import { useSesionUsuario } from "@/lib/sesionUsuario";
+import { toast } from "sonner";
 
 const links = [
   { label: "Modos", href: "#modos" },
@@ -16,9 +17,13 @@ export default function NavBar() {
   const navigate = useNavigate();
   const { usuario, permisos, cerrarSesion } = useSesionUsuario();
 
-  function salir() {
-    cerrarSesion();
-    navigate("/");
+  async function salir() {
+    try {
+      await cerrarSesion();
+      navigate("/");
+    } catch (error) {
+      toast.error(error.message || "No se pudo cerrar la sesión.");
+    }
   }
 
   return (

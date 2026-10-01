@@ -59,8 +59,8 @@ export function AuthProvider({ children }) {
     return result;
   };
 
-  const logout = (shouldRedirect = false) => {
-    authClient.logout();
+  const logout = async (shouldRedirect = false) => {
+    await authClient.logout();
     setUser(null);
     setIsAuthenticated(false);
     setAuthError(null);

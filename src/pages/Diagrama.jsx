@@ -18,14 +18,14 @@ import {
 
 import "@xyflow/react/dist/style.css";
 
-import Sidebar from "../components/SideBar";
-import CustomNode from "../components/CustomNode";
+import Sidebar from "../components/diagrama/Sidebar.jsx";
+import CustomNode from "../components/diagrama/CustomNode.jsx";
 import {
     DnDProvider,
     useDnD,
-} from "../components/DnDContext";
+} from "../components/diagrama/DnDContext.jsx";
 
-import "../css/Diagrama.css";
+import "../components/diagrama/Diagrama.css";
 
 
 const nodeTypes = {

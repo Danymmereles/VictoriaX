@@ -3,7 +3,7 @@ import {
     Position,
 } from "@xyflow/react";
 
-import "../css/CustomNode.css";
+import "./CustomNode.css";
 
 export default function CustomNode({ data }) {
 

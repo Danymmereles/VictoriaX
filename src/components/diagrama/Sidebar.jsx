@@ -1,5 +1,5 @@
-import "../css/SideBar.css";
-import { useDnD } from "../components/DnDContext";
+import "./Sidebar.css";
+import { useDnD } from "./DnDContext.jsx";
 
 function SidebarItem({ type, label }) {
     const [, setType] = useDnD();

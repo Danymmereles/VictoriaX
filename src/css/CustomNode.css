@@ -16,8 +16,14 @@
     box-sizing: border-box;
 }
 
+
+/* =========================================
+   CONTENIDO
+   ========================================= */
+
 .node-content {
     display: flex;
+
     align-items: center;
     justify-content: center;
 
@@ -27,9 +33,10 @@
     height: 100%;
 }
 
-/* =========================
+
+/* =========================================
    ENTRADA
-   ========================= */
+   ========================================= */
 
 .node-input {
     border-radius: 50%;
@@ -37,9 +44,10 @@
     background: #e8ddff;
 }
 
-/* =========================
+
+/* =========================================
    PROCESO
-   ========================= */
+   ========================================= */
 
 .node-process {
     border-radius: 6px;
@@ -47,44 +55,10 @@
     background: #dcecff;
 }
 
-/* =========================
-   DECISIÓN
-   ========================= */
 
-.node-decision {
-    width: 100px;
-    min-width: 100px;
-
-    height: 100px;
-    min-height: 100px;
-
-    transform: rotate(45deg);
-
-    background: #ffe6bd;
-}
-
-/*
-   Como el nodo está rotado,
-   también rotamos nuevamente
-   su contenido para que el texto
-   permanezca derecho.
-*/
-
-.node-decision .node-content {
-    transform: rotate(-45deg);
-}
-
-.node-decision .react-flow__handle {
-    transform: rotate(-45deg);
-}
-
-.decision-symbol {
-    font-weight: bold;
-}
-
-/* =========================
+/* =========================================
    SALIDA
-   ========================= */
+   ========================================= */
 
 .node-output {
     min-width: 120px;
@@ -92,4 +66,125 @@
     border-radius: 30px;
 
     background: #dcf5df;
+}
+
+
+/* =========================================
+   DECISIÓN
+   ========================================= */
+
+.decision-node {
+
+    position: relative;
+
+    width: 120px;
+    height: 120px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+}
+
+
+/* =========================================
+   ROMBO
+   ========================================= */
+
+.decision-shape {
+
+    width: 78px;
+    height: 78px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: #ffe6bd;
+    border: 2px solid #444;
+    transform: rotate(45deg);
+    box-sizing: border-box;
+}
+
+
+/* =========================================
+   SIGNO ?
+   ========================================= */
+
+.decision-content {
+    font-size: 18px;
+    font-weight: bold;
+    transform: rotate(-45deg);
+
+}
+
+
+/* =========================================
+   HANDLES
+   ========================================= */
+
+.decision-handle {
+    width: 10px;
+    height: 10px;
+    background: #AF9BEF;
+    border: 2px solid #222;
+
+}
+
+
+/* =========================================
+   HANDLE SUPERIOR
+   ========================================= */
+
+.decision-handle-top {
+    top: 0;
+}
+
+
+/* =========================================
+   HANDLE IZQUIERDO - NO
+   ========================================= */
+
+.decision-handle-left {
+    left: 0;
+}
+
+
+/* =========================================
+   HANDLE DERECHO - SI
+   ========================================= */
+
+.decision-handle-right {
+    right: 0;
+}
+
+
+/* =========================================
+   ETIQUETAS SI / NO
+   ========================================= */
+
+.decision-label {
+    position: absolute;
+    font-size: 11px;
+    font-weight: 600;
+    color: #aaa;
+    pointer-events: none;
+
+}
+
+
+/* NO */
+
+.decision-label-no {
+    left: -20px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+/* SI */
+.decision-label-yes {
+    right: -18px;
+    top: 50%;
+    transform: translateY(-50%);
+
 }

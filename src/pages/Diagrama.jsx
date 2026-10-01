@@ -1,9 +1,8 @@
-import React from "react";
+import React, { useCallback } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Workflow } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import NavBar from "@/components/home/NavBar";
 import Footer from "@/components/home/Footer";
-import { useCallback, useState } from "react";
 
 import {
     ReactFlow,
@@ -21,12 +20,18 @@ import "@xyflow/react/dist/style.css";
 
 import Sidebar from "../components/SideBar";
 import CustomNode from "../components/CustomNode";
+import {
+    DnDProvider,
+    useDnD,
+} from "../components/DnDContext";
 
-import { DnDProvider, useDnD } from "../components/DnDContext";
+import "../css/Diagrama.css";
+
 
 const nodeTypes = {
     custom: CustomNode,
 };
+
 
 // Obtener texto del nodo
 function getNodeLabel(type) {
@@ -48,19 +53,22 @@ function getNodeLabel(type) {
     }
 }
 
+
 function Flow() {
+
     const [nodes, setNodes, onNodesChange] =
         useNodesState([]);
 
     const [edges, setEdges, onEdgesChange] =
         useEdgesState([]);
 
-    const { screenToFlowPosition } = useReactFlow();
+    const { screenToFlowPosition } =
+        useReactFlow();
 
-    // Obtenemos el tipo de nodo que se está arrastrando
     const [type] = useDnD();
 
-    // Crear conexión
+
+    // Crear conexión entre nodos
     const onConnect = useCallback(
         (params) => {
             setEdges((currentEdges) =>
@@ -70,31 +78,37 @@ function Flow() {
         [setEdges]
     );
 
-    // Permitir Drop
+
+    // Permitir soltar elementos
     const onDragOver = useCallback((event) => {
+
         event.preventDefault();
 
         event.dataTransfer.dropEffect = "move";
+
     }, []);
 
-    // Crear nodo
+
+    // Crear nodo al soltar
     const onDrop = useCallback(
         (event) => {
+
             event.preventDefault();
 
-            // Si no existe un tipo, no hacemos nada
             if (!type) {
                 return;
             }
 
-            // Convertimos las coordenadas del mouse
-            // a coordenadas internas de React Flow
-            const position = screenToFlowPosition({
-                x: event.clientX,
-                y: event.clientY,
-            });
+
+            const position =
+                screenToFlowPosition({
+                    x: event.clientX,
+                    y: event.clientY,
+                });
+
 
             const newNode = {
+
                 id: `${type}-${Date.now()}`,
 
                 type: "custom",
@@ -105,12 +119,15 @@ function Flow() {
                     type,
                     label: getNodeLabel(type),
                 },
+
             };
+
 
             setNodes((currentNodes) => [
                 ...currentNodes,
                 newNode,
             ]);
+
         },
         [
             type,
@@ -119,12 +136,16 @@ function Flow() {
         ]
     );
 
-    return (
-        <div className="flow-container">
 
+    return (
+        <div className="diagram-flow-container">
+
+            {/* Barra lateral */}
             <Sidebar />
 
-            <div className="flow-area">
+
+            {/* Área de React Flow */}
+            <div className="diagram-flow-area">
 
                 <ReactFlow
                     nodes={nodes}
@@ -142,8 +163,16 @@ function Flow() {
 
                     fitView
                 >
+
                     <Background />
+
                     <Controls />
+
+                    <MiniMap
+                        pannable
+                        zoomable
+                    />
+
                 </ReactFlow>
 
             </div>
@@ -152,18 +181,49 @@ function Flow() {
     );
 }
 
+
 export default function Diagrama() {
-  return (
-    <div className="min-h-screen bg-background text-foreground">
-      <NavBar />
-      <main className="mx-auto max-w-3xl px-6 py-32 text-center">
-        <Workflow className="mx-auto w-10 h-10 text-[#AF9BEF]" />
-          
-        <Link to="/modo-libre" className="mt-10 inline-flex items-center gap-2 rounded-full border border-border px-6 py-3 text-sm hover:border-[#AF9BEF]">
-          <ArrowLeft className="w-4 h-4" /> Volver al análisis previo
-        </Link>
-      </main>
-      <Footer />
-    </div>
-  );
+
+    return (
+        <div className="min-h-screen bg-background text-foreground">
+
+            <NavBar />
+
+
+            <main className="diagram-page">
+
+                {/* Editor */}
+                <ReactFlowProvider>
+
+                    <DnDProvider>
+
+                        <Flow />
+
+                    </DnDProvider>
+
+                </ReactFlowProvider>
+
+
+                {/* Volver */}
+                <div className="diagram-footer-action">
+
+                    <Link
+                        to="/modo-libre"
+                        className="diagram-back-button"
+                    >
+                        <ArrowLeft className="w-4 h-4" />
+
+                        Volver al análisis previo
+
+                    </Link>
+
+                </div>
+
+            </main>
+
+
+            <Footer />
+
+        </div>
+    );
 }

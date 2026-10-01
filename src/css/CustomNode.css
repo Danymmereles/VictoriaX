@@ -1,0 +1,95 @@
+.custom-node {
+    min-width: 120px;
+    min-height: 55px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    position: relative;
+
+    border: 2px solid #444;
+
+    font-size: 14px;
+    font-weight: 500;
+
+    box-sizing: border-box;
+}
+
+.node-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 5px;
+
+    width: 100%;
+    height: 100%;
+}
+
+/* =========================
+   ENTRADA
+   ========================= */
+
+.node-input {
+    border-radius: 50%;
+
+    background: #e8ddff;
+}
+
+/* =========================
+   PROCESO
+   ========================= */
+
+.node-process {
+    border-radius: 6px;
+
+    background: #dcecff;
+}
+
+/* =========================
+   DECISIÓN
+   ========================= */
+
+.node-decision {
+    width: 100px;
+    min-width: 100px;
+
+    height: 100px;
+    min-height: 100px;
+
+    transform: rotate(45deg);
+
+    background: #ffe6bd;
+}
+
+/*
+   Como el nodo está rotado,
+   también rotamos nuevamente
+   su contenido para que el texto
+   permanezca derecho.
+*/
+
+.node-decision .node-content {
+    transform: rotate(-45deg);
+}
+
+.node-decision .react-flow__handle {
+    transform: rotate(-45deg);
+}
+
+.decision-symbol {
+    font-weight: bold;
+}
+
+/* =========================
+   SALIDA
+   ========================= */
+
+.node-output {
+    min-width: 120px;
+
+    border-radius: 30px;
+
+    background: #dcf5df;
+}

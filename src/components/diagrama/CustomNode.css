@@ -188,3 +188,14 @@
     transform: translateY(-50%);
 
 }
+
+.node-edit-input {
+    width: 90%;
+    border: none;
+    outline: none;
+    background: transparent;
+    text-align: center;
+    font: inherit;
+    color: inherit;
+    padding: 2px 4px;
+}

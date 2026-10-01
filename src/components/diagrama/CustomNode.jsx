@@ -1,22 +1,55 @@
+import { useState } from "react";
 import {
     Handle,
     Position,
+    useReactFlow,
 } from "@xyflow/react";
 
 import "./CustomNode.css";
 
-export default function CustomNode({ data }) {
+export default function CustomNode({ id, data }) {
+    const { setNodes } = useReactFlow();
 
-    // ==========================================
-    // NODO DECISIÓN
-    // ==========================================
+    const [editing, setEditing] = useState(false);
+    const [text, setText] = useState(data.label);
+
+    const startEditing = () => {
+        setEditing(true);
+    };
+
+    const saveText = () => {
+        setEditing(false);
+
+        setNodes((nodes) =>
+            nodes.map((node) =>
+                node.id === id
+                    ? {
+                        ...node,
+                        data: {
+                            ...node.data,
+                            label: text.trim() || data.label,
+                        },
+                    }
+                    : node
+            )
+        );
+    };
+
+    const handleKeyDown = (event) => {
+        if (event.key === "Enter") {
+            saveText();
+        }
+
+        if (event.key === "Escape") {
+            setText(data.label);
+            setEditing(false);
+        }
+    };
 
     if (data.type === "decision") {
-
         return (
             <div className="decision-node">
 
-                {/* Conexión de entrada */}
                 <Handle
                     type="target"
                     position={Position.Top}
@@ -24,18 +57,27 @@ export default function CustomNode({ data }) {
                     className="decision-handle decision-handle-top"
                 />
 
-
-                {/* Figura del rombo */}
                 <div className="decision-shape">
-
                     <div className="decision-content">
-                        ?
+                        {editing ? (
+                            <input
+                                autoFocus
+                                value={text}
+                                onChange={(event) =>
+                                    setText(event.target.value)
+                                }
+                                onBlur={saveText}
+                                onKeyDown={handleKeyDown}
+                                className="node-edit-input"
+                            />
+                        ) : (
+                            <span onDoubleClick={startEditing}>
+                {data.label}
+              </span>
+                        )}
                     </div>
-
                 </div>
 
-
-                {/* Conexión SI */}
                 <Handle
                     type="source"
                     position={Position.Right}
@@ -43,8 +85,6 @@ export default function CustomNode({ data }) {
                     className="decision-handle decision-handle-right"
                 />
 
-
-                {/* Conexión NO */}
                 <Handle
                     type="source"
                     position={Position.Left}
@@ -52,14 +92,10 @@ export default function CustomNode({ data }) {
                     className="decision-handle decision-handle-left"
                 />
 
-
-                {/* Etiqueta SI */}
                 <span className="decision-label decision-label-yes">
           SI
         </span>
 
-
-                {/* Etiqueta NO */}
                 <span className="decision-label decision-label-no">
           NO
         </span>
@@ -68,17 +104,9 @@ export default function CustomNode({ data }) {
         );
     }
 
-
-    // ==========================================
-    // RESTO DE NODOS
-    // ==========================================
-
     return (
-        <div
-            className={`custom-node node-${data.type}`}
-        >
+        <div className={`custom-node node-${data.type}`}>
 
-            {/* Entrada */}
             <Handle
                 type="target"
                 position={Position.Top}
@@ -86,13 +114,25 @@ export default function CustomNode({ data }) {
 
             <div className="node-content">
 
-        <span>
-          {data.label}
-        </span>
+                {editing ? (
+                    <input
+                        autoFocus
+                        value={text}
+                        onChange={(event) =>
+                            setText(event.target.value)
+                        }
+                        onBlur={saveText}
+                        onKeyDown={handleKeyDown}
+                        className="node-edit-input"
+                    />
+                ) : (
+                    <span onDoubleClick={startEditing}>
+            {data.label}
+          </span>
+                )}
 
             </div>
 
-            {/* Salida */}
             <Handle
                 type="source"
                 position={Position.Bottom}

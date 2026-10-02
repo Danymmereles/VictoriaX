@@ -199,3 +199,183 @@
     color: inherit;
     padding: 2px 4px;
 }
+/* =====================================================
+   NUEVOS SÍMBOLOS
+   ===================================================== */
+
+.special-node {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+}
+
+
+/* =====================================================
+   DOCUMENTO
+   ===================================================== */
+
+.document-node {
+    width: 160px;
+    height: 90px;
+}
+
+.document-shape {
+    position: absolute;
+    inset: 0;
+
+    width: 100%;
+    height: 100%;
+
+    overflow: visible;
+}
+
+.document-shape path {
+    fill: #e8ddff;
+    stroke: #444;
+    stroke-width: 3;
+    stroke-linejoin: round;
+}
+
+.document-content {
+    position: relative;
+    z-index: 2;
+
+    width: 120px;
+    min-height: 40px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    text-align: center;
+}
+
+
+/* =====================================================
+   INPUT / OUTPUT
+   ===================================================== */
+
+.io-node {
+    width: 160px;
+    height: 80px;
+}
+
+.io-shape {
+    position: absolute;
+    inset: 0;
+
+    width: 100%;
+    height: 100%;
+}
+
+.io-shape polygon {
+    fill: #dcecff;
+    stroke: #444;
+    stroke-width: 3;
+    stroke-linejoin: round;
+}
+
+.io-content {
+    position: relative;
+    z-index: 2;
+
+    width: 110px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    text-align: center;
+}
+
+
+/* =====================================================
+   PREPARACIÓN
+   ===================================================== */
+
+.preparation-node {
+    width: 160px;
+    height: 80px;
+}
+
+.preparation-shape {
+    position: absolute;
+    inset: 0;
+
+    width: 100%;
+    height: 100%;
+}
+
+.preparation-shape polygon {
+    fill: #ffe6bd;
+    stroke: #444;
+    stroke-width: 3;
+    stroke-linejoin: round;
+}
+
+.preparation-content {
+    position: relative;
+    z-index: 2;
+
+    width: 105px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    text-align: center;
+}
+
+
+/* =====================================================
+   CONECTOR
+   ===================================================== */
+
+.connector-node {
+    width: 70px;
+    height: 70px;
+}
+
+.connector-shape {
+    width: 54px;
+    height: 54px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: #dcf5df;
+
+    border: 3px solid #444;
+    border-radius: 50%;
+
+    box-sizing: border-box;
+}
+
+/* =====================================================
+   CONNECTOR SYMBOL
+
+.connector-node {
+    width: 70px;
+    height: 70px;
+}
+
+.connector-shape {
+    width: 55px;
+    height: 55px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: #dcf5df;
+    border: 2px solid #444;
+    border-radius: 50%;
+
+    box-sizing: border-box;
+
+    font-weight: 600;
+}
+===================================================== */

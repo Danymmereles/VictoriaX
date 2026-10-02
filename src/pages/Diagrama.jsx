@@ -49,6 +49,18 @@ function getNodeLabel(type) {
         case "output":
             return "Salida";
 
+        case "document":
+            return "Documento";
+
+        case "io":
+            return "Entrada / Salida";
+
+        case "preparation":
+            return "Preparación";
+
+        case "connector":
+            return "A";
+
         default:
             return "Nodo";
     }

@@ -60,10 +60,13 @@ export function AuthProvider({ children }) {
   };
 
   const logout = async (shouldRedirect = false) => {
-    await authClient.logout();
-    setUser(null);
-    setIsAuthenticated(false);
-    setAuthError(null);
+    try {
+      await authClient.logout();
+    } finally {
+      setUser(null);
+      setIsAuthenticated(false);
+      setAuthError(null);
+    }
     if (shouldRedirect) window.location.assign("/login");
   };
 

@@ -19,14 +19,14 @@ export default function Footer() {
             <ul className="mt-4 space-y-3 text-sm">
               <li><Link to="/modo-libre" className="hover:text-foreground text-muted-foreground">Modo Libre</Link></li>
               <li><Link to="/login" className="hover:text-foreground text-muted-foreground">Modo Estudio</Link></li>
-              <li><a href="#flujo" className="hover:text-foreground text-muted-foreground">Cómo funciona</a></li>
+              <li><Link to="/#flujo" className="hover:text-foreground text-muted-foreground">Cómo funciona</Link></li>
             </ul>
           </div>
           <div>
             <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">Proyecto</p>
             <ul className="mt-4 space-y-3 text-sm">
-              <li><a href="#legado" className="hover:text-foreground text-muted-foreground">Legado Victoria</a></li>
-              <li><a href="#proyecto" className="hover:text-foreground text-muted-foreground">Cátedras</a></li>
+              <li><Link to="/#legado" className="hover:text-foreground text-muted-foreground">Legado Victoria</Link></li>
+              <li><Link to="/#proyecto" className="hover:text-foreground text-muted-foreground">Cátedras</Link></li>
             </ul>
           </div>
           <div>

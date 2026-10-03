@@ -1,8 +1,14 @@
 import React from "react";
+import Wordmark from "@/components/brand/Wordmark";
+import ThemeToggle from "@/components/theme/ThemeToggle";
 
 export default function AuthLayout({ icon: Icon, title, subtitle, footer, children }) {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
+    <div className="relative min-h-screen flex items-center justify-center bg-background px-4 py-24">
+      <header className="absolute inset-x-0 top-0 flex h-20 items-center justify-between px-6 lg:px-12">
+        <Wordmark />
+        <ThemeToggle />
+      </header>
       <div className="w-full max-w-md">
         <div className="text-center mb-10">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary mb-4">

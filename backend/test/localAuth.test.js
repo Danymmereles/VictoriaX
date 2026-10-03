@@ -27,6 +27,8 @@ test("local test users persist, register as students, and allow admin role chang
     assert.equal(user.rol, role);
     assert.equal((await localAuth.me()).id_usuario, user.id_usuario);
   }
+  assert.equal(await localAuth.hasAccount("ALUMNO@FRBA.UTN.EDU.AR"), true);
+  assert.equal(await localAuth.hasAccount("otra@frba.utn.edu.ar"), false);
 
   const registered = await localAuth.register({
     email: "nueva@ejemplo.com",
@@ -77,7 +79,7 @@ test("local test users persist, register as students, and allow admin role chang
   );
   await assert.rejects(
     localAuth.login({ email: "admin@frba.utn.edu.ar", password: "incorrecta" }),
-    /Email o contraseña de prueba incorrectos/,
+    /Email o contraseña incorrectos/,
   );
   localAuth.logout();
   assert.equal(await localAuth.me(), null);

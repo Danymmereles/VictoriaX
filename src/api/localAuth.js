@@ -119,6 +119,12 @@ function toAppRole(role) {
 }
 
 export const localAuth = {
+  async hasAccount(email) {
+    const normalizedEmail = email.trim().toLowerCase();
+    const users = await readUsers();
+    return users.some((user) => user.email === normalizedEmail);
+  },
+
   async register({ email, password, nombreCompleto }) {
     const normalizedEmail = email.trim().toLowerCase();
     if (normalizedEmail.length > 320 || !EMAIL_PATTERN.test(normalizedEmail)) {

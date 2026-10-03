@@ -32,9 +32,9 @@ export default function NavBar() {
         <Wordmark />
         <nav className="hidden md:flex items-center gap-10">
           {links.map((l) => (
-            <a key={l.href} href={l.href} className="text-sm text-muted-foreground transition-colors hover:text-foreground">
+            <Link key={l.href} to={`/${l.href}`} className="text-sm text-muted-foreground transition-colors hover:text-foreground">
               {l.label}
-            </a>
+            </Link>
           ))}
         </nav>
         <div className="flex items-center gap-3">

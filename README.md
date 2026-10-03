@@ -64,12 +64,12 @@ When you use `base44 dev`, the command injects the local Base44 values for you, 
 
 ## Frontend authentication (Supabase Auth)
 
-The existing login and registration screens authenticate directly with Supabase Auth through `src/api/authClient.js`. Configure the root `.env.local` with the Supabase project URL and publishable key. In development, the local demo users remain enabled by default and need no database; set `VITE_LOCAL_AUTH=false` to use Supabase Auth. Production builds use Supabase Auth.
+The existing login and registration screens authenticate directly with Supabase Auth through `src/api/authClient.js`. Configure the root `.env.local` with the Supabase project URL and publishable key. In development, the local demo users remain available without a database even when `VITE_LOCAL_AUTH=false` enables Supabase Auth for other accounts. Production builds use Supabase Auth.
 
 ```dotenv
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=your-publishable-key
-# Set this to false to use Supabase Auth during local development.
+# Set this to false to use Supabase Auth for non-demo accounts during local development.
 VITE_LOCAL_AUTH=false
 ```
 

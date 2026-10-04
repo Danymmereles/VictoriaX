@@ -64,23 +64,23 @@ When you use `base44 dev`, the command injects the local Base44 values for you, 
 
 ## Frontend authentication (Supabase Auth)
 
-The existing login and registration screens authenticate directly with Supabase Auth through `src/api/authClient.js`. Configure the root `.env.local` with the Supabase project URL and publishable key. In development, the local demo users remain available without a database even when `VITE_LOCAL_AUTH=false` enables Supabase Auth for other accounts. Production builds use Supabase Auth.
+The existing login and registration screens authenticate directly with Supabase Auth through `src/api/authClient.js`. In development, only the three predefined demo users use local authentication; every other login and new registration uses Supabase Auth. Configure the root `.env.local` with the Supabase project URL and publishable key to use Supabase. The demo accounts can still be tested without these variables.
 
 ```dotenv
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=your-publishable-key
-# Set this to false to use Supabase Auth for non-demo accounts during local development.
-VITE_LOCAL_AUTH=false
 ```
 
 The publishable key is intended for frontend use. Never expose a Supabase secret/service-role key through a `VITE_` variable.
 For hosted builds, configure these same `VITE_SUPABASE_*` variables in the hosting environment; `.env.local` is ignored and stays on the developer machine.
 
+The frontend expires Supabase and local demo sessions seven days after login; activity does not extend the deadline, and open tabs share the session state. Existing sessions without a recorded start time receive one initial seven-day window. This client-side limit is for application behavior only and is not a server-enforced security boundary.
+
 ## Standalone Auth API (Supabase + PostgreSQL)
 
 The separate API in `backend/` uses Node.js 20+, the Supabase Auth SDK, Drizzle ORM and PostgreSQL's `pg` driver; the HTTP server and test runner are built into Node. The frontend login does not call this API. It remains available for standalone API development and its database integration tests.
 
-Registration accepts any valid email and creates the account with the `ALUMNO` role when using the standalone API. Only Modo Estudio requires an `@frba.utn.edu.ar` address; that restriction is checked at login and again by the protected API, not just by the frontend. In local demo mode, newly registered users are also stored in this browser and start as students.
+Registration accepts any valid email and creates the account with the `ALUMNO` role when using the standalone API. Only Modo Estudio requires an `@frba.utn.edu.ar` address; that restriction is checked at login and again by the protected API, not just by the frontend.
 
 ### Local setup
 
@@ -91,7 +91,7 @@ Registration accepts any valid email and creates the account with the `ALUMNO` r
 5. Start the API with `npm start` to test it independently. The frontend does not require this API or PostgreSQL to authenticate through Supabase.
 6. Run the API tests with `npm test`.
 
-The frontend's Vite-only local auth provides these accounts without contacting Supabase, the API, or PostgreSQL. New registrations are saved in this browser's local storage as `ALUMNO` and remain available after refresh:
+The frontend's local demo auth provides these three accounts without contacting Supabase, the API, or PostgreSQL. All other frontend registrations use Supabase Auth; they are not saved in the browser's local user list:
 
 | Email | Password | Role |
 |---|---|---|
@@ -99,7 +99,7 @@ The frontend's Vite-only local auth provides these accounts without contacting S
 | `docente@frba.utn.edu.ar` | `VictoriaX123` | `DOCENTE` |
 | `admin@frba.utn.edu.ar` | `VictoriaX123` | `ADMIN` |
 
-When signed in as the local admin, open **Participantes → Editar** to change another user's role. These accounts, registrations and role changes stay only in this browser; clearing its site data removes them. Local accounts only simulate frontend access and do not create Supabase users or authorize requests to the standalone API. To seed the alumno in local Supabase and PostgreSQL for API testing, run `npm run seed:local`; this seed refuses to run unless **both** services resolve to localhost/127.0.0.1/::1. Never use these shared test credentials in a hosted environment. Keep Supabase secret/service-role keys server-side.
+When signed in as the local admin, open **Participantes → Editar** to change the demo users' roles. These accounts and role changes stay only in this browser; clearing its site data removes them. Local demo accounts do not create Supabase users or authorize requests to the standalone API. To seed the alumno in local Supabase and PostgreSQL for API testing, run `npm run seed:local`; this seed refuses to run unless **both** services resolve to localhost/127.0.0.1/::1. Never use these shared test credentials in a hosted environment. Keep Supabase secret/service-role keys server-side.
 
 The migration creates the specified user, resolution, feedback, course membership and model-version tables. `CURSO` and `EJERCICIO` include only their key columns because their remaining attributes were not part of the supplied schema. The registration endpoint creates the Supabase identity first and compensates by deleting it if the RDS shadow insert fails; a cross-database ACID transaction is not possible.
 

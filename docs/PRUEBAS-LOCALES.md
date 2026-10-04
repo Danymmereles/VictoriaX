@@ -20,7 +20,7 @@ Abrí la dirección local que muestra Vite, normalmente `http://localhost:5173`.
 
 ## 2.1 Probar sin conectar una base
 
-En desarrollo, la autenticación local está activada por defecto. No necesita `.env.local`, Supabase, PostgreSQL ni la API. En **Iniciar sesión**, usá una de estas cuentas:
+En desarrollo, estas tres cuentas demo usan autenticación local automáticamente; no necesitan `.env.local`, Supabase, PostgreSQL ni la API. Las demás cuentas, y todos los registros nuevos, usan Supabase Auth.
 
 | Usuario | Contraseña | Rol |
 |---|---|---|
@@ -28,7 +28,11 @@ En desarrollo, la autenticación local está activada por defecto. No necesita `
 | `docente@frba.utn.edu.ar` | `VictoriaX123` | `DOCENTE` |
 | `admin@frba.utn.edu.ar` | `VictoriaX123` | `ADMIN` |
 
-También podés registrarte desde el formulario: las cuentas nuevas locales empiezan como estudiantes y quedan guardadas en el navegador. El admin demo puede editar participantes y roles. Esta información es local a ese navegador; borrar sus datos del sitio la elimina.
+El admin demo puede editar los perfiles y roles de estas cuentas. Esos cambios quedan en el navegador; borrar sus datos del sitio los elimina. Registrarse con uno de los emails demo está reservado y se debe iniciar sesión con su contraseña de prueba.
+
+Las sesiones demo y Supabase vencen siete días después del inicio de sesión, aunque se siga usando la app. El vencimiento se comparte entre pestañas del mismo navegador; al vencer, la app cierra la sesión. Las sesiones que ya existían al publicar el cambio reciben una ventana inicial de siete días desde la primera apertura. Es un límite aplicado por el frontend, no por el servidor.
+
+Para simular el vencimiento sin esperar siete días, con una sesión iniciada ejecutá en la consola del navegador `localStorage.setItem("victoriax-auth-started-at", String(Date.now() - 8 * 24 * 60 * 60 * 1000))` y recargá la página; las otras pestañas abiertas del mismo sitio también deben cerrar la sesión.
 
 ## 2.2 Probar Supabase Auth
 
@@ -41,11 +45,11 @@ También podés registrarte desde el formulario: las cuentas nuevas locales empi
    VITE_SUPABASE_PUBLISHABLE_KEY=your-publishable-key
    ```
 
-   Reemplazá los dos primeros valores con la URL y la publishable key del proyecto. `.env.local` está ignorado por Git. No pongas claves `secret` o `service_role` en variables `VITE_`.
-4. Reiniciá `npm run dev` para que Vite cargue las variables. Con `VITE_LOCAL_AUTH=false`, las cuentas demo y otras cuentas ya guardadas localmente siguen usando el navegador; las cuentas nuevas usan Supabase.
+   Reemplazá los dos valores con la URL y la publishable key del proyecto. `.env.local` está ignorado por Git. No pongas claves `secret` o `service_role` en variables `VITE_`.
+4. Reiniciá `npm run dev` para que Vite cargue las variables. Las cuentas demo siguen usando autenticación local; las demás cuentas y los nuevos registros van a Supabase.
 5. En el formulario **Crear cuenta**, registrá un email de prueba distinto de las cuentas demo. El registro admite cualquier email; para iniciar sesión en Modo Estudio, el login requiere `@frba.utn.edu.ar`.
 6. Si Supabase tiene habilitada la confirmación de email, abrí el correo de confirmación antes de iniciar sesión. Si está deshabilitada, el alta puede dejar la sesión iniciada directamente.
-7. Iniciá sesión, recargá la página para comprobar que la sesión persiste y luego cerrala desde **Salir**. En el panel **Authentication → Users** podés comprobar que la cuenta quedó creada.
+7. Iniciá sesión, recargá la página y abrí otra pestaña del mismo sitio para comprobar que la sesión persiste y se comparte; luego cerrala desde **Salir**. En el panel **Authentication → Users** podés comprobar que la cuenta quedó creada.
 
 Las cuentas creadas en Supabase son independientes de los usuarios demo del navegador. Si un email ya está registrado, el formulario informa que hay que iniciar sesión en lugar de indicar que envió una confirmación. Los nuevos registros se tratan como `ALUMNO`; los roles especiales de prueba (`DOCENTE` y `ADMIN`) solo están disponibles en el modo local demo. La autenticación no crea registros de usuario en PostgreSQL.
 
@@ -54,14 +58,14 @@ Las cuentas creadas en Supabase son independientes de los usuarios demo del nave
 | Prueba | Frontend | Supabase Auth | Base de negocio / API |
 |---|---|---|---|
 | Usuarios demo locales | Sí | No | No |
-| Registro e inicio de sesión reales | Sí | Sí, excepto las cuentas demo que siguen siendo locales en desarrollo | No |
+| Registro e inicio de sesión de otras cuentas | Sí | Sí | No |
 | Cursos, ejercicios y demás datos de la app | Sí | No para autenticación | Actualmente usan las entidades Base44 existentes |
 
 La API y PostgreSQL de `backend/` tienen una configuración y un flujo de pruebas propios; no son necesarios para los pasos anteriores. Las tablas de negocio en PostgreSQL y la migración de los datos que hoy usan Base44 quedan para una etapa posterior.
 
 ## Problemas frecuentes
 
-- **Quiero usar Supabase pero también probar los usuarios demo:** dejá `VITE_LOCAL_AUTH=false`; en desarrollo las cuentas demo/guardadas localmente siguen usando el navegador y los emails nuevos se autentican con Supabase.
+- **Quiero probar un usuario demo sin Supabase:** iniciá sesión con una de las tres cuentas de demo; no necesitás variables de Supabase para ese flujo.
 - **Faltan variables de Supabase:** comprobá los nombres `VITE_SUPABASE_URL` y `VITE_SUPABASE_PUBLISHABLE_KEY`, sin comillas ni espacios alrededor del `=`.
 - **No llega el correo:** revisá la configuración SMTP/confirmación de email y la carpeta de spam del proyecto Supabase.
 - **Falla el acceso al Modo Estudio:** usá un email `@frba.utn.edu.ar`; el formulario de registro, en cambio, permite otros dominios.

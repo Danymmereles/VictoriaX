@@ -6,6 +6,7 @@ import React, {
   useState,
 } from "react";
 import { authClient } from "@/api/authClient";
+import { AUTH_SESSION_EXPIRY_KEY } from "@/api/sessionExpiry";
 
 const AuthContext = createContext(null);
 
@@ -37,6 +38,42 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     checkUserAuth();
   }, [checkUserAuth]);
+
+  useEffect(() => {
+    let expiryTimer;
+    const scheduleExpiryCheck = () => {
+      window.clearTimeout(expiryTimer);
+      if (!isAuthenticated) return;
+      const expiresAt = authClient.getSessionExpiresAt();
+      if (expiresAt === null) return;
+      expiryTimer = window.setTimeout(
+        () => void checkUserAuth(),
+        Math.max(0, expiresAt - Date.now()),
+      );
+    };
+    const handleStorage = (event) => {
+      if (event.key === AUTH_SESSION_EXPIRY_KEY) void checkUserAuth();
+    };
+    const handleFocus = () => {
+      const expiresAt = authClient.getSessionExpiresAt();
+      if (expiresAt !== null && expiresAt <= Date.now()) void checkUserAuth();
+    };
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") handleFocus();
+    };
+
+    scheduleExpiryCheck();
+    window.addEventListener("storage", handleStorage);
+    window.addEventListener("focus", handleFocus);
+    document.addEventListener("visibilitychange", handleVisibility);
+
+    return () => {
+      window.clearTimeout(expiryTimer);
+      window.removeEventListener("storage", handleStorage);
+      window.removeEventListener("focus", handleFocus);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
+  }, [checkUserAuth, isAuthenticated, user?.id_usuario]);
 
   const login = async (credentials) => {
     const currentUser = await authClient.login(credentials);

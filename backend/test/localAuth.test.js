@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { webcrypto } from "node:crypto";
 import { localAuth } from "../../src/api/localAuth.js";
 
-test("local test users persist, register as students, and allow admin role changes", async (t) => {
+test("only the seeded demo identities authenticate locally and allow demo role changes", async (t) => {
   const storage = new Map();
   const originalCrypto = globalThis.crypto;
   globalThis.crypto = webcrypto;
@@ -27,23 +27,9 @@ test("local test users persist, register as students, and allow admin role chang
     assert.equal(user.rol, role);
     assert.equal((await localAuth.me()).id_usuario, user.id_usuario);
   }
-  assert.equal(await localAuth.hasAccount("ALUMNO@FRBA.UTN.EDU.AR"), true);
-  assert.equal(await localAuth.hasAccount("otra@frba.utn.edu.ar"), false);
-
-  const registered = await localAuth.register({
-    email: "nueva@ejemplo.com",
-    password: "UnaClaveSegura123",
-    nombreCompleto: "Nueva Participante",
-  });
-  assert.equal(registered.rol, "ALUMNO");
-  assert.equal(
-    (await localAuth.listUsers()).find((user) => user.id === registered.id_usuario).rol,
-    "ESTUDIANTE",
-  );
-  assert.equal(
-    JSON.stringify([...storage.values()]).includes("UnaClaveSegura123"),
-    false,
-  );
+  assert.equal(localAuth.isDemoEmail("ALUMNO@FRBA.UTN.EDU.AR"), true);
+  assert.equal(localAuth.isDemoEmail("otra@frba.utn.edu.ar"), false);
+  assert.equal((await localAuth.listUsers()).length, 3);
 
   await localAuth.login({
     email: "admin@frba.utn.edu.ar",
@@ -56,27 +42,47 @@ test("local test users persist, register as students, and allow admin role chang
       }),
     /no puede cambiar su propio rol/,
   );
-  await localAuth.updateUser(registered.id_usuario, { rol: "DOCENTE" });
+  const docente = "22222222-2222-4222-8222-222222222222";
+  await localAuth.updateUser(docente, { rol: "ESTUDIANTE" });
   assert.equal(
-    (await localAuth.listUsers()).find((user) => user.id === registered.id_usuario).rol,
-    "DOCENTE",
+    (await localAuth.listUsers()).find((user) => user.id === docente).rol,
+    "ESTUDIANTE",
   );
-  assert.equal(
-    (await localAuth.login({
-      email: "nueva@ejemplo.com",
-      password: "UnaClaveSegura123",
-    })).rol,
-    "DOCENTE",
-  );
-
-  await localAuth.login({
+  assert.equal((await localAuth.login({
     email: "docente@frba.utn.edu.ar",
     password: "VictoriaX123",
+  })).rol, "ALUMNO");
+
+  const storedUsers = JSON.parse(storage.get("victoriax-local-users"));
+  storedUsers.push({
+    id_usuario: "legacy-local-user",
+    email: "legacy@frba.utn.edu.ar",
+    nombre_completo: "Usuario local antiguo",
+    rol: "ALUMNO",
+    password_hash: "not-a-valid-hash",
+    password_salt: "legacy",
   });
-  await assert.rejects(
-    () => localAuth.updateUser(registered.id_usuario, { rol: "ADMIN" }),
-    /Solo el administrador local/,
+  storage.set("victoriax-local-users", JSON.stringify(storedUsers));
+  assert.equal(localAuth.isDemoEmail("legacy@frba.utn.edu.ar"), false);
+  assert.equal(
+    (await localAuth.listUsers()).some((user) => user.email === "legacy@frba.utn.edu.ar"),
+    false,
   );
+  await assert.rejects(
+    () => localAuth.login({ email: "legacy@frba.utn.edu.ar", password: "cualquiera" }),
+    /deben autenticarse con Supabase/,
+  );
+  await assert.rejects(
+    () => localAuth.updateUser("legacy-local-user", { rol: "ADMIN" }),
+    /No se encontró el participante demo/,
+  );
+  storage.set("victoriax-local-user", "legacy-local-user");
+  assert.equal(await localAuth.me(), null);
+  assert.equal(storage.has("victoriax-local-user"), false);
+  await localAuth.login({
+    email: "admin@frba.utn.edu.ar",
+    password: "VictoriaX123",
+  });
   await assert.rejects(
     localAuth.login({ email: "admin@frba.utn.edu.ar", password: "incorrecta" }),
     /Email o contraseña incorrectos/,

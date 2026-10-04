@@ -23,6 +23,7 @@ const SEED_USERS = [
     rol: "ADMIN",
   },
 ];
+const SEED_USER_IDS = new Set(SEED_USERS.map((user) => user.id_usuario));
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const USER_ROLES = new Set(["ADMIN", "DOCENTE", "ALUMNO"]);
@@ -33,7 +34,7 @@ const APP_ROLES = {
 };
 
 function getCrypto() {
-  if (!globalThis.crypto?.subtle || !globalThis.crypto.randomUUID) {
+  if (!globalThis.crypto?.subtle || !globalThis.crypto.getRandomValues) {
     throw new Error("El navegador debe permitir Web Crypto para usar el modo local.");
   }
   return globalThis.crypto;
@@ -80,6 +81,32 @@ function publicUser(user) {
   return safeUser;
 }
 
+function normalizeEmail(email) {
+  return email.trim().toLowerCase();
+}
+
+function isSeedUser(user) {
+  return SEED_USER_IDS.has(user.id_usuario);
+}
+
+function isDemoEmail(email) {
+  const normalizedEmail = normalizeEmail(email);
+  if (SEED_USERS.some((user) => user.email === normalizedEmail)) return true;
+
+  const saved = localStorage.getItem(USERS_KEY);
+  if (!saved) return false;
+  const users = JSON.parse(saved);
+  if (!Array.isArray(users)) {
+    throw new Error("El registro de usuarios locales no tiene un formato válido.");
+  }
+  return users.some(
+    (user) =>
+      isSeedUser(user) &&
+      typeof user.email === "string" &&
+      normalizeEmail(user.email) === normalizedEmail,
+  );
+}
+
 async function readUsers() {
   const saved = localStorage.getItem(USERS_KEY);
   if (saved) {
@@ -119,45 +146,19 @@ function toAppRole(role) {
 }
 
 export const localAuth = {
-  async hasAccount(email) {
-    const normalizedEmail = email.trim().toLowerCase();
-    const users = await readUsers();
-    return users.some((user) => user.email === normalizedEmail);
-  },
-
-  async register({ email, password, nombreCompleto }) {
-    const normalizedEmail = email.trim().toLowerCase();
-    if (normalizedEmail.length > 320 || !EMAIL_PATTERN.test(normalizedEmail)) {
-      throw new Error("Ingresá un email válido.");
-    }
-    if (typeof password !== "string" || password.length < 8) {
-      throw new Error("La contraseña debe tener al menos 8 caracteres.");
-    }
-    if (typeof nombreCompleto !== "string" || !nombreCompleto.trim()) {
-      throw new Error("El nombre completo es obligatorio.");
-    }
-
-    const users = await readUsers();
-    if (users.some((user) => user.email === normalizedEmail)) {
-      throw new Error("Ya existe una cuenta con ese email.");
-    }
-
-    const user = {
-      id_usuario: getCrypto().randomUUID(),
-      email: normalizedEmail,
-      nombre_completo: nombreCompleto.trim(),
-      rol: "ALUMNO",
-      ...(await hashPassword(password)),
-    };
-    localStorage.setItem(USERS_KEY, JSON.stringify([...users, user]));
-    localStorage.setItem(SESSION_KEY, user.id_usuario);
-    return publicUser(user);
-  },
+  isDemoEmail,
 
   async login({ email, password }) {
-    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedEmail = normalizeEmail(email);
+    if (!isDemoEmail(normalizedEmail)) {
+      throw new Error("Las cuentas nuevas deben autenticarse con Supabase.");
+    }
     const users = await readUsers();
-    const user = users.find((candidate) => candidate.email === normalizedEmail);
+    const user = users.find(
+      (candidate) =>
+        isSeedUser(candidate) &&
+        normalizeEmail(candidate.email) === normalizedEmail,
+    );
     if (
       !user ||
       typeof password !== "string" ||
@@ -174,13 +175,16 @@ export const localAuth = {
     const id = localStorage.getItem(SESSION_KEY);
     if (!id) return null;
     const users = await readUsers();
-    const user = users.find((candidate) => candidate.id_usuario === id);
+    const user = users.find(
+      (candidate) => candidate.id_usuario === id && isSeedUser(candidate),
+    );
+    if (!user) localStorage.removeItem(SESSION_KEY);
     return user ? publicUser(user) : null;
   },
 
   async listUsers() {
     const users = await readUsers();
-    return users.map((user) => ({
+    return users.filter(isSeedUser).map((user) => ({
       ...publicUser(user),
       id: user.id_usuario,
       rol: toAppRole(user.rol),
@@ -192,12 +196,14 @@ export const localAuth = {
     const actor = users.find(
       (user) => user.id_usuario === localStorage.getItem(SESSION_KEY),
     );
-    if (!actor) {
+    if (!actor || !isSeedUser(actor)) {
       throw new Error("Iniciá sesión para administrar usuarios locales.");
     }
 
     const targetIndex = users.findIndex((user) => user.id_usuario === id);
-    if (targetIndex < 0) throw new Error("No se encontró el participante.");
+    if (targetIndex < 0 || !isSeedUser(users[targetIndex])) {
+      throw new Error("No se encontró el participante demo.");
+    }
     if (actor.rol !== "ADMIN" && actor.id_usuario !== id) {
       throw new Error("Solo el administrador local puede cambiar participantes y roles.");
     }

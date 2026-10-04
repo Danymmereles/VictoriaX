@@ -50,6 +50,7 @@ Para simular el vencimiento sin esperar siete días, con una sesión iniciada ej
 5. En el formulario **Crear cuenta**, registrá un email de prueba distinto de las cuentas demo. El registro admite cualquier email; para iniciar sesión en Modo Estudio, el login requiere `@frba.utn.edu.ar`.
 6. Si Supabase tiene habilitada la confirmación de email, abrí el correo de confirmación antes de iniciar sesión. Si está deshabilitada, el alta puede dejar la sesión iniciada directamente.
 7. Iniciá sesión, recargá la página y abrí otra pestaña del mismo sitio para comprobar que la sesión persiste y se comparte; luego cerrala desde **Salir**. En el panel **Authentication → Users** podés comprobar que la cuenta quedó creada.
+8. En **Mi perfil**, seleccioná **Cambiar contraseña**. En la página nueva, ingresá la contraseña actual, una nueva de al menos 8 caracteres y su confirmación. Para Supabase se verifica la contraseña actual antes de actualizarla; las cuentas demo guardan el cambio de forma local. Podés volver al perfil con el enlace de la parte superior.
 
 Las cuentas creadas en Supabase son independientes de los usuarios demo del navegador. Si un email ya está registrado, el formulario informa que hay que iniciar sesión en lugar de indicar que envió una confirmación. Los nuevos registros se tratan como `ALUMNO`; los roles especiales de prueba (`DOCENTE` y `ADMIN`) solo están disponibles en el modo local demo. La autenticación no crea registros de usuario en PostgreSQL.
 

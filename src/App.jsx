@@ -13,6 +13,7 @@ import ModoLibre from './pages/ModoLibre';
 import ModoEstudio from './pages/ModoEstudio';
 import EjercicioEstudio from './pages/EjercicioEstudio';
 import MiPerfil from './pages/MiPerfil';
+import CambiarContrasena from './pages/CambiarContrasena';
 import Participantes from './pages/Participantes';
 import Diagrama from './pages/Diagrama';
 import Cursos from './pages/Cursos';
@@ -31,6 +32,7 @@ const AppRoutes = () => {
         <Route path="/modo-estudio" element={<ModoEstudio />} />
         <Route path="/modo-estudio/:id" element={<EjercicioEstudio />} />
         <Route path="/perfil" element={<MiPerfil />} />
+        <Route path="/perfil/cambiar-contrasena" element={<CambiarContrasena />} />
         <Route path="/participantes" element={<Participantes />} />
         <Route path="/cursos" element={<Cursos />} />
         <Route path="/cursos/:id" element={<CursoDetalle />} />

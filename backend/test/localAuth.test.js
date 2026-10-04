@@ -87,6 +87,28 @@ test("only the seeded demo identities authenticate locally and allow demo role c
     localAuth.login({ email: "admin@frba.utn.edu.ar", password: "incorrecta" }),
     /Email o contraseña incorrectos/,
   );
+  await assert.rejects(
+    localAuth.updatePassword({
+      currentPassword: "incorrecta",
+      newPassword: "NuevaVictoriaX123",
+    }),
+    /La contraseña actual es incorrecta/,
+  );
+  await localAuth.updatePassword({
+    currentPassword: "VictoriaX123",
+    newPassword: "NuevaVictoriaX123",
+  });
   localAuth.logout();
   assert.equal(await localAuth.me(), null);
+  await assert.rejects(
+    () => localAuth.login({ email: "admin@frba.utn.edu.ar", password: "VictoriaX123" }),
+    /Email o contraseña incorrectos/,
+  );
+  assert.equal(
+    (await localAuth.login({
+      email: "admin@frba.utn.edu.ar",
+      password: "NuevaVictoriaX123",
+    })).rol,
+    "ADMIN",
+  );
 });

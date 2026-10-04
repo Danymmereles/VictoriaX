@@ -157,6 +157,44 @@ export const authClient = {
     if (error) throw error;
   },
 
+  async changePassword({ currentPassword, newPassword }) {
+    if (isLocalAuthEnabled) {
+      return localAuth.updatePassword({ currentPassword, newPassword });
+    }
+
+    if (typeof currentPassword !== "string" || !currentPassword) {
+      throw new Error("Ingresá tu contraseña actual.");
+    }
+    if (typeof newPassword !== "string" || newPassword.length < 8) {
+      throw new Error("La nueva contraseña debe tener al menos 8 caracteres.");
+    }
+
+    const supabase = getSupabaseClient();
+    const { data: authData, error: authError } = await supabase.auth.getUser();
+    if (authError) throw authError;
+    if (!authData.user?.email) {
+      throw new Error("No se encontró un usuario autenticado con email.");
+    }
+
+    const { data: reauthData, error: reauthError } =
+      await supabase.auth.signInWithPassword({
+        email: authData.user.email,
+        password: currentPassword,
+      });
+    if (reauthError) {
+      if (reauthError.code === "invalid_credentials") {
+        throw new Error("La contraseña actual es incorrecta.");
+      }
+      throw reauthError;
+    }
+    if (reauthData.user?.id !== authData.user.id) {
+      throw new Error("No se pudo verificar la identidad de la sesión actual.");
+    }
+
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) throw error;
+  },
+
   getSessionExpiresAt() {
     return getSessionExpiresAt();
   },

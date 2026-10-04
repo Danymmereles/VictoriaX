@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, UserCircle } from "lucide-react";
+import { ArrowLeft, KeyRound, UserCircle } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { authClient, isLocalAuthEnabled } from "@/api/authClient";
 import { useSesionUsuario } from "@/lib/sesionUsuario";
@@ -71,6 +71,14 @@ export default function MiPerfil() {
             saving={saving}
           />
         </div>
+
+        <Link
+          to="/perfil/cambiar-contrasena"
+          className="mt-6 inline-flex items-center gap-2 rounded-full border border-border bg-card px-5 py-3 text-sm font-medium transition-colors hover:bg-muted"
+        >
+          <KeyRound className="h-4 w-4 text-[#AF9BEF]" aria-hidden="true" />
+          Cambiar contraseña
+        </Link>
       </main>
       <Footer />
     </div>

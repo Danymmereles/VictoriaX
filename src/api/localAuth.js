@@ -182,6 +182,40 @@ export const localAuth = {
     return user ? publicUser(user) : null;
   },
 
+  async updatePassword({ currentPassword, newPassword }) {
+    if (typeof currentPassword !== "string" || !currentPassword) {
+      throw new Error("Ingresá tu contraseña actual.");
+    }
+    if (typeof newPassword !== "string" || newPassword.length < 8) {
+      throw new Error("La nueva contraseña debe tener al menos 8 caracteres.");
+    }
+
+    const users = await readUsers();
+    const id = localStorage.getItem(SESSION_KEY);
+    const targetIndex = users.findIndex(
+      (user) => user.id_usuario === id && isSeedUser(user),
+    );
+    if (targetIndex < 0) {
+      throw new Error("Iniciá sesión para cambiar tu contraseña demo.");
+    }
+
+    const current = users[targetIndex];
+    if (
+      typeof currentPassword !== "string" ||
+      (await derivePassword(currentPassword, current.password_salt)) !== current.password_hash
+    ) {
+      throw new Error("La contraseña actual es incorrecta.");
+    }
+
+    const updated = {
+      ...current,
+      ...(await hashPassword(newPassword)),
+    };
+    const result = users.slice();
+    result[targetIndex] = updated;
+    localStorage.setItem(USERS_KEY, JSON.stringify(result));
+  },
+
   async listUsers() {
     const users = await readUsers();
     return users.filter(isSeedUser).map((user) => ({

@@ -75,6 +75,7 @@ The publishable key is intended for frontend use. Never expose a Supabase secret
 For hosted builds, configure these same `VITE_SUPABASE_*` variables in the hosting environment; `.env.local` is ignored and stays on the developer machine.
 
 The frontend expires Supabase and local demo sessions seven days after login; activity does not extend the deadline, and open tabs share the session state. Existing sessions without a recorded start time receive one initial seven-day window. This client-side limit is for application behavior only and is not a server-enforced security boundary.
+Authenticated users can change their password from **Mi perfil → Cambiar contraseña**. Supabase accounts must re-enter the current password before the app calls Supabase Auth to update it; demo accounts update their local password hash.
 
 ## Standalone Auth API (Supabase + PostgreSQL)
 

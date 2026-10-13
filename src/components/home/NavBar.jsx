@@ -4,6 +4,7 @@ import { Users, UserCircle, LogOut, GraduationCap } from "lucide-react";
 import Wordmark from "@/components/brand/Wordmark";
 import ThemeToggle from "@/components/theme/ThemeToggle";
 import { useSesionUsuario } from "@/lib/sesionUsuario";
+import { toast } from "sonner";
 
 const links = [
   { label: "Modos", href: "#modos" },
@@ -16,9 +17,13 @@ export default function NavBar() {
   const navigate = useNavigate();
   const { usuario, permisos, cerrarSesion } = useSesionUsuario();
 
-  function salir() {
-    cerrarSesion();
-    navigate("/");
+  async function salir() {
+    try {
+      await cerrarSesion();
+      navigate("/");
+    } catch (error) {
+      toast.error(error.message || "No se pudo cerrar la sesión.");
+    }
   }
 
   return (
@@ -27,9 +32,9 @@ export default function NavBar() {
         <Wordmark />
         <nav className="hidden md:flex items-center gap-10">
           {links.map((l) => (
-            <a key={l.href} href={l.href} className="text-sm text-muted-foreground transition-colors hover:text-foreground">
+            <Link key={l.href} to={`/${l.href}`} className="text-sm text-muted-foreground transition-colors hover:text-foreground">
               {l.label}
-            </a>
+            </Link>
           ))}
         </nav>
         <div className="flex items-center gap-3">

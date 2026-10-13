@@ -1,230 +1,143 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
+import { Link, useNavigate } from "react-router-dom";
+import { Eye, EyeOff, Lock, Mail, UserPlus, Loader2 } from "lucide-react";
+import AuthLayout from "@/components/AuthLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { UserPlus, Mail, Lock, Loader2 } from "lucide-react";
-import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
-import AuthLayout from "@/components/AuthLayout";
-import GoogleIcon from "@/components/GoogleIcon";
-import { toast } from "@/components/ui/use-toast";
-import { safeReturnTo } from "@/lib/authReturnTo";
+import { useAuth } from "@/lib/AuthContext";
+
+const VALID_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function Register() {
+  const navigate = useNavigate();
+  const { register } = useAuth();
+  const [nombreCompleto, setNombreCompleto] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [confirmationMessage, setConfirmationMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showOtp, setShowOtp] = useState(false);
-  const [otpCode, setOtpCode] = useState("");
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  async function handleSubmit(event) {
+    event.preventDefault();
     setError("");
-    if (password !== confirmPassword) {
-      setError("Passwords do not match");
+    setConfirmationMessage("");
+    if (!VALID_EMAIL.test(email.trim())) {
+      setError("Ingresá un email válido.");
       return;
     }
-    setLoading(true);
-    try {
-      await base44.auth.register({ email, password });
-      setShowOtp(true);
-    } catch (err) {
-      setError(err.message || "Registration failed");
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  const handleVerify = async () => {
-    setError("");
     setLoading(true);
     try {
-      const result = await base44.auth.verifyOtp({ email, otpCode });
-      if (result?.access_token) {
-        base44.auth.setToken(result.access_token);
+      const result = await register({ nombreCompleto, email, password });
+      if (result.accessToken) {
+        if (email.trim().toLowerCase().endsWith("@frba.utn.edu.ar")) {
+          navigate("/modo-estudio");
+        } else {
+          setConfirmationMessage(
+            "Tu cuenta se creó correctamente. Para usar el Modo Estudio necesitás una cuenta @frba.utn.edu.ar; mientras tanto podés acceder al Modo Libre.",
+          );
+        }
+      } else {
+        setConfirmationMessage(
+          "La cuenta fue creada. Revisá el correo que ingresaste para confirmar tu email y luego iniciá sesión.",
+        );
       }
-      window.location.href = safeReturnTo();
-    } catch (err) {
-      setError(err.message || "Invalid verification code");
+    } catch (registrationError) {
+      setError(registrationError.message || "No se pudo crear la cuenta.");
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleResend = async () => {
-    setError("");
-    try {
-      await base44.auth.resendOtp(email);
-      toast({
-        title: "Code sent",
-        description: "Check your email for the new code.",
-      });
-    } catch (err) {
-      setError(err.message || "Failed to resend code");
-    }
-  };
-
-  const handleGoogle = () => {
-    base44.auth.loginWithProvider("google", safeReturnTo());
-  };
-
-  if (showOtp) {
-    return (
-      <AuthLayout
-        icon={Mail}
-        title="Verify your email"
-        subtitle={`We sent a code to ${email}`}
-      >
-        {error && (
-          <div className="mb-4 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
-            {error}
-          </div>
-        )}
-        <div className="flex justify-center mb-6">
-          <InputOTP
-            maxLength={6}
-            value={otpCode}
-            onChange={setOtpCode}
-            autoFocus
-            autoComplete="one-time-code"
-          >
-            <InputOTPGroup>
-              <InputOTPSlot index={0} />
-              <InputOTPSlot index={1} />
-              <InputOTPSlot index={2} />
-              <InputOTPSlot index={3} />
-              <InputOTPSlot index={4} />
-              <InputOTPSlot index={5} />
-            </InputOTPGroup>
-          </InputOTP>
-        </div>
-        <Button
-          className="w-full h-12 font-medium"
-          onClick={handleVerify}
-          disabled={loading || otpCode.length < 6}
-        >
-          {loading ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Verifying...
-            </>
-          ) : (
-            "Verify"
-          )}
-        </Button>
-        <p className="text-center text-sm text-muted-foreground mt-4">
-          Didn't receive the code?{" "}
-          <button onClick={handleResend} className="text-primary font-medium hover:underline">
-            Resend
-          </button>
-        </p>
-      </AuthLayout>
-    );
   }
 
   return (
     <AuthLayout
       icon={UserPlus}
-      title="Create your account"
-      subtitle="Sign up to get started"
+      title="Crear cuenta"
+      subtitle="Creá tu cuenta con email y contraseña."
       footer={
         <>
-          Already have an account?{" "}
-          <Link
-            to={"/login" + (safeReturnTo() !== "/" ? "?returnTo=" + encodeURIComponent(safeReturnTo()) : "")}
-            className="text-primary font-medium hover:underline"
-          >
-            Log in
+          ¿Ya tenés una cuenta?{" "}
+          <Link to="/login" className="font-medium text-primary hover:underline">
+            Iniciá sesión
           </Link>
         </>
       }
     >
-      <Button
-        variant="outline"
-        className="w-full h-12 text-sm font-medium mb-6"
-        onClick={handleGoogle}
-      >
-        <GoogleIcon className="w-5 h-5 mr-2" />
-        Continue with Google
-      </Button>
-
-      <div className="relative mb-6">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-border" />
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-card px-3 text-muted-foreground">or</span>
-        </div>
-      </div>
-
       {error && (
-        <div className="mb-4 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
+        <p role="alert" className="mb-4 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
           {error}
-        </div>
+        </p>
       )}
-
+      {confirmationMessage && (
+        <p role="status" className="mb-4 rounded-lg bg-primary/10 p-3 text-sm">
+          {confirmationMessage}
+        </p>
+      )}
       <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="nombreCompleto">Nombre completo</Label>
+          <div className="relative">
+            <UserPlus className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+            <Input
+              id="nombreCompleto"
+              autoComplete="name"
+              value={nombreCompleto}
+              onChange={(event) => setNombreCompleto(event.target.value)}
+              className="h-12 pl-10"
+              required
+            />
+          </div>
+        </div>
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
           <div className="relative">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
+            <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
             <Input
               id="email"
               type="email"
               autoComplete="email"
-              autoFocus
-              placeholder="you@example.com"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="pl-10 h-12"
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="nombre@ejemplo.com"
+              className="h-12 pl-10"
               required
             />
           </div>
+          <p className="text-xs text-muted-foreground">
+            Podés registrarte con cualquier email. Para acceder al Modo Estudio,
+            recordá usar una cuenta @frba.utn.edu.ar.
+          </p>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="password">Password</Label>
+          <Label htmlFor="password">Contraseña (mínimo 8 caracteres)</Label>
           <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
+            <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
             <Input
               id="password"
-              type="password"
+              type={showPassword ? "text" : "password"}
               autoComplete="new-password"
-              placeholder="••••••••"
+              minLength={8}
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="pl-10 h-12"
+              onChange={(event) => setPassword(event.target.value)}
+              className="h-12 pl-10 pr-12"
               required
             />
+            <button
+              type="button"
+              onClick={() => setShowPassword((visible) => !visible)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+              aria-pressed={showPassword}
+            >
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
           </div>
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="confirm">Confirm Password</Label>
-          <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
-            <Input
-              id="confirm"
-              type="password"
-              autoComplete="new-password"
-              placeholder="••••••••"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              className="pl-10 h-12"
-              required
-            />
-          </div>
-        </div>
-        <Button type="submit" className="w-full h-12 font-medium" disabled={loading}>
-          {loading ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Creating account...
-            </>
-          ) : (
-            "Create account"
-          )}
+        <Button type="submit" className="h-12 w-full font-medium" disabled={loading}>
+          {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Creando cuenta…</> : "Crear cuenta"}
         </Button>
       </form>
     </AuthLayout>

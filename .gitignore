@@ -1,6 +1,7 @@
 #env
 .env
 .env.*
+!backend/.env.example
 
 # Logs
 /logs

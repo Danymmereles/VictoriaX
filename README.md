@@ -11,6 +11,11 @@ Any change pushed to the repo will also be reflected in the Base44 Builder.
 3. Install dependencies: `npm install`.
 4. Install the Base44 CLI: `npm install -g base44@latest`.
 
+For Supabase authentication, copy `.env.example` to `.env.local` and set the
+project URL and publishable key from the Supabase project settings. Restart the
+Vite server after changing environment variables. Never put a Supabase
+`service_role` key in a `VITE_` variable or in frontend configuration.
+
 See the [Base44 CLI docs](https://docs.base44.com/developers/references/cli/get-started/overview) if you want to run Base44 commands directly.
 
 ## Run Locally
@@ -55,6 +60,10 @@ For frontend-only development, create or update `.env.local` in the project root
 VITE_BASE44_APP_ID=your_app_id
 VITE_BASE44_APP_BASE_URL=https://your-app.base44.app
 ```
+
+Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` in the same
+`.env.local` when using real Supabase accounts. Local demo accounts in
+development do not require these Supabase variables.
 
 `VITE_BASE44_APP_ID` identifies the Base44 app.
 

@@ -1,0 +1,22 @@
+/* =====================================================
+   FORMAS DEL DIAGRAMA
+   El grosor del contorno se define en shapes.jsx
+   (STROKE_WIDTH) para que sea igual en todas.
+   ===================================================== */
+
+.flow-shape {
+    display: block;
+    overflow: visible;
+
+    stroke: #444;
+    stroke-linejoin: round;
+}
+
+.flow-shape--input       { fill: #e8ddff; }
+.flow-shape--process     { fill: #dcecff; }
+.flow-shape--decision    { fill: #ffe6bd; }
+.flow-shape--output      { fill: #dcf5df; }
+.flow-shape--document    { fill: #e8ddff; }
+.flow-shape--io          { fill: #dcecff; }
+.flow-shape--preparation { fill: #ffe6bd; }
+.flow-shape--connector   { fill: #dcf5df; }

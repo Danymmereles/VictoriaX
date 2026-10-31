@@ -1,19 +1,66 @@
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import {
     Handle,
     Position,
     useReactFlow,
 } from "@xyflow/react";
 
+import { FlowShape } from "./shapes";
 import "./CustomNode.css";
+
+/*
+ * Mide el tamaño real del nodo (sin el zoom del lienzo)
+ * para dibujar el SVG a escala 1:1. Así el contorno
+ * mide lo mismo en todas las figuras, aunque el nodo
+ * crezca por un texto largo.
+ */
+function useNodeSize(ref) {
+    const [size, setSize] = useState(null);
+
+    useLayoutEffect(() => {
+        const element = ref.current;
+
+        if (!element) {
+            return;
+        }
+
+        const measure = () => {
+            setSize((current) => {
+                const width = element.offsetWidth;
+                const height = element.offsetHeight;
+
+                if (current?.width === width && current?.height === height) {
+                    return current;
+                }
+
+                return { width, height };
+            });
+        };
+
+        measure();
+
+        const observer = new ResizeObserver(measure);
+        observer.observe(element);
+
+        return () => observer.disconnect();
+    }, [ref]);
+
+    return size;
+}
 
 export default function CustomNode({ id, data }) {
     const { setNodes } = useReactFlow();
 
+    const nodeRef = useRef(null);
+    const size = useNodeSize(nodeRef);
+
     const [editing, setEditing] = useState(false);
     const [text, setText] = useState(data.label);
 
+    const isDecision = data.type === "decision";
+
     const startEditing = () => {
+        setText(data.label);
         setEditing(true);
     };
 
@@ -46,243 +93,75 @@ export default function CustomNode({ id, data }) {
         }
     };
 
-    const editableContent = (
-        <>
-            {editing ? (
-                <input
-                    autoFocus
-                    value={text}
-                    onChange={(event) => setText(event.target.value)}
-                    onBlur={saveText}
-                    onKeyDown={handleKeyDown}
-                    className="node-edit-input"
-                />
-            ) : (
-                <span onDoubleClick={startEditing}>
-          {data.label}
-        </span>
-            )}
-        </>
-    );
-
-    /*
-     * =========================
-     * DECISIÓN
-     * =========================
-     */
-
-    if (data.type === "decision") {
-        return (
-            <div className="decision-node">
-
-                <Handle
-                    type="target"
-                    position={Position.Top}
-                    id="input"
-                    className="decision-handle decision-handle-top"
-                />
-
-                <div className="decision-shape">
-                    <div className="decision-content">
-                        {editableContent}
-                    </div>
-                </div>
-
-                <Handle
-                    type="source"
-                    position={Position.Right}
-                    id="yes"
-                    className="decision-handle decision-handle-right"
-                />
-
-                <Handle
-                    type="source"
-                    position={Position.Left}
-                    id="no"
-                    className="decision-handle decision-handle-left"
-                />
-
-                <span className="decision-label decision-label-yes">
-          SI
-        </span>
-
-                <span className="decision-label decision-label-no">
-          NO
-        </span>
-
-            </div>
-        );
-    }
-
-    /*
-     * =========================
-     * DOCUMENTO
-     * =========================
-     */
-
-    if (data.type === "document") {
-        return (
-            <div className="special-node document-node">
-
-                <Handle
-                    type="target"
-                    position={Position.Top}
-                />
-
-                <svg
-                    className="document-shape"
-                    viewBox="0 0 160 90"
-                    preserveAspectRatio="none"
-                >
-                    <path
-                        d="
-              M 4 4
-              H 156
-              V 65
-              C 140 78, 125 78, 110 68
-              C 95 58, 80 58, 65 68
-              C 45 82, 25 76, 4 62
-              Z
-            "
-                    />
-                </svg>
-
-                <div className="document-content">
-                    {editableContent}
-                </div>
-
-                <Handle
-                    type="source"
-                    position={Position.Bottom}
-                />
-
-            </div>
-        );
-    }
-
-    /*
-     * =========================
-     * INPUT / OUTPUT
-     * =========================
-     */
-
-    if (data.type === "io") {
-        return (
-            <div className="special-node io-node">
-
-                <Handle
-                    type="target"
-                    position={Position.Top}
-                />
-
-                <svg
-                    className="io-shape"
-                    viewBox="0 0 160 80"
-                    preserveAspectRatio="none"
-                >
-                    <polygon points="25,3 157,3 135,77 3,77" />
-                </svg>
-
-                <div className="io-content">
-                    {editableContent}
-                </div>
-
-                <Handle
-                    type="source"
-                    position={Position.Bottom}
-                />
-
-            </div>
-        );
-    }
-
-    /*
-     * =========================
-     * PREPARACIÓN
-     * =========================
-     */
-
-    if (data.type === "preparation") {
-        return (
-            <div className="special-node preparation-node">
-
-                <Handle
-                    type="target"
-                    position={Position.Top}
-                />
-
-                <svg
-                    className="preparation-shape"
-                    viewBox="0 0 160 80"
-                    preserveAspectRatio="none"
-                >
-                    <polygon points="25,3 135,3 157,40 135,77 25,77 3,40" />
-                </svg>
-
-                <div className="preparation-content">
-                    {editableContent}
-                </div>
-
-                <Handle
-                    type="source"
-                    position={Position.Bottom}
-                />
-
-            </div>
-        );
-    }
-
-    /*
-     * =========================
-     * CONECTOR
-     * =========================
-     */
-
-    if (data.type === "connector") {
-        return (
-            <div className="special-node connector-node">
-
-                <Handle
-                    type="target"
-                    position={Position.Top}
-                />
-
-                <div className="connector-shape">
-                    {editableContent}
-                </div>
-
-                <Handle
-                    type="source"
-                    position={Position.Bottom}
-                />
-
-            </div>
-        );
-    }
-
-    /*
-     * =========================
-     * NODOS EXISTENTES
-     * =========================
-     */
-
     return (
-        <div className={`custom-node node-${data.type}`}>
+        <div
+            ref={nodeRef}
+            className={`flow-node flow-node--${data.type}`}
+        >
+            {size && (
+                <FlowShape
+                    type={data.type}
+                    width={size.width}
+                    height={size.height}
+                    className="flow-node__shape"
+                />
+            )}
 
             <Handle
                 type="target"
                 position={Position.Top}
+                id={isDecision ? "input" : undefined}
+                className={isDecision ? "decision-handle" : undefined}
             />
 
-            <div className="node-content">
-                {editableContent}
+            <div className="flow-node__label">
+                {editing ? (
+                    <input
+                        autoFocus
+                        value={text}
+                        onChange={(event) => setText(event.target.value)}
+                        onBlur={saveText}
+                        onKeyDown={handleKeyDown}
+                        className="node-edit-input nodrag"
+                        style={{ width: `${Math.max(text.length, 3) + 1}ch` }}
+                    />
+                ) : (
+                    <span onDoubleClick={startEditing}>
+                        {data.label}
+                    </span>
+                )}
             </div>
 
-            <Handle
-                type="source"
-                position={Position.Bottom}
-            />
+            {isDecision ? (
+                <>
+                    <Handle
+                        type="source"
+                        position={Position.Right}
+                        id="yes"
+                        className="decision-handle"
+                    />
 
+                    <Handle
+                        type="source"
+                        position={Position.Left}
+                        id="no"
+                        className="decision-handle"
+                    />
+
+                    <span className="decision-label decision-label-yes">
+                        SI
+                    </span>
+
+                    <span className="decision-label decision-label-no">
+                        NO
+                    </span>
+                </>
+            ) : (
+                <Handle
+                    type="source"
+                    position={Position.Bottom}
+                />
+            )}
         </div>
     );
 }

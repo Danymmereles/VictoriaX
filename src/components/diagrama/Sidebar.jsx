@@ -1,4 +1,5 @@
 import { useDnD } from "./DnDContext";
+import { FlowShape } from "./shapes";
 import "./Sidebar.css";
 
 /*
@@ -63,8 +64,21 @@ function EdgeTypeSelector({ value, onChange }) {
     );
 }
 
+// Tamaño (px) de cada figura en la barra lateral
+const PREVIEW_SIZES = {
+    input: [35, 35],
+    process: [35, 35],
+    decision: [38, 38],
+    output: [40, 35],
+    document: [46, 34],
+    io: [46, 34],
+    preparation: [46, 34],
+    connector: [34, 34],
+};
+
 function SidebarItem({ type, label }) {
     const [, setType] = useDnD();
+    const [width, height] = PREVIEW_SIZES[type];
 
     const onDragStart = (event) => {
         setType(type);
@@ -79,33 +93,11 @@ function SidebarItem({ type, label }) {
             title={label}
             aria-label={label}
         >
-            <div className={`sidebar-preview preview-${type}`}>
-                {type === "connector" && "A"}
+            <div className="sidebar-preview">
+                <FlowShape type={type} width={width} height={height} />
 
-                {type === "document" && (
-                    <svg viewBox="0 0 60 40">
-                        <path d="
-              M 2 2
-              H 58
-              V 28
-              C 52 35, 46 35, 40 29
-              C 34 23, 28 23, 22 29
-              C 15 36, 9 34, 2 27
-              Z
-            " />
-                    </svg>
-                )}
-
-                {type === "io" && (
-                    <svg viewBox="0 0 60 40">
-                        <polygon points="10,2 58,2 50,38 2,38" />
-                    </svg>
-                )}
-
-                {type === "preparation" && (
-                    <svg viewBox="0 0 60 40">
-                        <polygon points="10,2 50,2 58,20 50,38 10,38 2,20" />
-                    </svg>
+                {type === "connector" && (
+                    <span className="sidebar-preview-letter">A</span>
                 )}
             </div>
         </div>

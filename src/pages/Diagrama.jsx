@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import NavBar from "@/components/home/NavBar";
@@ -80,15 +80,45 @@ function Flow() {
 
     const [type] = useDnD();
 
+    // Tipo de conector global: aplica a todos los edges
+    const [edgeType, setEdgeType] =
+        useState("default");
+
+
+    // Cambiar el tipo de todos los conectores existentes
+    const changeEdgeType = useCallback(
+        (newType) => {
+            setEdgeType(newType);
+
+            setEdges((currentEdges) =>
+                currentEdges.map((edge) => ({
+                    ...edge,
+                    type: newType,
+                }))
+            );
+        },
+        [setEdges]
+    );
+
+
+    // Los conectores nuevos usan el tipo seleccionado
+    const defaultEdgeOptions = useMemo(
+        () => ({ type: edgeType }),
+        [edgeType]
+    );
+
 
     // Crear conexión entre nodos
     const onConnect = useCallback(
         (params) => {
             setEdges((currentEdges) =>
-                addEdge(params, currentEdges)
+                addEdge(
+                    { ...params, type: edgeType },
+                    currentEdges
+                )
             );
         },
-        [setEdges]
+        [setEdges, edgeType]
     );
 
 
@@ -155,7 +185,10 @@ function Flow() {
         <div className="diagram-flow-container">
 
             {/* Barra lateral */}
-            <Sidebar />
+            <Sidebar
+                edgeType={edgeType}
+                onEdgeTypeChange={changeEdgeType}
+            />
 
             {/* Área de React Flow */}
             <div className="diagram-flow-area">
@@ -173,6 +206,7 @@ function Flow() {
                     onDrop={onDrop}
 
                     nodeTypes={nodeTypes}
+                    defaultEdgeOptions={defaultEdgeOptions}
 
                     deleteKeyCode="Delete"
                     colorMode={theme}

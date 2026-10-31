@@ -9,17 +9,66 @@
     box-sizing: border-box;
 }
 
-.sidebar h2 {
-    margin: 0 0 8px;
+/* =====================================================
+   SELECTOR DE TIPO DE CONECTOR
+   ===================================================== */
 
-    font-size: 20px;
+.edge-type-selector {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+
+    margin-bottom: 16px;
+    padding: 4px;
+
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
 }
 
-.sidebar-description {
-    margin: 0 0 20px;
+.edge-type-option {
+    height: 36px;
 
-    font-size: 13px;
-    color: #666;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 0;
+
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 6px;
+
+    color: #444;
+    cursor: pointer;
+
+    transition: 0.2s;
+}
+
+.edge-type-option svg {
+    width: 20px;
+    height: 20px;
+
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.edge-type-option:hover {
+    background: #f0f0f0;
+}
+
+.edge-type-option.is-active {
+    background: rgba(175, 155, 239, 0.18);
+    border-color: #AF9BEF;
+    color: #222;
+}
+
+.edge-type-option:focus-visible {
+    outline: 2px solid #AF9BEF;
+    outline-offset: 1px;
 }
 
 .sidebar-items {
@@ -95,10 +144,6 @@
     transform: rotate(45deg);
 
     background: #ffe6bd;
-}
-
-.preview-decision::first-letter {
-    transform: rotate(-45deg);
 }
 
 /* Salida */

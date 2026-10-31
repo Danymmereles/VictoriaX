@@ -14,6 +14,8 @@ function SidebarItem({ type, label }) {
             className={`sidebar-item sidebar-${type}`}
             draggable
             onDragStart={onDragStart}
+            title={label}
+            aria-label={label}
         >
             <div className={`sidebar-preview preview-${type}`}>
                 {type === "decision" && "?"}
@@ -45,8 +47,6 @@ function SidebarItem({ type, label }) {
                     </svg>
                 )}
             </div>
-
-            <span>{label}</span>
         </div>
     );
 }

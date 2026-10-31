@@ -26,6 +26,7 @@ import {
     useDnD,
 } from "../components/diagrama/DnDContext.jsx";
 
+import "../components/diagrama/DiagramaTheme.css";
 import "../components/diagrama/Diagrama.css";
 
 
@@ -221,6 +222,9 @@ function Flow() {
                     <MiniMap
                         pannable
                         zoomable
+                        nodeClassName={(node) =>
+                            `minimap-node--${node.data?.type}`
+                        }
                     />
 
 

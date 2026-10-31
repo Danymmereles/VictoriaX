@@ -1,3 +1,4 @@
+import "./DiagramaTheme.css";
 import "./shapes.css";
 
 /*

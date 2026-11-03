@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import NavBar from "@/components/home/NavBar";
 import Footer from "@/components/home/Footer";
 import useTheme from "../hooks/useTheme";
+import { cargarAnalisis } from "@/lib/analisisPrevioStorage";
 
 import {
     ReactFlow,
@@ -22,6 +23,8 @@ import "@xyflow/react/dist/style.css";
 
 import Sidebar from "../components/diagrama/Sidebar.jsx";
 import VariablesPanel from "../components/diagrama/VariablesPanel.jsx";
+import EdgeMarkers, { withEdgeMarkers } from "../components/diagrama/EdgeMarkers.jsx";
+import { sincronizarConAnalisis } from "../components/diagrama/variables.js";
 import CustomNode from "../components/diagrama/CustomNode.jsx";
 import {
     DnDProvider,
@@ -91,9 +94,12 @@ function Flow() {
 
     const [type] = useDnD();
 
-    // Variables del diagrama y sus valores iniciales
+    // Variables del diagrama y sus valores iniciales.
+    // Arrancan con TODAS las del Análisis Previo (Datos,
+    // Control, Estado y Resultado), que se guarda en cada
+    // cambio y por eso está al día al "Pasar a Diagramar".
     const [variables, setVariables] =
-        useState([]);
+        useState(() => sincronizarConAnalisis([], cargarAnalisis()));
 
     // Tipo de conector global: aplica a todos los edges
     const [edgeType, setEdgeType] =
@@ -136,6 +142,13 @@ function Flow() {
 
 
     // Los conectores nuevos usan el tipo seleccionado
+    // Todos los conectores terminan en flecha (markerEnd)
+    const edgesWithMarkers = useMemo(
+        () => withEdgeMarkers(edges),
+        [edges]
+    );
+
+
     const defaultEdgeOptions = useMemo(
         () => ({ type: edgeType }),
         [edgeType]
@@ -246,9 +259,12 @@ function Flow() {
                 {/* Área de React Flow */}
                 <div className="diagram-flow-area">
 
+                    {/* Definición de las flechas de los conectores */}
+                    <EdgeMarkers />
+
                     <ReactFlow
                         nodes={nodes}
-                        edges={edges}
+                        edges={edgesWithMarkers}
 
                         onNodesChange={onNodesChange}
                         onEdgesChange={onEdgesChange}

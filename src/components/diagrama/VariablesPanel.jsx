@@ -2,8 +2,11 @@ import { useMemo, useState } from "react";
 
 import {
     VALOR_INICIAL_DEFAULT,
+    detalleVariable,
+    esImportada,
     nuevaVariable,
     nuevoIdVariable,
+    textoDimension,
     validarVariables,
 } from "./variables";
 
@@ -16,6 +19,10 @@ import "./VariablesPanel.css";
  * Tabla editable: Variable | Valor inicial.
  * La última fila siempre está vacía: al escribir en
  * ella se crea una variable nueva (como una planilla).
+ *
+ * Las variables del Análisis Previo llegan con nombre
+ * fijo (no se renombran ni se borran acá): solo se
+ * completa su valor inicial.
  *
  * Es un componente controlado: recibe `variables` y
  * avisa cada cambio con `onChange(nuevasVariables)`.
@@ -78,25 +85,50 @@ export default function VariablesPanel({ variables, onChange }) {
                                 ? undefined
                                 : errores[variable.id];
 
+                            const importada = esImportada(variable);
+
                             return (
                                 <tr
                                     key={variable.id}
                                     className={variable.isDraft ? "is-draft" : ""}
                                 >
                                     <td>
-                                        <input
-                                            className={`variables-input ${error?.nombre ? "is-invalid" : ""}`}
-                                            value={variable.nombre}
-                                            placeholder={variable.isDraft ? "Nueva" : ""}
-                                            onChange={(e) =>
-                                                updateVariable(variable.id, "nombre", e.target.value)
-                                            }
-                                            aria-label="Nombre de la variable"
-                                            aria-invalid={Boolean(error?.nombre)}
-                                            title={error?.nombre}
-                                            spellCheck={false}
-                                            autoComplete="off"
-                                        />
+                                        {importada ? (
+                                            <div
+                                                className={`variables-name ${error?.nombre ? "is-invalid" : ""}`}
+                                                title={[
+                                                    detalleVariable(variable),
+                                                    error?.nombre &&
+                                                        `${error.nombre} Corregilo en el Análisis Previo.`,
+                                                ]
+                                                    .filter(Boolean)
+                                                    .join("\n")}
+                                            >
+                                                <span className="variables-name-text">
+                                                    {variable.nombre}
+                                                </span>
+
+                                                {variable.esVector && (
+                                                    <span className="variables-vector">
+                                                        [{textoDimension(variable.dimension) || "?"}]
+                                                    </span>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <input
+                                                className={`variables-input ${error?.nombre ? "is-invalid" : ""}`}
+                                                value={variable.nombre}
+                                                placeholder={variable.isDraft ? "Nueva" : ""}
+                                                onChange={(e) =>
+                                                    updateVariable(variable.id, "nombre", e.target.value)
+                                                }
+                                                aria-label="Nombre de la variable"
+                                                aria-invalid={Boolean(error?.nombre)}
+                                                title={error?.nombre}
+                                                spellCheck={false}
+                                                autoComplete="off"
+                                            />
+                                        )}
                                     </td>
 
                                     <td>
@@ -119,7 +151,7 @@ export default function VariablesPanel({ variables, onChange }) {
                                     </td>
 
                                     <td className="variables-actions">
-                                        {!variable.isDraft && (
+                                        {!variable.isDraft && !importada && (
                                             <button
                                                 type="button"
                                                 className="variables-remove"

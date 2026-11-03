@@ -11,6 +11,11 @@ export const VALOR_INICIAL_DEFAULT = "0";
 
 // { id, nombre, valorInicial } — los valores se guardan como texto (lo que
 // escribe el usuario) y se convierten con valorNumerico() cuando se usen.
+//
+// Las variables que vienen del Análisis Previo además tienen:
+//   origen: "datos" | "control" | "estado" | "resultado"
+//   descripcion, esVector, dimension
+// Su nombre no se edita en el diagrama: se corrige en el Análisis Previo.
 export function nuevaVariable(id = nuevoIdVariable(), cambios = {}) {
     return {
         id,
@@ -72,4 +77,110 @@ export function validarVariables(variables) {
     });
 
     return errores;
+}
+
+
+// ===========================================================================
+// Importación desde el Análisis Previo
+// ===========================================================================
+
+// Orden en el que se listan en la tabla
+export const CATEGORIAS_ANALISIS = {
+    datos: "Variable de Datos",
+    control: "Variable de Control",
+    estado: "Variable de Estado",
+    resultado: "Variable de Resultado",
+};
+
+export const esImportada = (variable) => Boolean(variable.origen);
+
+/*
+ * Toma TODAS las variables cargadas en el Análisis Previo
+ * (Datos, Control, Estado y Resultado), sin importar cuántas
+ * haya en cada sección. Se ignoran las que no tienen siglas
+ * y, si una sigla se repite, se toma la primera.
+ */
+export function variablesDesdeAnalisis(analisis) {
+    if (!analisis?.variables) {
+        return [];
+    }
+
+    const vistas = new Set();
+    const resultado = [];
+
+    Object.keys(CATEGORIAS_ANALISIS).forEach((categoria) => {
+        (analisis.variables[categoria] || []).forEach((v) => {
+            const nombre = (v.sigla || "").trim();
+            const clave = nombre.toUpperCase();
+
+            if (!nombre || vistas.has(clave)) {
+                return;
+            }
+
+            vistas.add(clave);
+
+            resultado.push(
+                nuevaVariable(`analisis_${v.id}`, {
+                    nombre,
+                    origen: categoria,
+                    descripcion: (v.descripcion || "").trim(),
+                    esVector: Boolean(v.esVector),
+                    dimension: v.esVector ? v.dimension ?? null : null,
+                })
+            );
+        });
+    });
+
+    return resultado;
+}
+
+/*
+ * Combina las variables actuales del diagrama con las del
+ * Análisis Previo:
+ *   - las del análisis van primero y conservan el valor
+ *     inicial que el usuario ya les había puesto;
+ *   - las agregadas a mano en el diagrama se mantienen.
+ */
+export function sincronizarConAnalisis(actuales, analisis) {
+    const valoresPrevios = new Map(
+        actuales.map((v) => [v.nombre.trim().toUpperCase(), v.valorInicial])
+    );
+
+    const importadas = variablesDesdeAnalisis(analisis).map((v) => ({
+        ...v,
+        valorInicial: valoresPrevios.get(v.nombre.toUpperCase()) ?? v.valorInicial,
+    }));
+
+    const propias = actuales.filter((v) => !esImportada(v));
+
+    return [...importadas, ...propias];
+}
+
+// Texto descriptivo de una variable importada (para el tooltip)
+export function detalleVariable(variable) {
+    if (!esImportada(variable)) {
+        return "";
+    }
+
+    const partes = [CATEGORIAS_ANALISIS[variable.origen]];
+
+    if (variable.descripcion) {
+        partes.push(variable.descripcion);
+    }
+
+    if (variable.esVector) {
+        partes.push(`Vector de dimensión ${textoDimension(variable.dimension) || "sin definir"}`);
+    }
+
+    return partes.join(" · ");
+}
+
+export function textoDimension(dimension) {
+    if (!dimension) {
+        return "";
+    }
+
+    return dimension.tipo === "fijo"
+        ? String(dimension.valor)
+        : dimension.variableControl || "";
 }

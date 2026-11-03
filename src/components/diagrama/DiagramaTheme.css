@@ -172,6 +172,33 @@
 
 
 /* =====================================================
+   FLECHAS DE LOS CONECTORES (EdgeMarkers.jsx)
+   Mismo color que la línea, normal y seleccionada.
+   ===================================================== */
+
+.dg-edge-markers {
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+}
+
+#dg-arrow path {
+    fill: var(--dg-edge);
+    stroke: var(--dg-edge);
+    stroke-width: 1;
+    stroke-linejoin: round;
+}
+
+#dg-arrow-selected path {
+    fill: var(--dg-edge-selected);
+    stroke: var(--dg-edge-selected);
+    stroke-width: 1;
+    stroke-linejoin: round;
+}
+
+
+/* =====================================================
    MINIMAPA: cada nodo con el color de su figura
    ===================================================== */
 

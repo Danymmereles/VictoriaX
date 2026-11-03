@@ -8,6 +8,7 @@ import useTheme from "../hooks/useTheme";
 import {
     ReactFlow,
     ReactFlowProvider,
+    SelectionMode,
     Background,
     Controls,
     MiniMap,
@@ -32,6 +33,12 @@ import "../components/diagrama/Diagrama.css";
 
 const nodeTypes = {
     custom: CustomNode,
+};
+
+
+// El click derecho se usa para mover el lienzo
+const preventContextMenu = (event) => {
+    event.preventDefault();
 };
 
 
@@ -211,6 +218,17 @@ function Flow() {
 
                     deleteKeyCode="Delete"
                     colorMode={theme}
+
+                    // Click derecho + arrastrar: mover el lienzo
+                    panOnDrag={[2]}
+                    // Click izquierdo + arrastrar: selección múltiple
+                    selectionOnDrag
+                    selectionMode={SelectionMode.Partial}
+                    // Sin menú contextual del navegador al usar el click derecho
+                    onPaneContextMenu={preventContextMenu}
+                    onNodeContextMenu={preventContextMenu}
+                    onEdgeContextMenu={preventContextMenu}
+                    onSelectionContextMenu={preventContextMenu}
 
                     fitView
                 >

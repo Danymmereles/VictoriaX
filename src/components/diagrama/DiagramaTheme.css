@@ -29,6 +29,11 @@
     --dg-edge: #6b7280;
     --dg-edge-selected: #8b75e0;
 
+    /* Selección (nodos y recuadro de selección) */
+    --dg-selected: #8b75e0;
+    --dg-selected-glow: rgba(139, 117, 224, 0.45);
+    --dg-selection-bg: rgba(175, 155, 239, 0.10);
+
     /* Puntos de conexión */
     --dg-handle-bg: #1a192b;
     --dg-handle-border: #fff;
@@ -75,6 +80,11 @@
     /* Conectores: lavanda de la marca, celeste al seleccionar */
     --dg-edge: #b3a5f2;
     --dg-edge-selected: #73C3EE;
+
+    /* Selección (nodos y recuadro de selección) */
+    --dg-selected: #f1f5ff;
+    --dg-selected-glow: rgba(115, 195, 238, 0.85);
+    --dg-selection-bg: rgba(115, 195, 238, 0.08);
 
     /* Puntos de conexión */
     --dg-handle-bg: #cbd5e1;
@@ -123,6 +133,10 @@
 
     --xy-handle-background-color: var(--dg-handle-bg);
     --xy-handle-border-color: var(--dg-handle-border);
+
+    /* Recuadro de selección múltiple */
+    --xy-selection-background-color: var(--dg-selection-bg);
+    --xy-selection-border: 1px dashed var(--dg-edge-selected);
 }
 
 .dark .diagram-flow-area {

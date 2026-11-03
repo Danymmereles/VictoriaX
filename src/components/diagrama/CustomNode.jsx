@@ -48,7 +48,7 @@ function useNodeSize(ref) {
     return size;
 }
 
-export default function CustomNode({ id, data }) {
+export default function CustomNode({ id, data, selected }) {
     const { setNodes } = useReactFlow();
 
     const nodeRef = useRef(null);
@@ -96,7 +96,7 @@ export default function CustomNode({ id, data }) {
     return (
         <div
             ref={nodeRef}
-            className={`flow-node flow-node--${data.type}`}
+            className={`flow-node flow-node--${data.type} ${selected ? "is-selected" : ""}`}
         >
             {size && (
                 <FlowShape

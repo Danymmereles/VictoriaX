@@ -27,6 +27,12 @@
     pointer-events: none;
 }
 
+/* Nodo seleccionado: mismo color que un conector seleccionado */
+.flow-node.is-selected .flow-shape {
+    stroke: var(--dg-selected);
+    filter: drop-shadow(0 0 5px var(--dg-selected-glow));
+}
+
 .flow-node__label {
     position: relative;
     z-index: 1;

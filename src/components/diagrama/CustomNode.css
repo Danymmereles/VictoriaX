@@ -107,8 +107,19 @@
    EDICIÓN DE TEXTO
    ===================================================== */
 
+/* Texto "fantasma": mantiene el tamaño mientras se edita */
+.flow-node__text.is-editing {
+    visibility: hidden;
+}
+
+/* El input se superpone al texto, sin cambiar el tamaño del nodo */
 .node-edit-input {
-    max-width: 100%;
+    position: absolute;
+    inset: 0;
+
+    width: 100%;
+    height: 100%;
+    min-width: 0;
     padding: 0;
 
     border: none;

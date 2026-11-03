@@ -124,8 +124,20 @@ export default function CustomNode({ id, data, selected }) {
                 className={isDecision ? "decision-handle" : undefined}
             />
 
+            {/*
+              * Al editar, el texto sigue en su lugar (invisible) y es
+              * el que define el tamaño del nodo; el input se superpone
+              * encima sin ocupar espacio. Así la figura no se deforma.
+              */}
             <div className="flow-node__label">
-                {editing ? (
+                <span
+                    className={`flow-node__text ${editing ? "is-editing" : ""}`}
+                    onDoubleClick={startEditing}
+                >
+                    {editing ? text || "\u00a0" : data.label}
+                </span>
+
+                {editing && (
                     <input
                         autoFocus
                         value={text}
@@ -133,12 +145,8 @@ export default function CustomNode({ id, data, selected }) {
                         onBlur={saveText}
                         onKeyDown={handleKeyDown}
                         className="node-edit-input nodrag"
-                        style={{ width: `${Math.max(text.length, 3) + 1}ch` }}
+                        aria-label="Texto del nodo"
                     />
-                ) : (
-                    <span onDoubleClick={startEditing}>
-                        {data.label}
-                    </span>
                 )}
             </div>
 

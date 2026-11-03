@@ -47,6 +47,11 @@
     --dg-icon-active-bg: rgba(175, 155, 239, 0.18);
     --dg-accent: #AF9BEF;
 
+    /* Botón ejecutar */
+    --dg-run-bg: #AF9BEF;
+    --dg-run-bg-hover: #9d86ec;
+    --dg-run-icon: #1f1a33;
+
     /* Lienzo */
     --dg-canvas-bg: transparent;
     --dg-canvas-dots: #b4b4bd;
@@ -88,6 +93,11 @@
     --dg-icon-active: #ece7ff;
     --dg-icon-active-bg: rgba(175, 155, 239, 0.16);
     --dg-accent: #AF9BEF;
+
+    /* Botón ejecutar */
+    --dg-run-bg: #AF9BEF;
+    --dg-run-bg-hover: #c4b5fd;
+    --dg-run-icon: hsl(var(--background));
 
     /* Lienzo: mismo fondo que la página */
     --dg-canvas-bg: hsl(var(--background));

@@ -8,7 +8,62 @@
 
     transition: background-color 0.2s, border-color 0.2s;
 
+    display: flex;
+    flex-direction: column;
+
     box-sizing: border-box;
+}
+
+/* =====================================================
+   BOTÓN EJECUTAR (al pie de la barra)
+   ===================================================== */
+
+.sidebar-footer {
+    margin-top: auto;
+    padding-top: 16px;
+}
+
+.run-button {
+    width: 100%;
+    height: 40px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 0;
+
+    background: var(--dg-run-bg);
+    border: none;
+    border-radius: 8px;
+
+    color: var(--dg-run-icon);
+    cursor: pointer;
+
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+.run-button svg {
+    width: 18px;
+    height: 18px;
+
+    fill: currentColor;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-linejoin: round;
+}
+
+.run-button:hover {
+    background: var(--dg-run-bg-hover);
+}
+
+.run-button:active {
+    transform: scale(0.98);
+}
+
+.run-button:focus-visible {
+    outline: 2px solid var(--dg-accent);
+    outline-offset: 2px;
 }
 
 /* =====================================================

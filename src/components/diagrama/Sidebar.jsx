@@ -123,6 +123,20 @@ export default function Sidebar({ edgeType, onEdgeTypeChange }) {
                 <SidebarItem type="preparation" label="Preparación" />
                 <SidebarItem type="connector" label="Conector" />
             </div>
+
+            {/* Ejecutar (sin comportamiento por ahora) */}
+            <div className="sidebar-footer">
+                <button
+                    type="button"
+                    className="run-button"
+                    aria-label="Ejecutar diagrama"
+                    title="Ejecutar"
+                >
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M8 5.5 V18.5 L18.5 12 Z" />
+                    </svg>
+                </button>
+            </div>
         </aside>
     );
 }

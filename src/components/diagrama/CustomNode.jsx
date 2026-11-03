@@ -6,6 +6,7 @@ import {
 } from "@xyflow/react";
 
 import { FlowShape } from "./shapes";
+import { useHistory } from "./HistoryContext";
 import "./CustomNode.css";
 
 /*
@@ -50,6 +51,7 @@ function useNodeSize(ref) {
 
 export default function CustomNode({ id, data, selected }) {
     const { setNodes } = useReactFlow();
+    const { takeSnapshot } = useHistory();
 
     const nodeRef = useRef(null);
     const size = useNodeSize(nodeRef);
@@ -67,6 +69,14 @@ export default function CustomNode({ id, data, selected }) {
     const saveText = () => {
         setEditing(false);
 
+        const newLabel = text.trim() || data.label;
+
+        if (newLabel === data.label) {
+            return;
+        }
+
+        takeSnapshot();
+
         setNodes((nodes) =>
             nodes.map((node) =>
                 node.id === id
@@ -74,7 +84,7 @@ export default function CustomNode({ id, data, selected }) {
                         ...node,
                         data: {
                             ...node.data,
-                            label: text.trim() || data.label,
+                            label: newLabel,
                         },
                     }
                     : node

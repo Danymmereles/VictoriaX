@@ -1,5 +1,6 @@
 .sidebar {
     width: 220px;
+    flex-shrink: 0;
     height: 100%;
     padding: 20px;
 
@@ -67,15 +68,15 @@
 }
 
 /* =====================================================
-   SELECTOR DE TIPO DE CONECTOR
+   BARRAS DE HERRAMIENTAS (Historial, Tipo de conector)
+   Botones de ícono agrupados en una caja.
    ===================================================== */
 
-.edge-type-selector {
+.sidebar-toolbar {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
     gap: 4px;
 
-    margin-bottom: 16px;
+    margin-bottom: 12px;
     padding: 4px;
 
     background: var(--dg-item-bg);
@@ -83,7 +84,15 @@
     border-radius: 8px;
 }
 
-.edge-type-option {
+.sidebar-toolbar--2 {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.sidebar-toolbar--3 {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.sidebar-tool {
     height: 36px;
 
     display: flex;
@@ -102,7 +111,7 @@
     transition: 0.2s;
 }
 
-.edge-type-option svg {
+.sidebar-tool svg {
     width: 20px;
     height: 20px;
 
@@ -113,22 +122,29 @@
     stroke-linejoin: round;
 }
 
-.edge-type-option:hover {
+.sidebar-tool:hover:not(:disabled) {
     background: var(--dg-icon-hover-bg);
 }
 
-.edge-type-option.is-active {
+.sidebar-tool.is-active {
     background: var(--dg-icon-active-bg);
     border-color: var(--dg-accent);
     color: var(--dg-icon-active);
 }
 
-.edge-type-option:focus-visible {
+.sidebar-tool:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.sidebar-tool:focus-visible {
     outline: 2px solid var(--dg-accent);
     outline-offset: 1px;
 }
 
 .sidebar-items {
+    margin-top: 4px;
+
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 12px;

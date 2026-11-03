@@ -26,6 +26,8 @@ import {
     DnDProvider,
     useDnD,
 } from "../components/diagrama/DnDContext.jsx";
+import useUndoRedo from "../components/diagrama/useUndoRedo.js";
+import { HistoryProvider } from "../components/diagrama/HistoryContext.jsx";
 
 import "../components/diagrama/DiagramaTheme.css";
 import "../components/diagrama/Diagrama.css";
@@ -93,9 +95,28 @@ function Flow() {
         useState("default");
 
 
+    // Historial (Deshacer / Rehacer). También guarda el
+    // tipo de conector para que el selector vuelva atrás.
+    const history = useUndoRedo({
+        getMeta: () => ({ edgeType }),
+        onRestore: (snapshot) => {
+            if (snapshot.meta?.edgeType) {
+                setEdgeType(snapshot.meta.edgeType);
+            }
+        },
+    });
+
+    const { takeSnapshot } = history;
+
+
     // Cambiar el tipo de todos los conectores existentes
     const changeEdgeType = useCallback(
         (newType) => {
+            if (newType === edgeType) {
+                return;
+            }
+
+            takeSnapshot();
             setEdgeType(newType);
 
             setEdges((currentEdges) =>
@@ -105,7 +126,7 @@ function Flow() {
                 }))
             );
         },
-        [setEdges]
+        [setEdges, edgeType, takeSnapshot]
     );
 
 
@@ -119,6 +140,8 @@ function Flow() {
     // Crear conexión entre nodos
     const onConnect = useCallback(
         (params) => {
+            takeSnapshot();
+
             setEdges((currentEdges) =>
                 addEdge(
                     { ...params, type: edgeType },
@@ -126,7 +149,7 @@ function Flow() {
                 )
             );
         },
-        [setEdges, edgeType]
+        [setEdges, edgeType, takeSnapshot]
     );
 
 
@@ -174,6 +197,8 @@ function Flow() {
             };
 
 
+            takeSnapshot();
+
             setNodes((currentNodes) => [
                 ...currentNodes,
                 newNode,
@@ -184,73 +209,94 @@ function Flow() {
             type,
             screenToFlowPosition,
             setNodes,
+            takeSnapshot,
         ]
+    );
+
+
+    // Antes de borrar (tecla Supr), guardar en el historial
+    const onBeforeDelete = useCallback(
+        async ({ nodes: toDelete, edges: edgesToDelete }) => {
+            if (toDelete.length > 0 || edgesToDelete.length > 0) {
+                takeSnapshot();
+            }
+
+            return true;
+        },
+        [takeSnapshot]
     );
 
     const theme = useTheme();
 
     return (
-        <div className="diagram-flow-container">
+        <HistoryProvider value={history}>
+            <div className="diagram-flow-container">
 
-            {/* Barra lateral */}
-            <Sidebar
-                edgeType={edgeType}
-                onEdgeTypeChange={changeEdgeType}
-            />
+                {/* Barra lateral */}
+                <Sidebar
+                    edgeType={edgeType}
+                    onEdgeTypeChange={changeEdgeType}
+                />
 
-            {/* Área de React Flow */}
-            <div className="diagram-flow-area">
+                {/* Área de React Flow */}
+                <div className="diagram-flow-area">
 
-                <ReactFlow
-                    nodes={nodes}
-                    edges={edges}
+                    <ReactFlow
+                        nodes={nodes}
+                        edges={edges}
 
-                    onNodesChange={onNodesChange}
-                    onEdgesChange={onEdgesChange}
+                        onNodesChange={onNodesChange}
+                        onEdgesChange={onEdgesChange}
 
-                    onConnect={onConnect}
+                        onConnect={onConnect}
 
-                    onDragOver={onDragOver}
-                    onDrop={onDrop}
+                        // Historial: guardar antes de mover o borrar
+                        onNodeDragStart={takeSnapshot}
+                        onSelectionDragStart={takeSnapshot}
+                        onBeforeDelete={onBeforeDelete}
 
-                    nodeTypes={nodeTypes}
-                    defaultEdgeOptions={defaultEdgeOptions}
+                        onDragOver={onDragOver}
+                        onDrop={onDrop}
 
-                    deleteKeyCode="Delete"
-                    colorMode={theme}
+                        nodeTypes={nodeTypes}
+                        defaultEdgeOptions={defaultEdgeOptions}
 
-                    // Click derecho + arrastrar: mover el lienzo
-                    panOnDrag={[2]}
-                    // Click izquierdo + arrastrar: selección múltiple
-                    selectionOnDrag
-                    selectionMode={SelectionMode.Partial}
-                    // Sin menú contextual del navegador al usar el click derecho
-                    onPaneContextMenu={preventContextMenu}
-                    onNodeContextMenu={preventContextMenu}
-                    onEdgeContextMenu={preventContextMenu}
-                    onSelectionContextMenu={preventContextMenu}
+                        deleteKeyCode="Delete"
+                        colorMode={theme}
 
-                    fitView
-                >
+                        // Click derecho + arrastrar: mover el lienzo
+                        panOnDrag={[2]}
+                        // Click izquierdo + arrastrar: selección múltiple
+                        selectionOnDrag
+                        selectionMode={SelectionMode.Partial}
+                        // Sin menú contextual del navegador al usar el click derecho
+                        onPaneContextMenu={preventContextMenu}
+                        onNodeContextMenu={preventContextMenu}
+                        onEdgeContextMenu={preventContextMenu}
+                        onSelectionContextMenu={preventContextMenu}
 
-                    <Background />
+                        fitView
+                    >
 
-                    <Controls />
+                        <Background />
 
-                    <MiniMap
-                        pannable
-                        zoomable
-                        nodeClassName={(node) =>
-                            `minimap-node--${node.data?.type}`
-                        }
-                    />
+                        <Controls />
+
+                        <MiniMap
+                            pannable
+                            zoomable
+                            nodeClassName={(node) =>
+                                `minimap-node--${node.data?.type}`
+                            }
+                        />
 
 
-                </ReactFlow>
+                    </ReactFlow>
+
+                </div>
 
             </div>
-
-        </div>
+        </HistoryProvider>
     );
 }
 

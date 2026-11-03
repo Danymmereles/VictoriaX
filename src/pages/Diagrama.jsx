@@ -21,6 +21,7 @@ import {
 import "@xyflow/react/dist/style.css";
 
 import Sidebar from "../components/diagrama/Sidebar.jsx";
+import VariablesPanel from "../components/diagrama/VariablesPanel.jsx";
 import CustomNode from "../components/diagrama/CustomNode.jsx";
 import {
     DnDProvider,
@@ -89,6 +90,10 @@ function Flow() {
         useReactFlow();
 
     const [type] = useDnD();
+
+    // Variables del diagrama y sus valores iniciales
+    const [variables, setVariables] =
+        useState([]);
 
     // Tipo de conector global: aplica a todos los edges
     const [edgeType, setEdgeType] =
@@ -294,6 +299,12 @@ function Flow() {
                     </ReactFlow>
 
                 </div>
+
+                {/* Barra lateral derecha: variables */}
+                <VariablesPanel
+                    variables={variables}
+                    onChange={setVariables}
+                />
 
             </div>
         </HistoryProvider>

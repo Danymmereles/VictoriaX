@@ -1,0 +1,187 @@
+/* =====================================================
+   PANEL DE VARIABLES (barra lateral derecha)
+   Colores desde DiagramaTheme.css
+   ===================================================== */
+
+.variables-panel {
+    width: 250px;
+    height: 100%;
+    flex-shrink: 0;
+
+    padding: 20px 16px;
+
+    display: flex;
+    flex-direction: column;
+
+    background: var(--dg-sidebar-bg);
+    border-left: 1px solid var(--dg-sidebar-border);
+
+    transition: background-color 0.2s, border-color 0.2s;
+
+    box-sizing: border-box;
+}
+
+.variables-table-wrapper {
+    max-height: 100%;
+    overflow-y: auto;
+
+    background: var(--dg-item-bg);
+    border: 1px solid var(--dg-item-border);
+    border-radius: 8px;
+}
+
+
+/* =====================================================
+   TABLA
+   ===================================================== */
+
+.variables-table {
+    width: 100%;
+
+    border-collapse: collapse;
+    table-layout: fixed;
+
+    font-size: 13px;
+    color: var(--dg-node-text);
+}
+
+.variables-table th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+
+    padding: 8px 8px;
+
+    background: var(--dg-table-header-bg);
+    border-bottom: 1px solid var(--dg-item-border);
+
+    font-size: 12px;
+    font-weight: 600;
+    text-align: left;
+    color: var(--dg-table-header-text);
+}
+
+/* Columna de acciones (eliminar) */
+.variables-table th:last-child,
+.variables-table td:last-child {
+    width: 28px;
+}
+
+.variables-table td {
+    padding: 0;
+
+    border-bottom: 1px solid var(--dg-item-border);
+}
+
+.variables-table td + td {
+    border-left: 1px solid var(--dg-item-border);
+}
+
+.variables-table th + th {
+    border-left: 1px solid var(--dg-item-border);
+}
+
+/* La columna de eliminar no lleva divisor: no es una columna de datos */
+.variables-table td:last-child,
+.variables-table th:last-child {
+    border-left: none;
+}
+
+.variables-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+
+/* =====================================================
+   CELDAS EDITABLES
+   ===================================================== */
+
+.variables-input {
+    width: 100%;
+    height: 32px;
+
+    padding: 0 8px;
+
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 0;
+    outline: none;
+
+    font: inherit;
+    color: inherit;
+
+    box-sizing: border-box;
+}
+
+.variables-input--value {
+    font-variant-numeric: tabular-nums;
+}
+
+.variables-input::placeholder {
+    color: var(--dg-table-placeholder);
+}
+
+.variables-input:focus {
+    background: var(--dg-icon-active-bg);
+    border-color: var(--dg-accent);
+}
+
+.variables-input.is-invalid {
+    background: var(--dg-error-bg);
+    border-color: var(--dg-error);
+}
+
+
+/* =====================================================
+   ELIMINAR FILA (aparece al pasar el mouse)
+   ===================================================== */
+
+.variables-actions {
+    text-align: center;
+}
+
+.variables-remove {
+    width: 22px;
+    height: 22px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 0;
+
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+
+    color: var(--dg-icon);
+    cursor: pointer;
+
+    opacity: 0;
+    transition: opacity 0.15s, background-color 0.15s, color 0.15s;
+}
+
+.variables-remove svg {
+    width: 14px;
+    height: 14px;
+
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+}
+
+.variables-table tr:hover .variables-remove,
+.variables-remove:focus-visible {
+    opacity: 1;
+}
+
+.variables-remove:hover {
+    background: var(--dg-error-bg);
+    color: var(--dg-error);
+}
+
+.variables-remove:focus-visible {
+    outline: 2px solid var(--dg-accent);
+    outline-offset: 1px;
+}

@@ -57,6 +57,15 @@
     --dg-run-bg-hover: #9d86ec;
     --dg-run-icon: #1f1a33;
 
+    /* Tabla de variables */
+    --dg-table-header-bg: hsl(var(--muted));
+    --dg-table-header-text: hsl(var(--muted-foreground));
+    --dg-table-placeholder: #9ca3af;
+
+    /* Errores de validación */
+    --dg-error: #dc2626;
+    --dg-error-bg: rgba(220, 38, 38, 0.08);
+
     /* Lienzo */
     --dg-canvas-bg: transparent;
     --dg-canvas-dots: #b4b4bd;
@@ -108,6 +117,15 @@
     --dg-run-bg: #AF9BEF;
     --dg-run-bg-hover: #c4b5fd;
     --dg-run-icon: hsl(var(--background));
+
+    /* Tabla de variables */
+    --dg-table-header-bg: hsl(222 25% 11%);
+    --dg-table-header-text: hsl(var(--muted-foreground));
+    --dg-table-placeholder: hsl(215 15% 45%);
+
+    /* Errores de validación */
+    --dg-error: #f87171;
+    --dg-error-bg: rgba(248, 113, 113, 0.12);
 
     /* Lienzo: mismo fondo que la página */
     --dg-canvas-bg: hsl(var(--background));

@@ -2,6 +2,7 @@ import { useDnD } from "./DnDContext";
 import { FlowShape } from "./shapes";
 import EdgeTypeSelector from "./EdgeTypeSelector";
 import HistoryControls from "./HistoryControls";
+import BackToAnalysisLink from "./BackToAnalysisLink";
 import "./Sidebar.css";
 
 // Tamaño (px) de cada figura en la barra lateral
@@ -44,9 +45,11 @@ function SidebarItem({ type, label }) {
     );
 }
 
-export default function Sidebar({ edgeType, onEdgeTypeChange }) {
+export default function Sidebar({ edgeType, onEdgeTypeChange, onRun, hasDiagram }) {
     return (
         <aside className="sidebar">
+            <BackToAnalysisLink hasDiagram={hasDiagram} />
+
             <HistoryControls />
 
             <EdgeTypeSelector
@@ -66,11 +69,12 @@ export default function Sidebar({ edgeType, onEdgeTypeChange }) {
                 <SidebarItem type="connector" label="Conector" />
             </div>
 
-            {/* Ejecutar (sin comportamiento por ahora) */}
+            {/* Ejecutar: abre la vista de ejecución */}
             <div className="sidebar-footer">
                 <button
                     type="button"
                     className="run-button"
+                    onClick={onRun}
                     aria-label="Ejecutar diagrama"
                     title="Ejecutar"
                 >

@@ -1,8 +1,4 @@
-import React, { useCallback, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
-import NavBar from "@/components/home/NavBar";
-import Footer from "@/components/home/Footer";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import useTheme from "../hooks/useTheme";
 import { cargarAnalisis } from "@/lib/analisisPrevioStorage";
 
@@ -24,6 +20,12 @@ import "@xyflow/react/dist/style.css";
 import Sidebar from "../components/diagrama/Sidebar.jsx";
 import VariablesPanel from "../components/diagrama/VariablesPanel.jsx";
 import EdgeMarkers, { withEdgeMarkers } from "../components/diagrama/EdgeMarkers.jsx";
+import DiagramaTabs, {
+    VISTAS,
+    panelId,
+    tabId,
+} from "../components/diagrama/DiagramaTabs.jsx";
+import ExecutionView from "../components/diagrama/ExecutionView.jsx";
 import { sincronizarConAnalisis } from "../components/diagrama/variables.js";
 import CustomNode from "../components/diagrama/CustomNode.jsx";
 import {
@@ -81,7 +83,13 @@ function getNodeLabel(type) {
 }
 
 
-function Flow() {
+/*
+ * Editor del diagrama.
+ *   active: false cuando hay otra vista abierta (Ejecución):
+ *           se desactivan Supr y los atajos de Deshacer/Rehacer.
+ *   onRun:  botón Ejecutar de la barra lateral.
+ */
+function Flow({ active = true, onRun }) {
 
     const [nodes, setNodes, onNodesChange] =
         useNodesState([]);
@@ -109,6 +117,7 @@ function Flow() {
     // Historial (Deshacer / Rehacer). También guarda el
     // tipo de conector para que el selector vuelva atrás.
     const history = useUndoRedo({
+        shortcutsEnabled: active,
         getMeta: () => ({ edgeType }),
         onRestore: (snapshot) => {
             if (snapshot.meta?.edgeType) {
@@ -254,6 +263,8 @@ function Flow() {
                 <Sidebar
                     edgeType={edgeType}
                     onEdgeTypeChange={changeEdgeType}
+                    onRun={onRun}
+                    hasDiagram={nodes.length > 0 || edges.length > 0}
                 />
 
                 {/* Área de React Flow */}
@@ -282,7 +293,7 @@ function Flow() {
                         nodeTypes={nodeTypes}
                         defaultEdgeOptions={defaultEdgeOptions}
 
-                        deleteKeyCode="Delete"
+                        deleteKeyCode={active ? "Delete" : null}
                         colorMode={theme}
 
                         // Click derecho + arrastrar: mover el lienzo
@@ -330,46 +341,75 @@ function Flow() {
 
 export default function Diagrama() {
 
+    // Vista activa: editor del diagrama o ejecución
+    const [vista, setVista] = useState(VISTAS.editor);
+
+    const enEditor = vista === VISTAS.editor;
+
+    // El editor oculto no recibe foco ni clicks (inert).
+    // Se asigna por ref para que funcione igual en React 18 y 19.
+    const editorRef = useRef(null);
+
+    useEffect(() => {
+        if (editorRef.current) {
+            editorRef.current.inert = !enEditor;
+        }
+    }, [enEditor]);
+
+    // Pantalla completa: solo el editor (sin barra de
+    // navegación ni pie de página)
     return (
-        <div className="min-h-screen bg-background text-foreground">
+        <main className="diagram-page bg-background text-foreground">
 
-            <NavBar />
+            <DiagramaTabs
+                value={vista}
+                onChange={setVista}
+            />
 
+            <div className="diagram-views">
 
-            <main className="diagram-page">
+                {/*
+                  * Editor: siempre montado (solo se oculta) para no
+                  * perder el diagrama ni las variables al cambiar de
+                  * pestaña, ya que todavía no se guardan.
+                  */}
+                <div
+                    id={panelId(VISTAS.editor)}
+                    role="tabpanel"
+                    aria-labelledby={tabId(VISTAS.editor)}
+                    ref={editorRef}
+                    className={`diagram-view ${enEditor ? "" : "is-hidden"}`}
+                >
+                    <ReactFlowProvider>
 
-                {/* Editor */}
-                <ReactFlowProvider>
+                        <DnDProvider>
 
-                    <DnDProvider>
+                            <Flow
+                                active={enEditor}
+                                onRun={() => setVista(VISTAS.ejecucion)}
+                            />
 
-                        <Flow />
+                        </DnDProvider>
 
-                    </DnDProvider>
-
-                </ReactFlowProvider>
-
-
-                {/* Volver */}
-                <div className="diagram-footer-action">
-
-                    <Link
-                        to="/modo-libre"
-                        className="diagram-back-button"
-                    >
-                        <ArrowLeft className="w-4 h-4" />
-
-                        Volver al análisis previo
-
-                    </Link>
-
+                    </ReactFlowProvider>
                 </div>
 
-            </main>
+                {/* Ejecución */}
+                {!enEditor && (
+                    <div
+                        id={panelId(VISTAS.ejecucion)}
+                        role="tabpanel"
+                        aria-labelledby={tabId(VISTAS.ejecucion)}
+                        className="diagram-view diagram-view--overlay"
+                    >
+                        <ExecutionView
+                            onBack={() => setVista(VISTAS.editor)}
+                        />
+                    </div>
+                )}
 
+            </div>
 
-            <Footer />
-
-        </div>
+        </main>
     );
 }

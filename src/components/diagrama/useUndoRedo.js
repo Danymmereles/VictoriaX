@@ -22,6 +22,8 @@ export default function useUndoRedo({
     getMeta,
     onRestore,
     maxHistory = MAX_HISTORY,
+    // false = los atajos de teclado no actúan (p. ej. otra vista activa)
+    shortcutsEnabled = true,
 } = {}) {
     const { getNodes, getEdges, setNodes, setEdges } = useReactFlow();
 
@@ -89,7 +91,7 @@ export default function useUndoRedo({
         restore(next);
     }, [future, createSnapshot, restore]);
 
-    useHistoryShortcuts({ undo, redo });
+    useHistoryShortcuts({ undo, redo, enabled: shortcutsEnabled });
 
     const canUndo = past.length > 0;
     const canRedo = future.length > 0;
@@ -116,11 +118,15 @@ function isTypingTarget(target) {
     );
 }
 
-function useHistoryShortcuts({ undo, redo }) {
+function useHistoryShortcuts({ undo, redo, enabled }) {
     const handlersRef = useRef({ undo, redo });
     handlersRef.current = { undo, redo };
 
     useEffect(() => {
+        if (!enabled) {
+            return undefined;
+        }
+
         const onKeyDown = (event) => {
             if (!(event.ctrlKey || event.metaKey) || isTypingTarget(event.target)) {
                 return;
@@ -140,5 +146,5 @@ function useHistoryShortcuts({ undo, redo }) {
         document.addEventListener("keydown", onKeyDown);
 
         return () => document.removeEventListener("keydown", onKeyDown);
-    }, []);
+    }, [enabled]);
 }

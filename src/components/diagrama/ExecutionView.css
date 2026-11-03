@@ -1,0 +1,122 @@
+/* =====================================================
+   VISTA DE EJECUCIÓN
+   Colores desde DiagramaTheme.css
+   ===================================================== */
+
+.execution-view {
+    width: 100%;
+    height: 100%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 24px;
+
+    background-color: var(--dg-canvas-solid-bg);
+    background-image: radial-gradient(var(--dg-canvas-dots) 1px, transparent 1px);
+    background-size: 20px 20px;
+
+    box-sizing: border-box;
+}
+
+.execution-empty {
+    max-width: 380px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    padding: 32px 28px;
+
+    background: var(--dg-item-bg);
+    border: 1px dashed var(--dg-item-border);
+    border-radius: 16px;
+
+    text-align: center;
+}
+
+.execution-empty-icon {
+    width: 52px;
+    height: 52px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    margin-bottom: 16px;
+
+    background: var(--dg-icon-active-bg);
+    border-radius: 14px;
+
+    color: var(--dg-accent);
+}
+
+.execution-empty-icon svg {
+    width: 26px;
+    height: 26px;
+
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.execution-empty-title {
+    margin: 0 0 8px;
+
+    font-family: var(--font-heading);
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--dg-tab-text-active);
+}
+
+.execution-empty-text {
+    margin: 0 0 20px;
+
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--dg-tab-text);
+}
+
+.execution-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+
+    padding: 8px 16px;
+
+    background: transparent;
+    border: 1px solid var(--dg-item-border);
+    border-radius: 9999px;
+
+    font: inherit;
+    font-size: 14px;
+    color: var(--dg-tab-text-active);
+
+    cursor: pointer;
+
+    transition: border-color 0.2s, background-color 0.2s;
+}
+
+.execution-back svg {
+    width: 16px;
+    height: 16px;
+
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.execution-back:hover {
+    border-color: var(--dg-accent);
+    background: var(--dg-icon-active-bg);
+}
+
+.execution-back:focus-visible {
+    outline: 2px solid var(--dg-accent);
+    outline-offset: 2px;
+}

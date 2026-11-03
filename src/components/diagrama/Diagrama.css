@@ -1,25 +1,65 @@
 /* =========================================
-   CONTENEDOR GENERAL DE LA PÁGINA
+   PÁGINA DEL DIAGRAMA (pantalla completa)
+   Solo el editor: pestañas arriba y el resto
+   del alto para las vistas. Sin scroll.
    ========================================= */
 
 .diagram-page {
     width: 100%;
-    padding-top: 0;
-    padding-bottom: 60px;
+    height: 100vh;
+    height: 100dvh;
+
+    display: flex;
+    flex-direction: column;
+
+    overflow: hidden;
     box-sizing: border-box;
 }
 
+
+/* =========================================
+   VISTAS (Diagrama / Ejecución)
+   El editor nunca se desmonta: se oculta con
+   visibility para conservar medidas y estado.
+   ========================================= */
+
+.diagram-views {
+    position: relative;
+
+    flex: 1;
+    min-height: 0;
+}
+
+.diagram-view {
+    height: 100%;
+}
+
+.diagram-view.is-hidden {
+    visibility: hidden;
+}
+
+.diagram-view--overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+
+    border-top: 1px solid hsl(var(--border));
+}
+
+
 /* =========================================
    CONTENEDOR DEL EDITOR
+   Sidebar | lienzo | VariablesPanel
    ========================================= */
 
 .diagram-flow-container {
     width: 100%;
-    height: 650px;
+    height: 100%;
+
     display: flex;
-    box-sizing: border-box;
+
     border-top: 1px solid hsl(var(--border));
-    border-bottom: 1px solid hsl(var(--border));
+    box-sizing: border-box;
 }
 
 
@@ -32,44 +72,6 @@
     height: 100%;
     min-width: 0;
 }
-
-
-/* =========================================
-   BOTÓN VOLVER
-   ========================================= */
-
-.diagram-footer-action {
-    display: flex;
-    justify-content: center;
-    margin-top: 30px;
-}
-
-
-.diagram-back-button {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 12px 24px;
-    border: 1px solid hsl(var(--border));
-    border-radius: 9999px;
-    color: inherit;
-    text-decoration: none;
-    font-size: 14px;
-    transition:
-            border-color 0.2s ease,
-            background-color 0.2s ease;
-}
-
-
-.diagram-back-button:hover {
-    border-color: #AF9BEF;
-    background-color: rgba(175, 155, 239, 0.05);
-}
-
-
-/* =========================================
-   REACT FLOW
-   ========================================= */
 
 .diagram-flow-area .react-flow {
     width: 100%;

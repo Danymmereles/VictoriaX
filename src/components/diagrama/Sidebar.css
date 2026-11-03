@@ -12,7 +12,67 @@
     display: flex;
     flex-direction: column;
 
+    /* En pantallas bajas la barra scrollea sola, no la página */
+    overflow-y: auto;
+
     box-sizing: border-box;
+}
+
+/* =====================================================
+   VOLVER AL ANÁLISIS PREVIO
+   ===================================================== */
+
+.sidebar-back {
+    height: 36px;
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    margin-bottom: 12px;
+    padding: 0 12px;
+
+    background: transparent;
+    border: 1px solid var(--dg-item-border);
+    border-radius: 8px;
+
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--dg-icon);
+    text-decoration: none;
+
+    transition: 0.2s;
+}
+
+.sidebar-back svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+
+    transition: transform 0.2s;
+}
+
+.sidebar-back:hover {
+    background: var(--dg-icon-active-bg);
+    border-color: var(--dg-accent);
+    color: var(--dg-icon-active);
+}
+
+/* Pequeño desplazamiento de la flecha: indica "volver" */
+.sidebar-back:hover svg {
+    transform: translateX(-2px);
+}
+
+.sidebar-back:focus-visible {
+    outline: 2px solid var(--dg-accent);
+    outline-offset: 1px;
 }
 
 /* =====================================================

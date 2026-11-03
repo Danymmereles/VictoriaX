@@ -57,6 +57,12 @@
     --dg-run-bg-hover: #9d86ec;
     --dg-run-icon: #1f1a33;
 
+    /* Pestañas y vista de ejecución (los tokens de la app
+       ya cambian solos con el tema) */
+    --dg-tab-text: hsl(var(--muted-foreground));
+    --dg-tab-text-active: hsl(var(--foreground));
+    --dg-canvas-solid-bg: hsl(var(--background));
+
     /* Tabla de variables */
     --dg-table-header-bg: hsl(var(--muted));
     --dg-table-header-text: hsl(var(--muted-foreground));

@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import useTheme from "../hooks/useTheme";
+import ThemeToggle from "@/components/theme/ThemeToggle";
 import { cargarAnalisis } from "@/lib/analisisPrevioStorage";
 
 import {
@@ -361,10 +362,15 @@ export default function Diagrama() {
     return (
         <main className="diagram-page bg-background text-foreground">
 
-            <DiagramaTabs
-                value={vista}
-                onChange={setVista}
-            />
+            {/* Barra superior: pestañas + modo claro/oscuro */}
+            <header className="diagram-topbar">
+                <DiagramaTabs
+                    value={vista}
+                    onChange={setVista}
+                />
+
+                <ThemeToggle className="diagram-theme-toggle" />
+            </header>
 
             <div className="diagram-views">
 

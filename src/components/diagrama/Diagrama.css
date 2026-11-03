@@ -18,6 +18,37 @@
 
 
 /* =========================================
+   BARRA SUPERIOR
+   Pestañas a la izquierda, modo claro/oscuro
+   a la derecha (ThemeToggle de la app).
+   ========================================= */
+
+.diagram-topbar {
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: stretch;
+    justify-content: space-between;
+
+    padding-right: 16px;
+
+    background: var(--dg-sidebar-bg);
+
+    transition: background-color 0.2s;
+}
+
+.diagram-topbar .diagram-theme-toggle {
+    align-self: center;
+    flex-shrink: 0;
+
+    /* Un poco más chico que en la barra del sitio,
+       para no agrandar la franja de pestañas */
+    width: 34px;
+    height: 34px;
+}
+
+
+/* =========================================
    VISTAS (Diagrama / Ejecución)
    El editor nunca se desmonta: se oculta con
    visibility para conservar medidas y estado.

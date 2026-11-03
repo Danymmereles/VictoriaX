@@ -8,12 +8,6 @@
     gap: 4px;
 
     padding: 0 16px;
-
-    flex-shrink: 0;
-
-    background: var(--dg-sidebar-bg);
-
-    transition: background-color 0.2s, border-color 0.2s;
 }
 
 .diagram-tab {

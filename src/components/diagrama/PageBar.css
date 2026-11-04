@@ -1,0 +1,147 @@
+/* =====================================================
+   BARRA DE PÁGINAS (parte inferior del lienzo)
+   Colores desde DiagramaTheme.css
+   ===================================================== */
+
+.page-bar {
+    height: 38px;
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: stretch;
+    gap: 12px;
+
+    padding: 0 12px;
+
+    background: var(--dg-sidebar-bg);
+    border-top: 1px solid var(--dg-sidebar-border);
+
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+.page-bar-tabs {
+    min-width: 0;
+
+    display: flex;
+    align-items: stretch;
+    gap: 2px;
+
+    /* Muchos subprocesos: la barra scrollea a lo ancho */
+    overflow-x: auto;
+    scrollbar-width: thin;
+}
+
+.page-tab {
+    position: relative;
+    flex-shrink: 0;
+
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+
+    max-width: 180px;
+    padding: 0 12px;
+
+    background: transparent;
+    border: none;
+
+    font: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--dg-tab-text);
+
+    cursor: pointer;
+
+    transition: color 0.2s, background-color 0.2s;
+}
+
+.page-tab svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.page-tab-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.page-tab:hover {
+    color: var(--dg-tab-text-active);
+    background: var(--dg-icon-hover-bg);
+}
+
+/* Página activa: fondo de tarjeta y línea superior lavanda */
+.page-tab::before {
+    content: "";
+
+    position: absolute;
+    top: -1px;
+    left: 8px;
+    right: 8px;
+
+    height: 2px;
+    border-radius: 2px;
+
+    background: transparent;
+}
+
+.page-tab.is-active {
+    color: var(--dg-tab-text-active);
+    background: var(--dg-item-bg);
+}
+
+.page-tab.is-active::before {
+    background: var(--dg-accent);
+}
+
+/* Nombre repetido */
+.page-tab.is-duplicated {
+    color: var(--dg-error);
+}
+
+.page-tab.is-duplicated.is-active::before {
+    background: var(--dg-error);
+}
+
+.page-tab-warning {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+    background: var(--dg-error);
+
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1;
+    color: hsl(var(--background));
+}
+
+.page-tab:focus-visible {
+    outline: 2px solid var(--dg-accent);
+    outline-offset: -3px;
+    border-radius: 6px;
+}
+
+.page-bar-hint {
+    align-self: center;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    font-size: 12px;
+    color: var(--dg-table-placeholder);
+}

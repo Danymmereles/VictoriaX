@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
     Handle,
     Position,
@@ -7,6 +7,7 @@ import {
 
 import { FlowShape } from "./shapes";
 import { useHistory } from "./HistoryContext";
+import { usePageContext } from "./PageContext";
 import "./CustomNode.css";
 
 /*
@@ -49,9 +50,13 @@ function useNodeSize(ref) {
     return size;
 }
 
+// Tiempo que se muestra el aviso de un nombre rechazado
+const NOTICE_MS = 2800;
+
 export default function CustomNode({ id, data, selected }) {
     const { setNodes } = useReactFlow();
     const { takeSnapshot } = useHistory();
+    const { nodeIssues, validateLabel } = usePageContext();
 
     const nodeRef = useRef(null);
     const size = useNodeSize(nodeRef);
@@ -59,19 +64,62 @@ export default function CustomNode({ id, data, selected }) {
     const [editing, setEditing] = useState(false);
     const [text, setText] = useState(data.label);
 
+    // Evita guardar dos veces (Enter + blur al desmontar el input)
+    const editingRef = useRef(false);
+
+    // Aviso breve cuando un nombre se rechaza
+    const [notice, setNotice] = useState(null);
+
+    useEffect(() => {
+        if (!notice) {
+            return undefined;
+        }
+
+        const timer = setTimeout(() => setNotice(null), NOTICE_MS);
+        return () => clearTimeout(timer);
+    }, [notice]);
+
     const isDecision = data.type === "decision";
 
+    // Nodo ancla: encabeza la página de su subproceso.
+    // Es el inicio (solo salida) y se renombra únicamente desde Main.
+    const isAnchor = Boolean(data.anchorOf);
+
+    const issue = nodeIssues?.[id];
+
     const startEditing = () => {
+        if (isAnchor) {
+            return;
+        }
+
         setText(data.label);
+        editingRef.current = true;
         setEditing(true);
     };
 
-    const saveText = () => {
+    const stopEditing = () => {
+        editingRef.current = false;
         setEditing(false);
+    };
+
+    const saveText = () => {
+        if (!editingRef.current) {
+            return;
+        }
+
+        stopEditing();
 
         const newLabel = text.trim() || data.label;
 
         if (newLabel === data.label) {
+            return;
+        }
+
+        const rejection = validateLabel?.({ data, nombre: newLabel });
+
+        if (rejection) {
+            setText(data.label);
+            setNotice(rejection);
             return;
         }
 
@@ -99,15 +147,35 @@ export default function CustomNode({ id, data, selected }) {
 
         if (event.key === "Escape") {
             setText(data.label);
-            setEditing(false);
+            stopEditing();
         }
     };
 
     return (
         <div
             ref={nodeRef}
-            className={`flow-node flow-node--${data.type} ${selected ? "is-selected" : ""}`}
+            className={[
+                "flow-node",
+                `flow-node--${data.type}`,
+                selected && "is-selected",
+                isAnchor && "is-anchor",
+                issue && "has-issue",
+            ]
+                .filter(Boolean)
+                .join(" ")}
+            title={
+                issue ||
+                (isAnchor
+                    ? "Inicio del subproceso. Se renombra desde Main."
+                    : undefined)
+            }
         >
+            {isAnchor && (
+                <span className="flow-node__badge" aria-hidden="true">
+                    Inicio
+                </span>
+            )}
+
             {size && (
                 <FlowShape
                     type={data.type}
@@ -117,12 +185,15 @@ export default function CustomNode({ id, data, selected }) {
                 />
             )}
 
-            <Handle
-                type="target"
-                position={Position.Top}
-                id={isDecision ? "input" : undefined}
-                className={isDecision ? "decision-handle" : undefined}
-            />
+            {/* El ancla es el inicio: no recibe conexiones */}
+            {!isAnchor && (
+                <Handle
+                    type="target"
+                    position={Position.Top}
+                    id={isDecision ? "input" : undefined}
+                    className={isDecision ? "decision-handle" : undefined}
+                />
+            )}
 
             {/*
               * Al editar, el texto sigue en su lugar (invisible) y es
@@ -179,6 +250,12 @@ export default function CustomNode({ id, data, selected }) {
                     type="source"
                     position={Position.Bottom}
                 />
+            )}
+
+            {notice && (
+                <span className="flow-node__notice" role="alert">
+                    {notice}
+                </span>
             )}
         </div>
     );

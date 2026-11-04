@@ -12,11 +12,16 @@ import { useReactFlow } from "@xyflow/react";
  * Regla de uso: llamar a takeSnapshot() JUSTO ANTES de
  * cada cambio que se quiera poder deshacer.
  *
+ * `scope` separa historiales independientes (una página
+ * del algoritmo = un historial). Cambiar de scope no
+ * borra los demás.
+ *
  * Debe usarse dentro de <ReactFlowProvider>.
  * =====================================================
  */
 
 const MAX_HISTORY = 100;
+const EMPTY_STACK = { past: [], future: [] };
 
 export default function useUndoRedo({
     getMeta,
@@ -24,11 +29,25 @@ export default function useUndoRedo({
     maxHistory = MAX_HISTORY,
     // false = los atajos de teclado no actúan (p. ej. otra vista activa)
     shortcutsEnabled = true,
+    // Historial activo (p. ej. id de la página que se está editando)
+    scope = "default",
 } = {}) {
     const { getNodes, getEdges, setNodes, setEdges } = useReactFlow();
 
-    const [past, setPast] = useState([]);
-    const [future, setFuture] = useState([]);
+    // { [scope]: { past: [], future: [] } }
+    const [stacks, setStacks] = useState({});
+
+    const { past, future } = stacks[scope] ?? EMPTY_STACK;
+
+    const updateStack = useCallback(
+        (update) => {
+            setStacks((all) => ({
+                ...all,
+                [scope]: update(all[scope] ?? EMPTY_STACK),
+            }));
+        },
+        [scope]
+    );
 
     // Siempre la última versión de los callbacks externos
     const getMetaRef = useRef(getMeta);
@@ -58,10 +77,12 @@ export default function useUndoRedo({
     const takeSnapshot = useCallback(() => {
         const snapshot = createSnapshot();
 
-        setPast((stack) => [...stack, snapshot].slice(-maxHistory));
-        // Un cambio nuevo invalida lo que se podía rehacer
-        setFuture([]);
-    }, [createSnapshot, maxHistory]);
+        updateStack((stack) => ({
+            past: [...stack.past, snapshot].slice(-maxHistory),
+            // Un cambio nuevo invalida lo que se podía rehacer
+            future: [],
+        }));
+    }, [createSnapshot, maxHistory, updateStack]);
 
     const undo = useCallback(() => {
         if (past.length === 0) {
@@ -72,10 +93,12 @@ export default function useUndoRedo({
         // La foto del estado actual se toma ANTES de restaurar
         const current = createSnapshot();
 
-        setPast(past.slice(0, -1));
-        setFuture((stack) => [...stack, current]);
+        updateStack((stack) => ({
+            past: stack.past.slice(0, -1),
+            future: [...stack.future, current],
+        }));
         restore(previous);
-    }, [past, createSnapshot, restore]);
+    }, [past, createSnapshot, restore, updateStack]);
 
     const redo = useCallback(() => {
         if (future.length === 0) {
@@ -86,10 +109,12 @@ export default function useUndoRedo({
         // La foto del estado actual se toma ANTES de restaurar
         const current = createSnapshot();
 
-        setFuture(future.slice(0, -1));
-        setPast((stack) => [...stack, current]);
+        updateStack((stack) => ({
+            past: [...stack.past, current],
+            future: stack.future.slice(0, -1),
+        }));
         restore(next);
-    }, [future, createSnapshot, restore]);
+    }, [future, createSnapshot, restore, updateStack]);
 
     useHistoryShortcuts({ undo, redo, enabled: shortcutsEnabled });
 

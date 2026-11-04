@@ -33,6 +33,75 @@
     filter: drop-shadow(0 0 5px var(--dg-selected-glow));
 }
 
+/* Nodo con un problema (nombre repetido, llamada inexistente...) */
+.flow-node.has-issue .flow-shape {
+    stroke: var(--dg-error);
+}
+
+.flow-node.has-issue.is-selected .flow-shape {
+    filter: drop-shadow(0 0 5px var(--dg-error-bg));
+}
+
+
+/* =====================================================
+   NODO ANCLA (inicio de la página de un subproceso)
+   ===================================================== */
+
+.flow-node__badge {
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+
+    padding: 1px 8px;
+
+    border-radius: 9999px;
+    background: var(--dg-icon-active-bg);
+
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: var(--dg-accent);
+
+    pointer-events: none;
+}
+
+.flow-node.is-anchor .flow-node__text {
+    cursor: default;
+}
+
+
+/* =====================================================
+   AVISO DE NOMBRE RECHAZADO
+   ===================================================== */
+
+.flow-node__notice {
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+
+    width: max-content;
+    max-width: 240px;
+    padding: 6px 10px;
+
+    background: var(--dg-item-bg);
+    border: 1px solid var(--dg-error);
+    border-radius: 8px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.35;
+    text-align: center;
+    color: var(--dg-error);
+
+    pointer-events: none;
+}
+
 .flow-node__label {
     position: relative;
     z-index: 1;

@@ -27,6 +27,19 @@ import DiagramaTabs, {
     tabId,
 } from "../components/diagrama/DiagramaTabs.jsx";
 import ExecutionView from "../components/diagrama/ExecutionView.jsx";
+import PageBar from "../components/diagrama/PageBar.jsx";
+import {
+    MAIN_PAGE_ID,
+    SUBPROCESS_NODE_TYPE,
+    crearPaginaSubproceso,
+    derivarPaginas,
+    emptyPage,
+    mismoNombre,
+    problemasDeNodos,
+    sincronizarAncla,
+    validarNombreNodo,
+} from "../components/diagrama/pages.js";
+import { PageProvider } from "../components/diagrama/PageContext.jsx";
 import { sincronizarConAnalisis } from "../components/diagrama/variables.js";
 import CustomNode from "../components/diagrama/CustomNode.jsx";
 import {
@@ -43,6 +56,21 @@ import "../components/diagrama/Diagrama.css";
 const nodeTypes = {
     custom: CustomNode,
 };
+
+
+// Posición del lienzo para una página que se abre por primera vez
+const DEFAULT_VIEWPORT = { x: 0, y: 0, zoom: 1 };
+
+// Al abrir un subproceso por primera vez, su nodo ancla (inicio)
+// queda centrado arriba. Ancho del nodo Preparación: 160px.
+const ANCHOR_WIDTH = 160;
+const ANCHOR_TOP = 70;
+
+// Nombre por defecto de una llamada si choca con el subproceso actual
+const CALL_FALLBACK_LABEL = "Llamada";
+
+const deselect = (items) =>
+    items.map((item) => (item.selected ? { ...item, selected: false } : item));
 
 
 // El click derecho se usa para mover el lienzo
@@ -98,8 +126,13 @@ function Flow({ active = true, onRun }) {
     const [edges, setEdges, onEdgesChange] =
         useEdgesState([]);
 
-    const { screenToFlowPosition } =
-        useReactFlow();
+    const {
+        screenToFlowPosition,
+        getNodes,
+        getEdges,
+        getViewport,
+        setViewport,
+    } = useReactFlow();
 
     const [type] = useDnD();
 
@@ -111,18 +144,50 @@ function Flow({ active = true, onRun }) {
         useState(() => sincronizarConAnalisis([], cargarAnalisis()));
 
     // Tipo de conector global: aplica a todos los edges
+    // de TODAS las páginas
     const [edgeType, setEdgeType] =
         useState("default");
 
 
-    // Historial (Deshacer / Rehacer). También guarda el
-    // tipo de conector para que el selector vuelva atrás.
+    // ---------------------------------------------------
+    // Páginas del algoritmo: Main + un subproceso por cada
+    // nodo Preparación (ver pages.js). React Flow muestra
+    // solo la página activa; las demás quedan guardadas acá.
+    // ---------------------------------------------------
+    const [activePage, setActivePage] =
+        useState(MAIN_PAGE_ID);
+
+    const pagesStoreRef = useRef({});
+    const [storeVersion, setStoreVersion] = useState(0);
+
+    const applyEdgeTypeToStoredPages = useCallback((newType) => {
+        const store = pagesStoreRef.current;
+
+        Object.keys(store).forEach((pageId) => {
+            store[pageId] = {
+                ...store[pageId],
+                edges: store[pageId].edges.map((edge) => ({
+                    ...edge,
+                    type: newType,
+                })),
+            };
+        });
+    }, []);
+
+
+    // Historial (Deshacer / Rehacer): uno por página.
+    // También guarda el tipo de conector para que el
+    // selector vuelva atrás.
     const history = useUndoRedo({
+        scope: activePage,
         shortcutsEnabled: active,
         getMeta: () => ({ edgeType }),
         onRestore: (snapshot) => {
-            if (snapshot.meta?.edgeType) {
-                setEdgeType(snapshot.meta.edgeType);
+            const restoredType = snapshot.meta?.edgeType;
+
+            if (restoredType && restoredType !== edgeType) {
+                setEdgeType(restoredType);
+                applyEdgeTypeToStoredPages(restoredType);
             }
         },
     });
@@ -130,7 +195,128 @@ function Flow({ active = true, onRun }) {
     const { takeSnapshot } = history;
 
 
+    // Lista de páginas: sale de los nodos Preparación de Main
+    // (si Main es la activa se lee de React Flow, al día)
+    const pages = useMemo(
+        () =>
+            derivarPaginas(
+                activePage === MAIN_PAGE_ID
+                    ? nodes
+                    : pagesStoreRef.current[MAIN_PAGE_ID]?.nodes
+            ),
+        // storeVersion: avisa que cambió lo guardado
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [nodes, activePage, storeVersion]
+    );
+
+    const currentPage = useMemo(
+        () => pages.find((page) => page.id === activePage),
+        [pages, activePage]
+    );
+
+
+    // El nodo ancla siempre muestra el nombre del nodo de Main
+    const displayNodes = useMemo(
+        () => sincronizarAncla(nodes, currentPage),
+        [nodes, currentPage]
+    );
+
+
+    // Contexto para los nodos: errores a marcar y validación
+    // de nombres (una llamada no puede ser al propio subproceso)
+    const nodeIssues = useMemo(
+        () => problemasDeNodos({ nodes, pagina: currentPage, paginas: pages }),
+        [nodes, currentPage, pages]
+    );
+
+    const validateLabel = useCallback(
+        ({ data, nombre }) =>
+            validarNombreNodo({ data, nombre, pagina: currentPage }),
+        [currentPage]
+    );
+
+    const pageContext = useMemo(
+        () => ({ page: currentPage, nodeIssues, validateLabel }),
+        [currentPage, nodeIssues, validateLabel]
+    );
+
+
+    // Lienzo: para ubicar el nodo ancla al abrir un subproceso
+    const canvasRef = useRef(null);
+
+
+    // Cambiar de página: guardar la actual y cargar la otra
+    const switchPage = useCallback(
+        (pageId) => {
+            if (pageId === activePage) {
+                return;
+            }
+
+            pagesStoreRef.current[activePage] = {
+                nodes: getNodes(),
+                edges: getEdges(),
+                viewport: getViewport(),
+            };
+
+            const page = pages.find((p) => p.id === pageId);
+            const width = canvasRef.current?.clientWidth ?? 0;
+
+            // Primera vez que se abre un subproceso: arranca con
+            // su nodo ancla, centrado arriba
+            const target =
+                pagesStoreRef.current[pageId] ??
+                (pageId === MAIN_PAGE_ID || !page
+                    ? emptyPage()
+                    : {
+                        ...crearPaginaSubproceso(page),
+                        viewport: {
+                            x: Math.max(width / 2 - ANCHOR_WIDTH / 2, 0),
+                            y: ANCHOR_TOP,
+                            zoom: 1,
+                        },
+                    });
+
+            setNodes(deselect(target.nodes));
+            setEdges(deselect(target.edges));
+            setViewport(target.viewport ?? DEFAULT_VIEWPORT);
+
+            setActivePage(pageId);
+            setStoreVersion((v) => v + 1);
+        },
+        [
+            activePage,
+            pages,
+            getNodes,
+            getEdges,
+            getViewport,
+            setNodes,
+            setEdges,
+            setViewport,
+        ]
+    );
+
+
+    // Si la página activa deja de existir (se deshizo o
+    // borró su nodo Preparación), volver a Main
+    useEffect(() => {
+        if (!pages.some((page) => page.id === activePage)) {
+            switchPage(MAIN_PAGE_ID);
+        }
+    }, [pages, activePage, switchPage]);
+
+
+    // ¿Hay algo dibujado en alguna página?
+    const hasDiagram =
+        nodes.length > 0 ||
+        edges.length > 0 ||
+        Object.entries(pagesStoreRef.current).some(
+            ([pageId, page]) =>
+                pageId !== activePage && page.nodes.length > 0
+        );
+
+
     // Cambiar el tipo de todos los conectores existentes
+    // (en todas las páginas)
     const changeEdgeType = useCallback(
         (newType) => {
             if (newType === edgeType) {
@@ -139,6 +325,7 @@ function Flow({ active = true, onRun }) {
 
             takeSnapshot();
             setEdgeType(newType);
+            applyEdgeTypeToStoredPages(newType);
 
             setEdges((currentEdges) =>
                 currentEdges.map((edge) => ({
@@ -147,11 +334,10 @@ function Flow({ active = true, onRun }) {
                 }))
             );
         },
-        [setEdges, edgeType, takeSnapshot]
+        [setEdges, edgeType, takeSnapshot, applyEdgeTypeToStoredPages]
     );
 
 
-    // Los conectores nuevos usan el tipo seleccionado
     // Todos los conectores terminan en flecha (markerEnd)
     const edgesWithMarkers = useMemo(
         () => withEdgeMarkers(edges),
@@ -159,6 +345,7 @@ function Flow({ active = true, onRun }) {
     );
 
 
+    // Los conectores nuevos usan el tipo seleccionado
     const defaultEdgeOptions = useMemo(
         () => ({ type: edgeType }),
         [edgeType]
@@ -209,6 +396,19 @@ function Flow({ active = true, onRun }) {
                 });
 
 
+            // En un subproceso, una llamada no puede tener el
+            // nombre del propio subproceso
+            let label = getNodeLabel(type);
+
+            if (
+                type === SUBPROCESS_NODE_TYPE &&
+                activePage !== MAIN_PAGE_ID &&
+                mismoNombre(label, currentPage?.nombre)
+            ) {
+                label = CALL_FALLBACK_LABEL;
+            }
+
+
             const newNode = {
 
                 id: `${type}-${Date.now()}`,
@@ -219,7 +419,7 @@ function Flow({ active = true, onRun }) {
 
                 data: {
                     type,
-                    label: getNodeLabel(type),
+                    label,
                 },
 
             };
@@ -238,6 +438,8 @@ function Flow({ active = true, onRun }) {
             screenToFlowPosition,
             setNodes,
             takeSnapshot,
+            activePage,
+            currentPage,
         ]
     );
 
@@ -265,7 +467,7 @@ function Flow({ active = true, onRun }) {
                     edgeType={edgeType}
                     onEdgeTypeChange={changeEdgeType}
                     onRun={onRun}
-                    hasDiagram={nodes.length > 0 || edges.length > 0}
+                    hasDiagram={hasDiagram}
                 />
 
                 {/* Área de React Flow */}
@@ -274,57 +476,68 @@ function Flow({ active = true, onRun }) {
                     {/* Definición de las flechas de los conectores */}
                     <EdgeMarkers />
 
-                    <ReactFlow
-                        nodes={nodes}
-                        edges={edgesWithMarkers}
+                    <div className="diagram-canvas" ref={canvasRef}>
+                        <PageProvider value={pageContext}>
+                            <ReactFlow
+                                nodes={displayNodes}
+                                edges={edgesWithMarkers}
 
-                        onNodesChange={onNodesChange}
-                        onEdgesChange={onEdgesChange}
+                                onNodesChange={onNodesChange}
+                                onEdgesChange={onEdgesChange}
 
-                        onConnect={onConnect}
+                                onConnect={onConnect}
 
-                        // Historial: guardar antes de mover o borrar
-                        onNodeDragStart={takeSnapshot}
-                        onSelectionDragStart={takeSnapshot}
-                        onBeforeDelete={onBeforeDelete}
+                                // Historial: guardar antes de mover o borrar
+                                onNodeDragStart={takeSnapshot}
+                                onSelectionDragStart={takeSnapshot}
+                                onBeforeDelete={onBeforeDelete}
 
-                        onDragOver={onDragOver}
-                        onDrop={onDrop}
+                                onDragOver={onDragOver}
+                                onDrop={onDrop}
 
-                        nodeTypes={nodeTypes}
-                        defaultEdgeOptions={defaultEdgeOptions}
+                                nodeTypes={nodeTypes}
+                                defaultEdgeOptions={defaultEdgeOptions}
 
-                        deleteKeyCode={active ? "Delete" : null}
-                        colorMode={theme}
+                                deleteKeyCode={active ? "Delete" : null}
+                                colorMode={theme}
 
-                        // Click derecho + arrastrar: mover el lienzo
-                        panOnDrag={[2]}
-                        // Click izquierdo + arrastrar: selección múltiple
-                        selectionOnDrag
-                        selectionMode={SelectionMode.Partial}
-                        // Sin menú contextual del navegador al usar el click derecho
-                        onPaneContextMenu={preventContextMenu}
-                        onNodeContextMenu={preventContextMenu}
-                        onEdgeContextMenu={preventContextMenu}
-                        onSelectionContextMenu={preventContextMenu}
+                                // Click derecho + arrastrar: mover el lienzo
+                                panOnDrag={[2]}
+                                // Click izquierdo + arrastrar: selección múltiple
+                                selectionOnDrag
+                                selectionMode={SelectionMode.Partial}
+                                // Sin menú contextual del navegador al usar el click derecho
+                                onPaneContextMenu={preventContextMenu}
+                                onNodeContextMenu={preventContextMenu}
+                                onEdgeContextMenu={preventContextMenu}
+                                onSelectionContextMenu={preventContextMenu}
 
-                        fitView
-                    >
+                                fitView
+                            >
 
-                        <Background />
+                                <Background />
 
-                        <Controls />
+                                <Controls />
 
-                        <MiniMap
-                            pannable
-                            zoomable
-                            nodeClassName={(node) =>
-                                `minimap-node--${node.data?.type}`
-                            }
-                        />
+                                <MiniMap
+                                    pannable
+                                    zoomable
+                                    nodeClassName={(node) =>
+                                        `minimap-node--${node.data?.type}`
+                                    }
+                                />
 
 
-                    </ReactFlow>
+                            </ReactFlow>
+                        </PageProvider>
+                    </div>
+
+                    {/* Páginas: Main + subprocesos */}
+                    <PageBar
+                        pages={pages}
+                        activePage={activePage}
+                        onSelect={switchPage}
+                    />
 
                 </div>
 

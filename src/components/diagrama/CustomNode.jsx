@@ -81,8 +81,8 @@ export default function CustomNode({ id, data, selected }) {
 
     const isDecision = data.type === "decision";
 
-    // Nodo ancla: encabeza la página de su subproceso.
-    // Es el inicio (solo salida) y se renombra únicamente desde Main.
+    // Nodo ancla: encabeza la página de su variable de datos.
+    // Es el inicio (solo salida) y su nombre viene del Análisis Previo.
     const isAnchor = Boolean(data.anchorOf);
 
     const issue = nodeIssues?.[id];
@@ -166,7 +166,7 @@ export default function CustomNode({ id, data, selected }) {
             title={
                 issue ||
                 (isAnchor
-                    ? "Inicio del subproceso. Se renombra desde Main."
+                    ? "Inicio de la variable de datos. Su nombre se cambia en el Análisis Previo."
                     : undefined)
             }
         >

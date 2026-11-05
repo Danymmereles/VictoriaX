@@ -20,6 +20,10 @@ import "./VariablesPanel.css";
  * La última fila siempre está vacía: al escribir en
  * ella se crea una variable nueva (como una planilla).
  *
+ * Las variables de Datos NO están acá: son funciones de
+ * probabilidad con su propia pestaña (sus nombres llegan en
+ * `reservedNames` y no se pueden usar en la tabla).
+ *
  * Las variables del Análisis Previo llegan con nombre
  * fijo (no se renombran ni se borran acá): solo se
  * completa su valor inicial.
@@ -29,14 +33,14 @@ import "./VariablesPanel.css";
  * =====================================================
  */
 
-export default function VariablesPanel({ variables, onChange }) {
+export default function VariablesPanel({ variables, onChange, reservedNames = [] }) {
     // Id reservado para la fila vacía. Al convertirse en
     // variable conserva el id, así React mantiene el foco.
     const [draftId, setDraftId] = useState(nuevoIdVariable);
 
     const errores = useMemo(
-        () => validarVariables(variables),
-        [variables]
+        () => validarVariables(variables, { nombresReservados: reservedNames }),
+        [variables, reservedNames]
     );
 
     const updateVariable = (id, campo, valor) => {

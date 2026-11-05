@@ -6,13 +6,13 @@ import "./PageBar.css";
  * =====================================================
  * BARRA DE PÁGINAS (parte inferior del lienzo)
  * -----------------------------------------------------
- * Main + una página por cada nodo "Preparación" de Main.
- * Las páginas no se crean a mano: aparecen y se
- * renombran junto con sus nodos de Main (ver pages.js).
+ * Main + una página por cada variable de datos del
+ * Análisis Previo (funciones de probabilidad), donde se
+ * define su algoritmo. Ver pages.js.
  * =====================================================
  */
 
-function SubprocessIcon() {
+function FunctionIcon() {
     return (
         <svg viewBox="0 0 24 24" aria-hidden="true">
             <polygon points="6,5 18,5 22,12 18,19 6,19 2,12" />
@@ -41,7 +41,7 @@ export default function PageBar({ pages, activePage, onSelect }) {
                     const title = [
                         esMain
                             ? "Algoritmo principal"
-                            : "Subproceso definido por un nodo Preparación de Main",
+                            : `Variable de datos (función de probabilidad)${pagina.descripcion ? `: ${pagina.descripcion}` : ""}`,
                         pagina.duplicada && mensajeDuplicada(pagina),
                     ]
                         .filter(Boolean)
@@ -64,7 +64,7 @@ export default function PageBar({ pages, activePage, onSelect }) {
                                 .join(" ")}
                             onClick={() => onSelect(pagina.id)}
                         >
-                            {esMain ? <MainIcon /> : <SubprocessIcon />}
+                            {esMain ? <MainIcon /> : <FunctionIcon />}
 
                             <span className="page-tab-name">{pagina.nombre}</span>
 
@@ -80,7 +80,7 @@ export default function PageBar({ pages, activePage, onSelect }) {
 
             {pages.length === 1 && (
                 <span className="page-bar-hint">
-                    Cada nodo Preparación de Main crea su propia página
+                    Las variables de datos del Análisis Previo aparecen acá, cada una con su página
                 </span>
             )}
         </nav>

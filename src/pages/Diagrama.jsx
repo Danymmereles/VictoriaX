@@ -29,18 +29,21 @@ import DiagramaTabs, {
 import ExecutionView from "../components/diagrama/ExecutionView.jsx";
 import PageBar from "../components/diagrama/PageBar.jsx";
 import {
+    CALL_NODE_TYPE,
     MAIN_PAGE_ID,
-    SUBPROCESS_NODE_TYPE,
-    crearPaginaSubproceso,
+    crearPaginaFuncion,
     derivarPaginas,
     emptyPage,
-    mismoNombre,
+    nombreLlamadaPorDefecto,
     problemasDeNodos,
     sincronizarAncla,
     validarNombreNodo,
 } from "../components/diagrama/pages.js";
 import { PageProvider } from "../components/diagrama/PageContext.jsx";
-import { sincronizarConAnalisis } from "../components/diagrama/variables.js";
+import {
+    funcionesDeDatos,
+    sincronizarConAnalisis,
+} from "../components/diagrama/variables.js";
 import CustomNode from "../components/diagrama/CustomNode.jsx";
 import {
     DnDProvider,
@@ -61,13 +64,10 @@ const nodeTypes = {
 // Posición del lienzo para una página que se abre por primera vez
 const DEFAULT_VIEWPORT = { x: 0, y: 0, zoom: 1 };
 
-// Al abrir un subproceso por primera vez, su nodo ancla (inicio)
-// queda centrado arriba. Ancho del nodo Preparación: 160px.
+// Al abrir la página de una variable de datos por primera vez, su
+// nodo ancla (inicio) queda centrado arriba. Ancho del nodo: 160px.
 const ANCHOR_WIDTH = 160;
 const ANCHOR_TOP = 70;
-
-// Nombre por defecto de una llamada si choca con el subproceso actual
-const CALL_FALLBACK_LABEL = "Llamada";
 
 const deselect = (items) =>
     items.map((item) => (item.selected ? { ...item, selected: false } : item));
@@ -139,12 +139,26 @@ function Flow({ active = true, onRun }) {
 
     const [type] = useDnD();
 
-    // Variables del diagrama y sus valores iniciales.
-    // Arrancan con TODAS las del Análisis Previo (Datos,
-    // Control, Estado y Resultado), que se guarda en cada
-    // cambio y por eso está al día al "Pasar a Diagramar".
+    // Análisis Previo (se guarda en cada cambio, por eso está
+    // al día al "Pasar a Diagramar")
+    const [analisis] = useState(cargarAnalisis);
+
+    // Variables de datos = funciones de probabilidad: cada una
+    // tiene su página (no van en la tabla de valores iniciales)
+    const funciones = useMemo(
+        () => funcionesDeDatos(analisis),
+        [analisis]
+    );
+
+    const nombresDeFunciones = useMemo(
+        () => funciones.map((f) => f.nombre),
+        [funciones]
+    );
+
+    // Variables con valor inicial: Control, Estado y Resultado
+    // del Análisis Previo, más las que se agreguen a mano
     const [variables, setVariables] =
-        useState(() => sincronizarConAnalisis([], cargarAnalisis()));
+        useState(() => sincronizarConAnalisis([], analisis));
 
     // Tipo de conector global: aplica a todos los edges
     // de TODAS las páginas
@@ -153,15 +167,16 @@ function Flow({ active = true, onRun }) {
 
 
     // ---------------------------------------------------
-    // Páginas del algoritmo: Main + un subproceso por cada
-    // nodo Preparación (ver pages.js). React Flow muestra
-    // solo la página activa; las demás quedan guardadas acá.
+    // Páginas del algoritmo: Main + una por cada variable de
+    // datos (ver pages.js). React Flow muestra solo la página
+    // activa; las demás quedan guardadas acá.
     // ---------------------------------------------------
     const [activePage, setActivePage] =
         useState(MAIN_PAGE_ID);
 
     const pagesStoreRef = useRef({});
-    const [storeVersion, setStoreVersion] = useState(0);
+    // Fuerza un render al cambiar lo guardado (p. ej. hasDiagram)
+    const [, setStoreVersion] = useState(0);
 
     const applyEdgeTypeToStoredPages = useCallback((newType) => {
         const store = pagesStoreRef.current;
@@ -198,18 +213,10 @@ function Flow({ active = true, onRun }) {
     const { takeSnapshot } = history;
 
 
-    // Lista de páginas: sale de los nodos Preparación de Main
-    // (si Main es la activa se lee de React Flow, al día)
+    // Lista de páginas: Main + una por variable de datos
     const pages = useMemo(
-        () =>
-            derivarPaginas(
-                activePage === MAIN_PAGE_ID
-                    ? nodes
-                    : pagesStoreRef.current[MAIN_PAGE_ID]?.nodes
-            ),
-        // storeVersion: avisa que cambió lo guardado
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-        [nodes, activePage, storeVersion]
+        () => derivarPaginas(funciones),
+        [funciones]
     );
 
     const currentPage = useMemo(
@@ -226,7 +233,7 @@ function Flow({ active = true, onRun }) {
 
 
     // Contexto para los nodos: errores a marcar y validación
-    // de nombres (una llamada no puede ser al propio subproceso)
+    // de nombres (una variable no puede llamarse a sí misma)
     const nodeIssues = useMemo(
         () => problemasDeNodos({ nodes, pagina: currentPage, paginas: pages }),
         [nodes, currentPage, pages]
@@ -244,7 +251,7 @@ function Flow({ active = true, onRun }) {
     );
 
 
-    // Lienzo: para ubicar el nodo ancla al abrir un subproceso
+    // Lienzo: para ubicar el nodo ancla al abrir una variable
     const canvasRef = useRef(null);
 
 
@@ -264,14 +271,14 @@ function Flow({ active = true, onRun }) {
             const page = pages.find((p) => p.id === pageId);
             const width = canvasRef.current?.clientWidth ?? 0;
 
-            // Primera vez que se abre un subproceso: arranca con
+            // Primera vez que se abre una variable: arranca con
             // su nodo ancla, centrado arriba
             const target =
                 pagesStoreRef.current[pageId] ??
                 (pageId === MAIN_PAGE_ID || !page
                     ? emptyPage()
                     : {
-                        ...crearPaginaSubproceso(page),
+                        ...crearPaginaFuncion(page),
                         viewport: {
                             x: Math.max(width / 2 - ANCHOR_WIDTH / 2, 0),
                             y: ANCHOR_TOP,
@@ -299,8 +306,7 @@ function Flow({ active = true, onRun }) {
     );
 
 
-    // Si la página activa deja de existir (se deshizo o
-    // borró su nodo Preparación), volver a Main
+    // Si la página activa deja de existir, volver a Main
     useEffect(() => {
         if (!pages.some((page) => page.id === activePage)) {
             switchPage(MAIN_PAGE_ID);
@@ -399,17 +405,16 @@ function Flow({ active = true, onRun }) {
                 });
 
 
-            // En un subproceso, una llamada no puede tener el
-            // nombre del propio subproceso
-            let label = getNodeLabel(type);
-
-            if (
-                type === SUBPROCESS_NODE_TYPE &&
-                activePage !== MAIN_PAGE_ID &&
-                mismoNombre(label, currentPage?.nombre)
-            ) {
-                label = CALL_FALLBACK_LABEL;
-            }
+            // Una llamada (Preparación) nueva arranca con el nombre de
+            // una variable de datos que se pueda llamar desde acá
+            const label =
+                type === CALL_NODE_TYPE
+                    ? nombreLlamadaPorDefecto({
+                        pagina: currentPage,
+                        paginas: pages,
+                        generico: getNodeLabel(type),
+                    })
+                    : getNodeLabel(type);
 
 
             const newNode = {
@@ -441,8 +446,8 @@ function Flow({ active = true, onRun }) {
             screenToFlowPosition,
             setNodes,
             takeSnapshot,
-            activePage,
             currentPage,
+            pages,
         ]
     );
 
@@ -535,7 +540,7 @@ function Flow({ active = true, onRun }) {
                         </PageProvider>
                     </div>
 
-                    {/* Páginas: Main + subprocesos */}
+                    {/* Páginas: Main + variables de datos */}
                     <PageBar
                         pages={pages}
                         activePage={activePage}
@@ -548,6 +553,7 @@ function Flow({ active = true, onRun }) {
                 <VariablesPanel
                     variables={variables}
                     onChange={setVariables}
+                    reservedNames={nombresDeFunciones}
                 />
 
             </div>

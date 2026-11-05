@@ -36,8 +36,15 @@ export function valorNumerico(valor) {
  * Devuelve los errores por variable:
  *   { [id]: { nombre?: string, valorInicial?: string } }
  * Una variable sin errores no aparece en el resultado.
+ *
+ * nombresReservados: nombres que no se pueden usar en la tabla
+ * (las variables de datos, que son funciones de probabilidad).
  */
-export function validarVariables(variables) {
+export function validarVariables(variables, { nombresReservados = [] } = {}) {
+    const reservados = new Set(
+        nombresReservados.map((n) => String(n).trim().toUpperCase())
+    );
+
     const errores = {};
 
     const agregar = (id, campo, mensaje) => {
@@ -67,6 +74,12 @@ export function validarVariables(variables) {
             );
         } else if (repeticiones[nombre.toUpperCase()] > 1) {
             agregar(v.id, "nombre", `La variable "${nombre}" está repetida.`);
+        } else if (reservados.has(nombre.toUpperCase())) {
+            agregar(
+                v.id,
+                "nombre",
+                `"${nombre}" es una variable de datos: se define en su propia pestaña.`
+            );
         }
 
         if (!valor) {
@@ -134,10 +147,24 @@ export function variablesDesdeAnalisis(analisis) {
     return resultado;
 }
 
+export const esVariableDeDatos = (variable) => variable.origen === "datos";
+
 /*
- * Combina las variables actuales del diagrama con las del
- * Análisis Previo:
- *   - las del análisis van primero y conservan el valor
+ * Variables de datos del Análisis Previo. Son funciones de
+ * probabilidad: no van en la tabla de valores iniciales, sino
+ * que cada una tiene su pestaña para definir su algoritmo.
+ *   [{ id, nombre, descripcion }]
+ */
+export function funcionesDeDatos(analisis) {
+    return variablesDesdeAnalisis(analisis)
+        .filter(esVariableDeDatos)
+        .map(({ id, nombre, descripcion }) => ({ id, nombre, descripcion }));
+}
+
+/*
+ * Variables de la tabla del diagrama (con valor inicial):
+ *   - las del análisis (Control, Estado y Resultado; las de Datos
+ *     NO, ver funcionesDeDatos) van primero y conservan el valor
  *     inicial que el usuario ya les había puesto;
  *   - las agregadas a mano en el diagrama se mantienen.
  */
@@ -146,10 +173,13 @@ export function sincronizarConAnalisis(actuales, analisis) {
         actuales.map((v) => [v.nombre.trim().toUpperCase(), v.valorInicial])
     );
 
-    const importadas = variablesDesdeAnalisis(analisis).map((v) => ({
-        ...v,
-        valorInicial: valoresPrevios.get(v.nombre.toUpperCase()) ?? v.valorInicial,
-    }));
+    const importadas = variablesDesdeAnalisis(analisis)
+        .filter((v) => !esVariableDeDatos(v))
+        .map((v) => ({
+            ...v,
+            valorInicial:
+                valoresPrevios.get(v.nombre.toUpperCase()) ?? v.valorInicial,
+        }));
 
     const propias = actuales.filter((v) => !esImportada(v));
 

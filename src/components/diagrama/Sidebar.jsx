@@ -15,6 +15,12 @@ const PREVIEW_SIZES = {
     io: [46, 34],
     preparation: [46, 34],
     connector: [34, 34],
+    random: [34, 34],
+};
+
+// Detalles de figura propios de la barra lateral
+const PREVIEW_OPTIONS = {
+    random: { centerPip: true },
 };
 
 function SidebarItem({ type, label }) {
@@ -35,7 +41,12 @@ function SidebarItem({ type, label }) {
             aria-label={label}
         >
             <div className="sidebar-preview">
-                <FlowShape type={type} width={width} height={height} />
+                <FlowShape
+                    type={type}
+                    width={width}
+                    height={height}
+                    options={PREVIEW_OPTIONS[type]}
+                />
 
                 {type === "connector" && (
                     <span className="sidebar-preview-letter">A</span>
@@ -67,6 +78,7 @@ export default function Sidebar({ edgeType, onEdgeTypeChange, onRun, hasDiagram 
                 <SidebarItem type="io" label="Entrada / Salida" />
                 <SidebarItem type="preparation" label="Preparación" />
                 <SidebarItem type="connector" label="Conector" />
+                <SidebarItem type="random" label="Random (número entre 0 y 1)" />
             </div>
 
             {/* Ejecutar: abre la vista de ejecución */}

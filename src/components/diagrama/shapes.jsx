@@ -90,6 +90,43 @@ const SHAPES = {
     connector: (w, h, s) => (
         <ellipse cx={w / 2} cy={h / 2} rx={(w - s) / 2} ry={(h - s) / 2} />
     ),
+
+    // Dado (función random): cara del 5. En el lienzo el punto central
+    // se reemplaza por el texto del nodo; en la barra lateral se dibuja.
+    random: (w, h, s, { centerPip = false } = {}) => {
+        const lado = Math.min(w, h);
+        const r = Math.max(lado * 0.065, 2);
+        const inset = lado * 0.25;
+
+        const pips = [
+            [inset, inset],
+            [w - inset, inset],
+            [inset, h - inset],
+            [w - inset, h - inset],
+            ...(centerPip ? [[w / 2, h / 2]] : []),
+        ];
+
+        return (
+            <>
+                <rect
+                    x={s / 2}
+                    y={s / 2}
+                    width={w - s}
+                    height={h - s}
+                    rx={lado * 0.18}
+                />
+                {pips.map(([cx, cy]) => (
+                    <circle
+                        key={`${cx}-${cy}`}
+                        className="flow-shape__pip"
+                        cx={cx}
+                        cy={cy}
+                        r={r}
+                    />
+                ))}
+            </>
+        );
+    },
 };
 
 export function FlowShape({
@@ -98,6 +135,8 @@ export function FlowShape({
     height,
     strokeWidth = STROKE_WIDTH,
     className = "",
+    // Detalles opcionales de algunas figuras (p. ej. { centerPip } del dado)
+    options,
 }) {
     const draw = SHAPES[type] ?? SHAPES.process;
 
@@ -114,7 +153,7 @@ export function FlowShape({
             strokeWidth={strokeWidth}
             aria-hidden="true"
         >
-            {draw(width, height, strokeWidth)}
+            {draw(width, height, strokeWidth, options)}
         </svg>
     );
 }

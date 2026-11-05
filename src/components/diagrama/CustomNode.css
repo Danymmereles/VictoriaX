@@ -171,6 +171,13 @@
     padding: 6px;
 }
 
+/* Dado: el texto ocupa el lugar del punto central */
+.flow-node--random {
+    min-width: 88px;
+    min-height: 88px;
+    padding: 24px 16px;
+}
+
 
 /* =====================================================
    EDICIÓN DE TEXTO

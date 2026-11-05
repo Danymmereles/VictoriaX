@@ -82,6 +82,16 @@
 .sidebar-footer {
     margin-top: auto;
     padding-top: 16px;
+
+    /* Siempre visible: si la barra scrollea (ventanas
+       bajas), el botón queda fijo al pie */
+    position: sticky;
+    bottom: -20px;
+    padding-bottom: 20px;
+    margin-bottom: -20px;
+
+    background: var(--dg-sidebar-bg);
+    transition: background-color 0.2s;
 }
 
 .run-button {

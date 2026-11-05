@@ -106,6 +106,9 @@ function getNodeLabel(type) {
         case "connector":
             return "A";
 
+        case "random":
+            return "Random";
+
         default:
             return "Nodo";
     }

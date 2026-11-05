@@ -35,3 +35,14 @@
     fill: var(--dg-green-fill);
     stroke: var(--dg-green-stroke);
 }
+
+.flow-shape--random {
+    fill: var(--dg-pink-fill);
+    stroke: var(--dg-pink-stroke);
+}
+
+/* Puntos del dado: del color del contorno, sin borde */
+.flow-shape--random .flow-shape__pip {
+    fill: var(--dg-pink-stroke);
+    stroke: none;
+}

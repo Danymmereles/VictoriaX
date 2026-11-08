@@ -1,24 +1,129 @@
-import { useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
     Handle,
     Position,
     useReactFlow,
 } from "@xyflow/react";
 
+import { FlowShape } from "./shapes";
+import { useHistory } from "./HistoryContext";
+import { usePageContext } from "./PageContext";
 import "./CustomNode.css";
 
-export default function CustomNode({ id, data }) {
+/*
+ * Mide el tamaño real del nodo (sin el zoom del lienzo)
+ * para dibujar el SVG a escala 1:1. Así el contorno
+ * mide lo mismo en todas las figuras, aunque el nodo
+ * crezca por un texto largo.
+ */
+function useNodeSize(ref) {
+    const [size, setSize] = useState(null);
+
+    useLayoutEffect(() => {
+        const element = ref.current;
+
+        if (!element) {
+            return;
+        }
+
+        const measure = () => {
+            setSize((current) => {
+                const width = element.offsetWidth;
+                const height = element.offsetHeight;
+
+                if (current?.width === width && current?.height === height) {
+                    return current;
+                }
+
+                return { width, height };
+            });
+        };
+
+        measure();
+
+        const observer = new ResizeObserver(measure);
+        observer.observe(element);
+
+        return () => observer.disconnect();
+    }, [ref]);
+
+    return size;
+}
+
+// Tiempo que se muestra el aviso de un nombre rechazado
+const NOTICE_MS = 2800;
+
+export default function CustomNode({ id, data, selected }) {
     const { setNodes } = useReactFlow();
+    const { takeSnapshot } = useHistory();
+    const { nodeIssues, validateLabel } = usePageContext();
+
+    const nodeRef = useRef(null);
+    const size = useNodeSize(nodeRef);
 
     const [editing, setEditing] = useState(false);
     const [text, setText] = useState(data.label);
 
+    // Evita guardar dos veces (Enter + blur al desmontar el input)
+    const editingRef = useRef(false);
+
+    // Aviso breve cuando un nombre se rechaza
+    const [notice, setNotice] = useState(null);
+
+    useEffect(() => {
+        if (!notice) {
+            return undefined;
+        }
+
+        const timer = setTimeout(() => setNotice(null), NOTICE_MS);
+        return () => clearTimeout(timer);
+    }, [notice]);
+
+    const isDecision = data.type === "decision";
+
+    // Nodo ancla: encabeza la página de su variable de datos.
+    // Es el inicio (solo salida) y su nombre viene del Análisis Previo.
+    const isAnchor = Boolean(data.anchorOf);
+
+    const issue = nodeIssues?.[id];
+
     const startEditing = () => {
+        if (isAnchor) {
+            return;
+        }
+
+        setText(data.label);
+        editingRef.current = true;
         setEditing(true);
     };
 
-    const saveText = () => {
+    const stopEditing = () => {
+        editingRef.current = false;
         setEditing(false);
+    };
+
+    const saveText = () => {
+        if (!editingRef.current) {
+            return;
+        }
+
+        stopEditing();
+
+        const newLabel = text.trim() || data.label;
+
+        if (newLabel === data.label) {
+            return;
+        }
+
+        const rejection = validateLabel?.({ data, nombre: newLabel });
+
+        if (rejection) {
+            setText(data.label);
+            setNotice(rejection);
+            return;
+        }
+
+        takeSnapshot();
 
         setNodes((nodes) =>
             nodes.map((node) =>
@@ -27,7 +132,7 @@ export default function CustomNode({ id, data }) {
                         ...node,
                         data: {
                             ...node.data,
-                            label: text.trim() || data.label,
+                            label: newLabel,
                         },
                     }
                     : node
@@ -42,247 +147,116 @@ export default function CustomNode({ id, data }) {
 
         if (event.key === "Escape") {
             setText(data.label);
-            setEditing(false);
+            stopEditing();
         }
     };
 
-    const editableContent = (
-        <>
-            {editing ? (
-                <input
-                    autoFocus
-                    value={text}
-                    onChange={(event) => setText(event.target.value)}
-                    onBlur={saveText}
-                    onKeyDown={handleKeyDown}
-                    className="node-edit-input"
-                />
-            ) : (
-                <span onDoubleClick={startEditing}>
-          {data.label}
-        </span>
-            )}
-        </>
-    );
-
-    /*
-     * =========================
-     * DECISIÓN
-     * =========================
-     */
-
-    if (data.type === "decision") {
-        return (
-            <div className="decision-node">
-
-                <Handle
-                    type="target"
-                    position={Position.Top}
-                    id="input"
-                    className="decision-handle decision-handle-top"
-                />
-
-                <div className="decision-shape">
-                    <div className="decision-content">
-                        {editableContent}
-                    </div>
-                </div>
-
-                <Handle
-                    type="source"
-                    position={Position.Right}
-                    id="yes"
-                    className="decision-handle decision-handle-right"
-                />
-
-                <Handle
-                    type="source"
-                    position={Position.Left}
-                    id="no"
-                    className="decision-handle decision-handle-left"
-                />
-
-                <span className="decision-label decision-label-yes">
-          SI
-        </span>
-
-                <span className="decision-label decision-label-no">
-          NO
-        </span>
-
-            </div>
-        );
-    }
-
-    /*
-     * =========================
-     * DOCUMENTO
-     * =========================
-     */
-
-    if (data.type === "document") {
-        return (
-            <div className="special-node document-node">
-
-                <Handle
-                    type="target"
-                    position={Position.Top}
-                />
-
-                <svg
-                    className="document-shape"
-                    viewBox="0 0 160 90"
-                    preserveAspectRatio="none"
-                >
-                    <path
-                        d="
-              M 4 4
-              H 156
-              V 65
-              C 140 78, 125 78, 110 68
-              C 95 58, 80 58, 65 68
-              C 45 82, 25 76, 4 62
-              Z
-            "
-                    />
-                </svg>
-
-                <div className="document-content">
-                    {editableContent}
-                </div>
-
-                <Handle
-                    type="source"
-                    position={Position.Bottom}
-                />
-
-            </div>
-        );
-    }
-
-    /*
-     * =========================
-     * INPUT / OUTPUT
-     * =========================
-     */
-
-    if (data.type === "io") {
-        return (
-            <div className="special-node io-node">
-
-                <Handle
-                    type="target"
-                    position={Position.Top}
-                />
-
-                <svg
-                    className="io-shape"
-                    viewBox="0 0 160 80"
-                    preserveAspectRatio="none"
-                >
-                    <polygon points="25,3 157,3 135,77 3,77" />
-                </svg>
-
-                <div className="io-content">
-                    {editableContent}
-                </div>
-
-                <Handle
-                    type="source"
-                    position={Position.Bottom}
-                />
-
-            </div>
-        );
-    }
-
-    /*
-     * =========================
-     * PREPARACIÓN
-     * =========================
-     */
-
-    if (data.type === "preparation") {
-        return (
-            <div className="special-node preparation-node">
-
-                <Handle
-                    type="target"
-                    position={Position.Top}
-                />
-
-                <svg
-                    className="preparation-shape"
-                    viewBox="0 0 160 80"
-                    preserveAspectRatio="none"
-                >
-                    <polygon points="25,3 135,3 157,40 135,77 25,77 3,40" />
-                </svg>
-
-                <div className="preparation-content">
-                    {editableContent}
-                </div>
-
-                <Handle
-                    type="source"
-                    position={Position.Bottom}
-                />
-
-            </div>
-        );
-    }
-
-    /*
-     * =========================
-     * CONECTOR
-     * =========================
-     */
-
-    if (data.type === "connector") {
-        return (
-            <div className="special-node connector-node">
-
-                <Handle
-                    type="target"
-                    position={Position.Top}
-                />
-
-                <div className="connector-shape">
-                    {editableContent}
-                </div>
-
-                <Handle
-                    type="source"
-                    position={Position.Bottom}
-                />
-
-            </div>
-        );
-    }
-
-    /*
-     * =========================
-     * NODOS EXISTENTES
-     * =========================
-     */
-
     return (
-        <div className={`custom-node node-${data.type}`}>
+        <div
+            ref={nodeRef}
+            className={[
+                "flow-node",
+                `flow-node--${data.type}`,
+                selected && "is-selected",
+                isAnchor && "is-anchor",
+                issue && "has-issue",
+            ]
+                .filter(Boolean)
+                .join(" ")}
+            title={
+                issue ||
+                (isAnchor
+                    ? "Inicio de la variable de datos. Su nombre se cambia en el Análisis Previo."
+                    : undefined)
+            }
+        >
+            {isAnchor && (
+                <span className="flow-node__badge" aria-hidden="true">
+                    Inicio
+                </span>
+            )}
 
-            <Handle
-                type="target"
-                position={Position.Top}
-            />
+            {size && (
+                <FlowShape
+                    type={data.type}
+                    width={size.width}
+                    height={size.height}
+                    className="flow-node__shape"
+                />
+            )}
 
-            <div className="node-content">
-                {editableContent}
+            {/* El ancla es el inicio: no recibe conexiones */}
+            {!isAnchor && (
+                <Handle
+                    type="target"
+                    position={Position.Top}
+                    id={isDecision ? "input" : undefined}
+                    className={isDecision ? "decision-handle" : undefined}
+                />
+            )}
+
+            {/*
+              * Al editar, el texto sigue en su lugar (invisible) y es
+              * el que define el tamaño del nodo; el input se superpone
+              * encima sin ocupar espacio. Así la figura no se deforma.
+              */}
+            <div className="flow-node__label">
+                <span
+                    className={`flow-node__text ${editing ? "is-editing" : ""}`}
+                    onDoubleClick={startEditing}
+                >
+                    {editing ? text || "\u00a0" : data.label}
+                </span>
+
+                {editing && (
+                    <input
+                        autoFocus
+                        value={text}
+                        onChange={(event) => setText(event.target.value)}
+                        onBlur={saveText}
+                        onKeyDown={handleKeyDown}
+                        className="node-edit-input nodrag"
+                        aria-label="Texto del nodo"
+                    />
+                )}
             </div>
 
-            <Handle
-                type="source"
-                position={Position.Bottom}
-            />
+            {isDecision ? (
+                <>
+                    <Handle
+                        type="source"
+                        position={Position.Right}
+                        id="yes"
+                        className="decision-handle"
+                    />
 
+                    <Handle
+                        type="source"
+                        position={Position.Left}
+                        id="no"
+                        className="decision-handle"
+                    />
+
+                    <span className="decision-label decision-label-yes">
+                        SI
+                    </span>
+
+                    <span className="decision-label decision-label-no">
+                        NO
+                    </span>
+                </>
+            ) : (
+                <Handle
+                    type="source"
+                    position={Position.Bottom}
+                />
+            )}
+
+            {notice && (
+                <span className="flow-node__notice" role="alert">
+                    {notice}
+                </span>
+            )}
         </div>
     );
 }

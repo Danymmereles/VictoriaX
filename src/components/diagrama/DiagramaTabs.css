@@ -1,0 +1,84 @@
+/* =====================================================
+   PESTAÑAS (Diagrama / Ejecución)
+   Colores desde DiagramaTheme.css
+   ===================================================== */
+
+.diagram-tabs {
+    display: flex;
+    gap: 4px;
+
+    padding: 0 16px;
+}
+
+.diagram-tab {
+    position: relative;
+
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+
+    padding: 10px 14px;
+
+    background: transparent;
+    border: none;
+
+    font: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--dg-tab-text);
+
+    cursor: pointer;
+
+    transition: color 0.2s;
+}
+
+.diagram-tab svg {
+    width: 16px;
+    height: 16px;
+
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* El ícono de "play" va relleno, como el botón Ejecutar */
+.diagram-tab svg path:only-child {
+    fill: currentColor;
+}
+
+.diagram-tab:hover {
+    color: var(--dg-tab-text-active);
+}
+
+/* Línea inferior de la pestaña activa */
+.diagram-tab::after {
+    content: "";
+
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    bottom: -1px;
+
+    height: 2px;
+    border-radius: 2px;
+
+    background: transparent;
+
+    transition: background-color 0.2s;
+}
+
+.diagram-tab.is-active {
+    color: var(--dg-tab-text-active);
+}
+
+.diagram-tab.is-active::after {
+    background: var(--dg-accent);
+}
+
+.diagram-tab:focus-visible {
+    outline: 2px solid var(--dg-accent);
+    outline-offset: -4px;
+    border-radius: 8px;
+}

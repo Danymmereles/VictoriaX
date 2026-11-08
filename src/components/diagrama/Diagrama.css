@@ -1,75 +1,117 @@
 /* =========================================
-   CONTENEDOR GENERAL DE LA PÁGINA
+   PÁGINA DEL DIAGRAMA (pantalla completa)
+   Solo el editor: pestañas arriba y el resto
+   del alto para las vistas. Sin scroll.
    ========================================= */
 
 .diagram-page {
     width: 100%;
-    padding-top: 0;
-    padding-bottom: 60px;
+    height: 100vh;
+    height: 100dvh;
+
+    display: flex;
+    flex-direction: column;
+
+    overflow: hidden;
     box-sizing: border-box;
 }
 
+
+/* =========================================
+   BARRA SUPERIOR
+   Pestañas a la izquierda, modo claro/oscuro
+   a la derecha (ThemeToggle de la app).
+   ========================================= */
+
+.diagram-topbar {
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: stretch;
+    justify-content: space-between;
+
+    padding-right: 16px;
+
+    background: var(--dg-sidebar-bg);
+
+    transition: background-color 0.2s;
+}
+
+.diagram-topbar .diagram-theme-toggle {
+    align-self: center;
+    flex-shrink: 0;
+
+    /* Un poco más chico que en la barra del sitio,
+       para no agrandar la franja de pestañas */
+    width: 34px;
+    height: 34px;
+}
+
+
+/* =========================================
+   VISTAS (Diagrama / Ejecución)
+   El editor nunca se desmonta: se oculta con
+   visibility para conservar medidas y estado.
+   ========================================= */
+
+.diagram-views {
+    position: relative;
+
+    flex: 1;
+    min-height: 0;
+}
+
+.diagram-view {
+    height: 100%;
+}
+
+.diagram-view.is-hidden {
+    visibility: hidden;
+}
+
+.diagram-view--overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+
+    border-top: 1px solid hsl(var(--border));
+}
+
+
 /* =========================================
    CONTENEDOR DEL EDITOR
+   Sidebar | lienzo | VariablesPanel
    ========================================= */
 
 .diagram-flow-container {
     width: 100%;
-    height: 650px;
+    height: 100%;
+
     display: flex;
+
+    border-top: 1px solid hsl(var(--border));
     box-sizing: border-box;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 
 /* =========================================
    ÁREA DE REACT FLOW
+   Lienzo arriba, barra de páginas abajo
    ========================================= */
 
 .diagram-flow-area {
     flex: 1;
     height: 100%;
     min-width: 0;
-}
 
-
-/* =========================================
-   BOTÓN VOLVER
-   ========================================= */
-
-.diagram-footer-action {
     display: flex;
-    justify-content: center;
-    margin-top: 30px;
+    flex-direction: column;
 }
 
-
-.diagram-back-button {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 12px 24px;
-    border: 1px solid hsl(var(--border));
-    border-radius: 9999px;
-    color: inherit;
-    text-decoration: none;
-    font-size: 14px;
-    transition:
-            border-color 0.2s ease,
-            background-color 0.2s ease;
+.diagram-canvas {
+    flex: 1;
+    min-height: 0;
 }
-
-
-.diagram-back-button:hover {
-    border-color: #AF9BEF;
-    background-color: rgba(175, 155, 239, 0.05);
-}
-
-
-/* =========================================
-   REACT FLOW
-   ========================================= */
 
 .diagram-flow-area .react-flow {
     width: 100%;
@@ -82,5 +124,5 @@
    ========================================= */
 
 .diagram-flow-area .react-flow__minimap {
-    border: 1px solid rgba(128, 128, 128, 0.25);
+    border: 1px solid hsl(var(--border));
 }

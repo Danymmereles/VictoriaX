@@ -1,13 +1,12 @@
-import React, { useCallback } from "react";
-import { Link } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
-import NavBar from "@/components/home/NavBar";
-import Footer from "@/components/home/Footer";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import useTheme from "../hooks/useTheme";
+import ThemeToggle from "@/components/theme/ThemeToggle";
+import { cargarAnalisis } from "@/lib/analisisPrevioStorage";
 
 import {
     ReactFlow,
     ReactFlowProvider,
+    SelectionMode,
     Background,
     Controls,
     MiniMap,
@@ -20,17 +19,63 @@ import {
 import "@xyflow/react/dist/style.css";
 
 import Sidebar from "../components/diagrama/Sidebar.jsx";
+import VariablesPanel from "../components/diagrama/VariablesPanel.jsx";
+import EdgeMarkers, { withEdgeMarkers } from "../components/diagrama/EdgeMarkers.jsx";
+import DiagramaTabs, {
+    VISTAS,
+    panelId,
+    tabId,
+} from "../components/diagrama/DiagramaTabs.jsx";
+import ExecutionView from "../components/diagrama/ExecutionView.jsx";
+import PageBar from "../components/diagrama/PageBar.jsx";
+import {
+    CALL_NODE_TYPE,
+    MAIN_PAGE_ID,
+    crearPaginaFuncion,
+    derivarPaginas,
+    emptyPage,
+    nombreLlamadaPorDefecto,
+    problemasDeNodos,
+    sincronizarAncla,
+    validarNombreNodo,
+} from "../components/diagrama/pages.js";
+import { PageProvider } from "../components/diagrama/PageContext.jsx";
+import {
+    funcionesDeDatos,
+    sincronizarConAnalisis,
+} from "../components/diagrama/variables.js";
 import CustomNode from "../components/diagrama/CustomNode.jsx";
 import {
     DnDProvider,
     useDnD,
 } from "../components/diagrama/DnDContext.jsx";
+import useUndoRedo from "../components/diagrama/useUndoRedo.js";
+import { HistoryProvider } from "../components/diagrama/HistoryContext.jsx";
 
+import "../components/diagrama/DiagramaTheme.css";
 import "../components/diagrama/Diagrama.css";
 
 
 const nodeTypes = {
     custom: CustomNode,
+};
+
+
+// Posición del lienzo para una página que se abre por primera vez
+const DEFAULT_VIEWPORT = { x: 0, y: 0, zoom: 1 };
+
+// Al abrir la página de una variable de datos por primera vez, su
+// nodo ancla (inicio) queda centrado arriba. Ancho del nodo: 160px.
+const ANCHOR_WIDTH = 160;
+const ANCHOR_TOP = 70;
+
+const deselect = (items) =>
+    items.map((item) => (item.selected ? { ...item, selected: false } : item));
+
+
+// El click derecho se usa para mover el lienzo
+const preventContextMenu = (event) => {
+    event.preventDefault();
 };
 
 
@@ -61,13 +106,22 @@ function getNodeLabel(type) {
         case "connector":
             return "A";
 
+        case "random":
+            return "Random";
+
         default:
             return "Nodo";
     }
 }
 
 
-function Flow() {
+/*
+ * Editor del diagrama.
+ *   active: false cuando hay otra vista abierta (Ejecución):
+ *           se desactivan Supr y los atajos de Deshacer/Rehacer.
+ *   onRun:  botón Ejecutar de la barra lateral.
+ */
+function Flow({ active = true, onRun }) {
 
     const [nodes, setNodes, onNodesChange] =
         useNodesState([]);
@@ -75,20 +129,251 @@ function Flow() {
     const [edges, setEdges, onEdgesChange] =
         useEdgesState([]);
 
-    const { screenToFlowPosition } =
-        useReactFlow();
+    const {
+        screenToFlowPosition,
+        getNodes,
+        getEdges,
+        getViewport,
+        setViewport,
+    } = useReactFlow();
 
     const [type] = useDnD();
+
+    // Análisis Previo (se guarda en cada cambio, por eso está
+    // al día al "Pasar a Diagramar")
+    const [analisis] = useState(cargarAnalisis);
+
+    // Variables de datos = funciones de probabilidad: cada una
+    // tiene su página (no van en la tabla de valores iniciales)
+    const funciones = useMemo(
+        () => funcionesDeDatos(analisis),
+        [analisis]
+    );
+
+    const nombresDeFunciones = useMemo(
+        () => funciones.map((f) => f.nombre),
+        [funciones]
+    );
+
+    // Variables con valor inicial: Control, Estado y Resultado
+    // del Análisis Previo, más las que se agreguen a mano
+    const [variables, setVariables] =
+        useState(() => sincronizarConAnalisis([], analisis));
+
+    // Tipo de conector global: aplica a todos los edges
+    // de TODAS las páginas
+    const [edgeType, setEdgeType] =
+        useState("default");
+
+
+    // ---------------------------------------------------
+    // Páginas del algoritmo: Main + una por cada variable de
+    // datos (ver pages.js). React Flow muestra solo la página
+    // activa; las demás quedan guardadas acá.
+    // ---------------------------------------------------
+    const [activePage, setActivePage] =
+        useState(MAIN_PAGE_ID);
+
+    const pagesStoreRef = useRef({});
+    // Fuerza un render al cambiar lo guardado (p. ej. hasDiagram)
+    const [, setStoreVersion] = useState(0);
+
+    const applyEdgeTypeToStoredPages = useCallback((newType) => {
+        const store = pagesStoreRef.current;
+
+        Object.keys(store).forEach((pageId) => {
+            store[pageId] = {
+                ...store[pageId],
+                edges: store[pageId].edges.map((edge) => ({
+                    ...edge,
+                    type: newType,
+                })),
+            };
+        });
+    }, []);
+
+
+    // Historial (Deshacer / Rehacer): uno por página.
+    // También guarda el tipo de conector para que el
+    // selector vuelva atrás.
+    const history = useUndoRedo({
+        scope: activePage,
+        shortcutsEnabled: active,
+        getMeta: () => ({ edgeType }),
+        onRestore: (snapshot) => {
+            const restoredType = snapshot.meta?.edgeType;
+
+            if (restoredType && restoredType !== edgeType) {
+                setEdgeType(restoredType);
+                applyEdgeTypeToStoredPages(restoredType);
+            }
+        },
+    });
+
+    const { takeSnapshot } = history;
+
+
+    // Lista de páginas: Main + una por variable de datos
+    const pages = useMemo(
+        () => derivarPaginas(funciones),
+        [funciones]
+    );
+
+    const currentPage = useMemo(
+        () => pages.find((page) => page.id === activePage),
+        [pages, activePage]
+    );
+
+
+    // El nodo ancla siempre muestra el nombre del nodo de Main
+    const displayNodes = useMemo(
+        () => sincronizarAncla(nodes, currentPage),
+        [nodes, currentPage]
+    );
+
+
+    // Contexto para los nodos: errores a marcar y validación
+    // de nombres (una variable no puede llamarse a sí misma)
+    const nodeIssues = useMemo(
+        () => problemasDeNodos({ nodes, pagina: currentPage, paginas: pages }),
+        [nodes, currentPage, pages]
+    );
+
+    const validateLabel = useCallback(
+        ({ data, nombre }) =>
+            validarNombreNodo({ data, nombre, pagina: currentPage }),
+        [currentPage]
+    );
+
+    const pageContext = useMemo(
+        () => ({ page: currentPage, nodeIssues, validateLabel }),
+        [currentPage, nodeIssues, validateLabel]
+    );
+
+
+    // Lienzo: para ubicar el nodo ancla al abrir una variable
+    const canvasRef = useRef(null);
+
+
+    // Cambiar de página: guardar la actual y cargar la otra
+    const switchPage = useCallback(
+        (pageId) => {
+            if (pageId === activePage) {
+                return;
+            }
+
+            pagesStoreRef.current[activePage] = {
+                nodes: getNodes(),
+                edges: getEdges(),
+                viewport: getViewport(),
+            };
+
+            const page = pages.find((p) => p.id === pageId);
+            const width = canvasRef.current?.clientWidth ?? 0;
+
+            // Primera vez que se abre una variable: arranca con
+            // su nodo ancla, centrado arriba
+            const target =
+                pagesStoreRef.current[pageId] ??
+                (pageId === MAIN_PAGE_ID || !page
+                    ? emptyPage()
+                    : {
+                        ...crearPaginaFuncion(page),
+                        viewport: {
+                            x: Math.max(width / 2 - ANCHOR_WIDTH / 2, 0),
+                            y: ANCHOR_TOP,
+                            zoom: 1,
+                        },
+                    });
+
+            setNodes(deselect(target.nodes));
+            setEdges(deselect(target.edges));
+            setViewport(target.viewport ?? DEFAULT_VIEWPORT);
+
+            setActivePage(pageId);
+            setStoreVersion((v) => v + 1);
+        },
+        [
+            activePage,
+            pages,
+            getNodes,
+            getEdges,
+            getViewport,
+            setNodes,
+            setEdges,
+            setViewport,
+        ]
+    );
+
+
+    // Si la página activa deja de existir, volver a Main
+    useEffect(() => {
+        if (!pages.some((page) => page.id === activePage)) {
+            switchPage(MAIN_PAGE_ID);
+        }
+    }, [pages, activePage, switchPage]);
+
+
+    // ¿Hay algo dibujado en alguna página?
+    const hasDiagram =
+        nodes.length > 0 ||
+        edges.length > 0 ||
+        Object.entries(pagesStoreRef.current).some(
+            ([pageId, page]) =>
+                pageId !== activePage && page.nodes.length > 0
+        );
+
+
+    // Cambiar el tipo de todos los conectores existentes
+    // (en todas las páginas)
+    const changeEdgeType = useCallback(
+        (newType) => {
+            if (newType === edgeType) {
+                return;
+            }
+
+            takeSnapshot();
+            setEdgeType(newType);
+            applyEdgeTypeToStoredPages(newType);
+
+            setEdges((currentEdges) =>
+                currentEdges.map((edge) => ({
+                    ...edge,
+                    type: newType,
+                }))
+            );
+        },
+        [setEdges, edgeType, takeSnapshot, applyEdgeTypeToStoredPages]
+    );
+
+
+    // Todos los conectores terminan en flecha (markerEnd)
+    const edgesWithMarkers = useMemo(
+        () => withEdgeMarkers(edges),
+        [edges]
+    );
+
+
+    // Los conectores nuevos usan el tipo seleccionado
+    const defaultEdgeOptions = useMemo(
+        () => ({ type: edgeType }),
+        [edgeType]
+    );
 
 
     // Crear conexión entre nodos
     const onConnect = useCallback(
         (params) => {
+            takeSnapshot();
+
             setEdges((currentEdges) =>
-                addEdge(params, currentEdges)
+                addEdge(
+                    { ...params, type: edgeType },
+                    currentEdges
+                )
             );
         },
-        [setEdges]
+        [setEdges, edgeType, takeSnapshot]
     );
 
 
@@ -120,6 +405,18 @@ function Flow() {
                 });
 
 
+            // Una llamada (Preparación) nueva arranca con el nombre de
+            // una variable de datos que se pueda llamar desde acá
+            const label =
+                type === CALL_NODE_TYPE
+                    ? nombreLlamadaPorDefecto({
+                        pagina: currentPage,
+                        paginas: pages,
+                        generico: getNodeLabel(type),
+                    })
+                    : getNodeLabel(type);
+
+
             const newNode = {
 
                 id: `${type}-${Date.now()}`,
@@ -130,11 +427,13 @@ function Flow() {
 
                 data: {
                     type,
-                    label: getNodeLabel(type),
+                    label,
                 },
 
             };
 
+
+            takeSnapshot();
 
             setNodes((currentNodes) => [
                 ...currentNodes,
@@ -146,101 +445,199 @@ function Flow() {
             type,
             screenToFlowPosition,
             setNodes,
+            takeSnapshot,
+            currentPage,
+            pages,
         ]
+    );
+
+
+    // Antes de borrar (tecla Supr), guardar en el historial
+    const onBeforeDelete = useCallback(
+        async ({ nodes: toDelete, edges: edgesToDelete }) => {
+            if (toDelete.length > 0 || edgesToDelete.length > 0) {
+                takeSnapshot();
+            }
+
+            return true;
+        },
+        [takeSnapshot]
     );
 
     const theme = useTheme();
 
     return (
-        <div className="diagram-flow-container">
+        <HistoryProvider value={history}>
+            <div className="diagram-flow-container">
 
-            {/* Barra lateral */}
-            <Sidebar />
+                {/* Barra lateral */}
+                <Sidebar
+                    edgeType={edgeType}
+                    onEdgeTypeChange={changeEdgeType}
+                    onRun={onRun}
+                    hasDiagram={hasDiagram}
+                />
 
-            {/* Área de React Flow */}
-            <div className="diagram-flow-area">
+                {/* Área de React Flow */}
+                <div className="diagram-flow-area">
 
-                <ReactFlow
-                    nodes={nodes}
-                    edges={edges}
+                    {/* Definición de las flechas de los conectores */}
+                    <EdgeMarkers />
 
-                    onNodesChange={onNodesChange}
-                    onEdgesChange={onEdgesChange}
+                    <div className="diagram-canvas" ref={canvasRef}>
+                        <PageProvider value={pageContext}>
+                            <ReactFlow
+                                nodes={displayNodes}
+                                edges={edgesWithMarkers}
 
-                    onConnect={onConnect}
+                                onNodesChange={onNodesChange}
+                                onEdgesChange={onEdgesChange}
 
-                    onDragOver={onDragOver}
-                    onDrop={onDrop}
+                                onConnect={onConnect}
 
-                    nodeTypes={nodeTypes}
+                                // Historial: guardar antes de mover o borrar
+                                onNodeDragStart={takeSnapshot}
+                                onSelectionDragStart={takeSnapshot}
+                                onBeforeDelete={onBeforeDelete}
 
-                    deleteKeyCode="Delete"
-                    colorMode={theme}
+                                onDragOver={onDragOver}
+                                onDrop={onDrop}
 
-                    fitView
-                >
+                                nodeTypes={nodeTypes}
+                                defaultEdgeOptions={defaultEdgeOptions}
 
-                    <Background />
+                                deleteKeyCode={active ? "Delete" : null}
+                                colorMode={theme}
 
-                    <Controls />
+                                // Click derecho + arrastrar: mover el lienzo
+                                panOnDrag={[2]}
+                                // Click izquierdo + arrastrar: selección múltiple
+                                selectionOnDrag
+                                selectionMode={SelectionMode.Partial}
+                                // Sin menú contextual del navegador al usar el click derecho
+                                onPaneContextMenu={preventContextMenu}
+                                onNodeContextMenu={preventContextMenu}
+                                onEdgeContextMenu={preventContextMenu}
+                                onSelectionContextMenu={preventContextMenu}
 
-                    <MiniMap
-                        pannable
-                        zoomable
+                                fitView
+                            >
+
+                                <Background />
+
+                                <Controls />
+
+                                <MiniMap
+                                    pannable
+                                    zoomable
+                                    nodeClassName={(node) =>
+                                        `minimap-node--${node.data?.type}`
+                                    }
+                                />
+
+
+                            </ReactFlow>
+                        </PageProvider>
+                    </div>
+
+                    {/* Páginas: Main + variables de datos */}
+                    <PageBar
+                        pages={pages}
+                        activePage={activePage}
+                        onSelect={switchPage}
                     />
 
+                </div>
 
-                </ReactFlow>
+                {/* Barra lateral derecha: variables */}
+                <VariablesPanel
+                    variables={variables}
+                    onChange={setVariables}
+                    reservedNames={nombresDeFunciones}
+                />
 
             </div>
-
-        </div>
+        </HistoryProvider>
     );
 }
 
 
 export default function Diagrama() {
 
+    // Vista activa: editor del diagrama o ejecución
+    const [vista, setVista] = useState(VISTAS.editor);
+
+    const enEditor = vista === VISTAS.editor;
+
+    // El editor oculto no recibe foco ni clicks (inert).
+    // Se asigna por ref para que funcione igual en React 18 y 19.
+    const editorRef = useRef(null);
+
+    useEffect(() => {
+        if (editorRef.current) {
+            editorRef.current.inert = !enEditor;
+        }
+    }, [enEditor]);
+
+    // Pantalla completa: solo el editor (sin barra de
+    // navegación ni pie de página)
     return (
-        <div className="min-h-screen bg-background text-foreground">
+        <main className="diagram-page bg-background text-foreground">
 
-            <NavBar />
+            {/* Barra superior: pestañas + modo claro/oscuro */}
+            <header className="diagram-topbar">
+                <DiagramaTabs
+                    value={vista}
+                    onChange={setVista}
+                />
 
+                <ThemeToggle className="diagram-theme-toggle" />
+            </header>
 
-            <main className="diagram-page">
+            <div className="diagram-views">
 
-                {/* Editor */}
-                <ReactFlowProvider>
+                {/*
+                  * Editor: siempre montado (solo se oculta) para no
+                  * perder el diagrama ni las variables al cambiar de
+                  * pestaña, ya que todavía no se guardan.
+                  */}
+                <div
+                    id={panelId(VISTAS.editor)}
+                    role="tabpanel"
+                    aria-labelledby={tabId(VISTAS.editor)}
+                    ref={editorRef}
+                    className={`diagram-view ${enEditor ? "" : "is-hidden"}`}
+                >
+                    <ReactFlowProvider>
 
-                    <DnDProvider>
+                        <DnDProvider>
 
-                        <Flow />
+                            <Flow
+                                active={enEditor}
+                                onRun={() => setVista(VISTAS.ejecucion)}
+                            />
 
-                    </DnDProvider>
+                        </DnDProvider>
 
-                </ReactFlowProvider>
-
-
-                {/* Volver */}
-                <div className="diagram-footer-action">
-
-                    <Link
-                        to="/modo-libre"
-                        className="diagram-back-button"
-                    >
-                        <ArrowLeft className="w-4 h-4" />
-
-                        Volver al análisis previo
-
-                    </Link>
-
+                    </ReactFlowProvider>
                 </div>
 
-            </main>
+                {/* Ejecución */}
+                {!enEditor && (
+                    <div
+                        id={panelId(VISTAS.ejecucion)}
+                        role="tabpanel"
+                        aria-labelledby={tabId(VISTAS.ejecucion)}
+                        className="diagram-view diagram-view--overlay"
+                    >
+                        <ExecutionView
+                            onBack={() => setVista(VISTAS.editor)}
+                        />
+                    </div>
+                )}
 
+            </div>
 
-            <Footer />
-
-        </div>
+        </main>
     );
 }

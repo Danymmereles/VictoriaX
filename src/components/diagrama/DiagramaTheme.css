@@ -1,0 +1,242 @@
+/* =====================================================
+   PALETA DEL DIAGRAMA (modo claro / modo oscuro)
+   -----------------------------------------------------
+   Todos los colores del editor salen de acá. El modo
+   oscuro se activa con la clase .dark en <html>, igual
+   que el resto de la app (ThemeToggle).
+
+   Claro:  relleno pastel + contorno gris oscuro.
+   Oscuro: relleno oscuro teñido del mismo pastel +
+           contorno pastel brillante + texto claro.
+   ===================================================== */
+
+:root {
+    /* Figuras */
+    --dg-purple-fill: #e8ddff;
+    --dg-blue-fill: #dcecff;
+    --dg-orange-fill: #ffe6bd;
+    --dg-green-fill: #dcf5df;
+    --dg-pink-fill: #fde1ee;
+
+    --dg-purple-stroke: #444;
+    --dg-blue-stroke: #444;
+    --dg-orange-stroke: #444;
+    --dg-green-stroke: #444;
+    --dg-pink-stroke: #444;
+
+    --dg-node-text: #1f1f1f;
+    --dg-decision-label: #8a8a8a;
+
+    /* Conectores (edges) */
+    --dg-edge: #6b7280;
+    --dg-edge-selected: #8b75e0;
+
+    /* Selección (nodos y recuadro de selección) */
+    --dg-selected: #8b75e0;
+    --dg-selected-glow: rgba(139, 117, 224, 0.45);
+    --dg-selection-bg: rgba(175, 155, 239, 0.10);
+
+    /* Puntos de conexión */
+    --dg-handle-bg: #1a192b;
+    --dg-handle-border: #fff;
+    --dg-decision-handle-bg: #AF9BEF;
+    --dg-decision-handle-border: #222;
+
+    /* Barra lateral */
+    --dg-sidebar-bg: hsl(var(--muted));
+    --dg-sidebar-border: hsl(var(--border));
+    --dg-item-bg: hsl(var(--card));
+    --dg-item-border: hsl(var(--border));
+    --dg-item-hover-border: #999;
+    --dg-icon: #444;
+    --dg-icon-hover-bg: hsl(var(--muted));
+    --dg-icon-active: #222;
+    --dg-icon-active-bg: rgba(175, 155, 239, 0.18);
+    --dg-accent: #AF9BEF;
+
+    /* Botón ejecutar */
+    --dg-run-bg: #AF9BEF;
+    --dg-run-bg-hover: #9d86ec;
+    --dg-run-icon: #1f1a33;
+
+    /* Pestañas y vista de ejecución (los tokens de la app
+       ya cambian solos con el tema) */
+    --dg-tab-text: hsl(var(--muted-foreground));
+    --dg-tab-text-active: hsl(var(--foreground));
+    --dg-canvas-solid-bg: hsl(var(--background));
+
+    /* Tabla de variables */
+    --dg-table-header-bg: hsl(var(--muted));
+    --dg-table-header-text: hsl(var(--muted-foreground));
+    --dg-table-placeholder: #9ca3af;
+
+    /* Errores de validación */
+    --dg-error: #dc2626;
+    --dg-error-bg: rgba(220, 38, 38, 0.08);
+
+    /* Lienzo */
+    --dg-canvas-bg: transparent;
+    --dg-canvas-dots: #b4b4bd;
+}
+
+.dark {
+    /* Figuras: pastel sobre fondo oscuro */
+    --dg-purple-fill: #2a2346;
+    --dg-blue-fill: #172a40;
+    --dg-orange-fill: #3a2c17;
+    --dg-green-fill: #173325;
+    --dg-pink-fill: #3a1c2b;
+
+    --dg-purple-stroke: #c4b5fd;
+    --dg-blue-stroke: #8ccdf2;
+    --dg-orange-stroke: #f6cd8b;
+    --dg-green-stroke: #97e0a5;
+    --dg-pink-stroke: #f2a7c8;
+
+    --dg-node-text: hsl(var(--foreground));
+    --dg-decision-label: #8b93a7;
+
+    /* Conectores: lavanda de la marca, celeste al seleccionar */
+    --dg-edge: #b3a5f2;
+    --dg-edge-selected: #73C3EE;
+
+    /* Selección (nodos y recuadro de selección) */
+    --dg-selected: #f1f5ff;
+    --dg-selected-glow: rgba(115, 195, 238, 0.85);
+    --dg-selection-bg: rgba(115, 195, 238, 0.08);
+
+    /* Puntos de conexión */
+    --dg-handle-bg: #cbd5e1;
+    --dg-handle-border: hsl(var(--background));
+    --dg-decision-handle-bg: #AF9BEF;
+    --dg-decision-handle-border: hsl(var(--background));
+
+    /* Barra lateral */
+    --dg-sidebar-bg: hsl(var(--card));
+    --dg-sidebar-border: hsl(var(--border));
+    --dg-item-bg: hsl(var(--secondary));
+    --dg-item-border: hsl(222 20% 20%);
+    --dg-item-hover-border: hsl(222 15% 38%);
+    --dg-icon: #cbd5e1;
+    --dg-icon-hover-bg: hsl(222 22% 18%);
+    --dg-icon-active: #ece7ff;
+    --dg-icon-active-bg: rgba(175, 155, 239, 0.16);
+    --dg-accent: #AF9BEF;
+
+    /* Botón ejecutar */
+    --dg-run-bg: #AF9BEF;
+    --dg-run-bg-hover: #c4b5fd;
+    --dg-run-icon: hsl(var(--background));
+
+    /* Tabla de variables */
+    --dg-table-header-bg: hsl(222 25% 11%);
+    --dg-table-header-text: hsl(var(--muted-foreground));
+    --dg-table-placeholder: hsl(215 15% 45%);
+
+    /* Errores de validación */
+    --dg-error: #f87171;
+    --dg-error-bg: rgba(248, 113, 113, 0.12);
+
+    /* Lienzo: mismo fondo que la página */
+    --dg-canvas-bg: hsl(var(--background));
+    --dg-canvas-dots: hsl(222 15% 26%);
+}
+
+
+/* =====================================================
+   VARIABLES DE REACT FLOW
+   (pisan los grises por defecto de colorMode)
+   ===================================================== */
+
+.diagram-flow-area {
+    --xy-background-color: var(--dg-canvas-bg);
+    --xy-background-pattern-color: var(--dg-canvas-dots);
+    --xy-background-pattern-dots-color: var(--dg-canvas-dots);
+
+    --xy-edge-stroke: var(--dg-edge);
+    --xy-edge-stroke-selected: var(--dg-edge-selected);
+    --xy-edge-stroke-width: 2;
+    --xy-connectionline-stroke: var(--dg-edge);
+    --xy-connectionline-stroke-width: 2;
+
+    --xy-handle-background-color: var(--dg-handle-bg);
+    --xy-handle-border-color: var(--dg-handle-border);
+
+    /* Recuadro de selección múltiple */
+    --xy-selection-background-color: var(--dg-selection-bg);
+    --xy-selection-border: 1px dashed var(--dg-edge-selected);
+}
+
+.dark .diagram-flow-area {
+    --xy-controls-button-background-color: hsl(var(--card));
+    --xy-controls-button-background-color-hover: hsl(var(--secondary));
+    --xy-controls-button-color: hsl(var(--foreground));
+    --xy-controls-button-color-hover: #fff;
+    --xy-controls-button-border-color: hsl(var(--border));
+    --xy-controls-box-shadow: 0 0 0 1px hsl(var(--border));
+
+    --xy-minimap-background-color: hsl(var(--card));
+    --xy-minimap-mask-background-color: rgba(8, 11, 18, 0.65);
+    --xy-minimap-mask-stroke-color: hsl(var(--border));
+}
+
+
+/* =====================================================
+   FLECHAS DE LOS CONECTORES (EdgeMarkers.jsx)
+   Mismo color que la línea, normal y seleccionada.
+   ===================================================== */
+
+.dg-edge-markers {
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+}
+
+#dg-arrow path {
+    fill: var(--dg-edge);
+    stroke: var(--dg-edge);
+    stroke-width: 1;
+    stroke-linejoin: round;
+}
+
+#dg-arrow-selected path {
+    fill: var(--dg-edge-selected);
+    stroke: var(--dg-edge-selected);
+    stroke-width: 1;
+    stroke-linejoin: round;
+}
+
+
+/* =====================================================
+   MINIMAPA: cada nodo con el color de su figura
+   ===================================================== */
+
+.diagram-flow-area .react-flow__minimap-node.minimap-node--input,
+.diagram-flow-area .react-flow__minimap-node.minimap-node--document {
+    fill: var(--dg-purple-fill) !important;
+    stroke: var(--dg-purple-stroke) !important;
+}
+
+.diagram-flow-area .react-flow__minimap-node.minimap-node--process,
+.diagram-flow-area .react-flow__minimap-node.minimap-node--io {
+    fill: var(--dg-blue-fill) !important;
+    stroke: var(--dg-blue-stroke) !important;
+}
+
+.diagram-flow-area .react-flow__minimap-node.minimap-node--decision,
+.diagram-flow-area .react-flow__minimap-node.minimap-node--preparation {
+    fill: var(--dg-orange-fill) !important;
+    stroke: var(--dg-orange-stroke) !important;
+}
+
+.diagram-flow-area .react-flow__minimap-node.minimap-node--output,
+.diagram-flow-area .react-flow__minimap-node.minimap-node--connector {
+    fill: var(--dg-green-fill) !important;
+    stroke: var(--dg-green-stroke) !important;
+}
+
+.diagram-flow-area .react-flow__minimap-node.minimap-node--random {
+    fill: var(--dg-pink-fill) !important;
+    stroke: var(--dg-pink-stroke) !important;
+}

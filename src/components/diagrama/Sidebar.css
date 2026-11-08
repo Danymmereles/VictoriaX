@@ -1,44 +1,236 @@
 .sidebar {
     width: 220px;
+    flex-shrink: 0;
     height: 100%;
     padding: 20px;
 
-    background: #f5f5f5;
-    border-right: 1px solid #ddd;
+    background: var(--dg-sidebar-bg);
+    border-right: 1px solid var(--dg-sidebar-border);
+
+    transition: background-color 0.2s, border-color 0.2s;
+
+    display: flex;
+    flex-direction: column;
+
+    /* En pantallas bajas la barra scrollea sola, no la página */
+    overflow-y: auto;
 
     box-sizing: border-box;
 }
 
-.sidebar h2 {
-    margin: 0 0 8px;
+/* =====================================================
+   VOLVER AL ANÁLISIS PREVIO
+   ===================================================== */
 
-    font-size: 20px;
-}
+.sidebar-back {
+    height: 36px;
+    flex-shrink: 0;
 
-.sidebar-description {
-    margin: 0 0 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    margin-bottom: 12px;
+    padding: 0 12px;
+
+    background: transparent;
+    border: 1px solid var(--dg-item-border);
+    border-radius: 8px;
 
     font-size: 13px;
-    color: #666;
+    font-weight: 500;
+    color: var(--dg-icon);
+    text-decoration: none;
+
+    transition: 0.2s;
+}
+
+.sidebar-back svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+
+    transition: transform 0.2s;
+}
+
+.sidebar-back:hover {
+    background: var(--dg-icon-active-bg);
+    border-color: var(--dg-accent);
+    color: var(--dg-icon-active);
+}
+
+/* Pequeño desplazamiento de la flecha: indica "volver" */
+.sidebar-back:hover svg {
+    transform: translateX(-2px);
+}
+
+.sidebar-back:focus-visible {
+    outline: 2px solid var(--dg-accent);
+    outline-offset: 1px;
+}
+
+/* =====================================================
+   BOTÓN EJECUTAR (al pie de la barra)
+   ===================================================== */
+
+.sidebar-footer {
+    margin-top: auto;
+    padding-top: 16px;
+
+    /* Siempre visible: si la barra scrollea (ventanas
+       bajas), el botón queda fijo al pie */
+    position: sticky;
+    bottom: -20px;
+    padding-bottom: 20px;
+    margin-bottom: -20px;
+
+    background: var(--dg-sidebar-bg);
+    transition: background-color 0.2s;
+}
+
+.run-button {
+    width: 100%;
+    height: 40px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 0;
+
+    background: var(--dg-run-bg);
+    border: none;
+    border-radius: 8px;
+
+    color: var(--dg-run-icon);
+    cursor: pointer;
+
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+.run-button svg {
+    width: 18px;
+    height: 18px;
+
+    fill: currentColor;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-linejoin: round;
+}
+
+.run-button:hover {
+    background: var(--dg-run-bg-hover);
+}
+
+.run-button:active {
+    transform: scale(0.98);
+}
+
+.run-button:focus-visible {
+    outline: 2px solid var(--dg-accent);
+    outline-offset: 2px;
+}
+
+/* =====================================================
+   BARRAS DE HERRAMIENTAS (Historial, Tipo de conector)
+   Botones de ícono agrupados en una caja.
+   ===================================================== */
+
+.sidebar-toolbar {
+    display: grid;
+    gap: 4px;
+
+    margin-bottom: 12px;
+    padding: 4px;
+
+    background: var(--dg-item-bg);
+    border: 1px solid var(--dg-item-border);
+    border-radius: 8px;
+}
+
+.sidebar-toolbar--2 {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.sidebar-toolbar--3 {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.sidebar-tool {
+    height: 36px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 0;
+
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 6px;
+
+    color: var(--dg-icon);
+    cursor: pointer;
+
+    transition: 0.2s;
+}
+
+.sidebar-tool svg {
+    width: 20px;
+    height: 20px;
+
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.sidebar-tool:hover:not(:disabled) {
+    background: var(--dg-icon-hover-bg);
+}
+
+.sidebar-tool.is-active {
+    background: var(--dg-icon-active-bg);
+    border-color: var(--dg-accent);
+    color: var(--dg-icon-active);
+}
+
+.sidebar-tool:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.sidebar-tool:focus-visible {
+    outline: 2px solid var(--dg-accent);
+    outline-offset: 1px;
 }
 
 .sidebar-items {
-    display: flex;
-    flex-direction: column;
+    margin-top: 4px;
+
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
     gap: 12px;
 }
 
 .sidebar-item {
-    height: 55px;
+    height: 64px;
 
     display: flex;
     align-items: center;
-    gap: 12px;
+    justify-content: center;
 
-    padding: 8px 12px;
+    padding: 8px;
 
-    background: white;
-    border: 1px solid #ddd;
+    background: var(--dg-item-bg);
+    border: 1px solid var(--dg-item-border);
     border-radius: 8px;
 
     cursor: grab;
@@ -49,7 +241,7 @@
 }
 
 .sidebar-item:hover {
-    border-color: #999;
+    border-color: var(--dg-item-hover-border);
     transform: translateY(-1px);
 }
 
@@ -57,122 +249,33 @@
     cursor: grabbing;
 }
 
-/* Preview de los nodos */
+/* =====================================================
+   PREVIEW DE LOS NODOS
+   La figura la dibuja <FlowShape> (shapes.jsx)
+   ===================================================== */
 
 .sidebar-preview {
-    width: 35px;
-    height: 35px;
+    position: relative;
 
     display: flex;
     align-items: center;
     justify-content: center;
 
     flex-shrink: 0;
-
-    border: 2px solid #444;
 }
 
-/* Entrada */
-
-.preview-input {
-    border-radius: 50%;
-    background: #e8ddff;
-}
-
-/* Proceso */
-
-.preview-process {
-    border-radius: 5px;
-    background: #dcecff;
-}
-
-/* Decisión */
-
-.preview-decision {
-    width: 27px;
-    height: 27px;
-
-    transform: rotate(45deg);
-
-    background: #ffe6bd;
-}
-
-.preview-decision::first-letter {
-    transform: rotate(-45deg);
-}
-
-/* Salida */
-
-.preview-output {
-    width: 40px;
-
-    border-radius: 20px;
-    background: #dcf5df;
-}
-/* =====================================================
-   NUEVOS PREVIEWS
-   ===================================================== */
-
-.preview-document,
-.preview-io,
-.preview-preparation {
-    width: 48px;
-    height: 36px;
+/* Letra del conector, centrada sobre el círculo */
+.sidebar-preview-letter {
+    position: absolute;
+    inset: 0;
 
     display: flex;
     align-items: center;
     justify-content: center;
-}
-
-.preview-document svg,
-.preview-io svg,
-.preview-preparation svg {
-    width: 46px;
-    height: 34px;
-    overflow: visible;
-}
-
-.preview-document path {
-    fill: #e8ddff;
-    stroke: #444;
-    stroke-width: 2.5;
-    stroke-linejoin: round;
-}
-
-.preview-io polygon {
-    fill: #dcecff;
-    stroke: #444;
-    stroke-width: 2.5;
-    stroke-linejoin: round;
-}
-
-.preview-preparation polygon {
-    fill: #ffe6bd;
-    stroke: #444;
-    stroke-width: 2.5;
-    stroke-linejoin: round;
-}
-
-
-/* =====================================================
-   CONECTOR
-   ===================================================== */
-
-.preview-connector {
-    width: 34px;
-    height: 34px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    background: #dcf5df;
-
-    border: 2.5px solid #444;
-    border-radius: 50%;
-
-    box-sizing: border-box;
 
     font-size: 11px;
     font-weight: 600;
+    color: var(--dg-node-text);
+
+    pointer-events: none;
 }

@@ -1,381 +1,241 @@
-.custom-node {
-    min-width: 120px;
-    min-height: 55px;
+/* =====================================================
+   NODO BASE
+   Todas las figuras se dibujan con SVG (<FlowShape>),
+   con el mismo contorno y el mismo tamaño de letra.
+   ===================================================== */
+
+.flow-node {
+    position: relative;
 
     display: flex;
     align-items: center;
     justify-content: center;
 
-    position: relative;
-
-    border: 2px solid #444;
+    box-sizing: border-box;
 
     font-size: 14px;
     font-weight: 500;
+    line-height: 1.25;
+    color: var(--dg-node-text);
+}
 
-    box-sizing: border-box;
+/* La figura ocupa todo el nodo, detrás del texto */
+.flow-node__shape {
+    position: absolute;
+    inset: 0;
+
+    pointer-events: none;
+}
+
+/* Nodo seleccionado: mismo color que un conector seleccionado */
+.flow-node.is-selected .flow-shape {
+    stroke: var(--dg-selected);
+    filter: drop-shadow(0 0 5px var(--dg-selected-glow));
+}
+
+/* Nodo con un problema (nombre repetido, llamada inexistente...) */
+.flow-node.has-issue .flow-shape {
+    stroke: var(--dg-error);
+}
+
+.flow-node.has-issue.is-selected .flow-shape {
+    filter: drop-shadow(0 0 5px var(--dg-error-bg));
 }
 
 
-/* =========================================
-   CONTENIDO
-   ========================================= */
+/* =====================================================
+   NODO ANCLA (inicio de la página de un subproceso)
+   ===================================================== */
 
-.node-content {
-    display: flex;
+.flow-node__badge {
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
 
-    align-items: center;
-    justify-content: center;
+    padding: 1px 8px;
 
-    gap: 5px;
+    border-radius: 9999px;
+    background: var(--dg-icon-active-bg);
+
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: var(--dg-accent);
+
+    pointer-events: none;
+}
+
+.flow-node.is-anchor .flow-node__text {
+    cursor: default;
+}
+
+
+/* =====================================================
+   AVISO DE NOMBRE RECHAZADO
+   ===================================================== */
+
+.flow-node__notice {
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+
+    width: max-content;
+    max-width: 240px;
+    padding: 6px 10px;
+
+    background: var(--dg-item-bg);
+    border: 1px solid var(--dg-error);
+    border-radius: 8px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.35;
+    text-align: center;
+    color: var(--dg-error);
+
+    pointer-events: none;
+}
+
+.flow-node__label {
+    position: relative;
+    z-index: 1;
+
+    max-width: 220px;
+
+    text-align: center;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+
+/* =====================================================
+   TAMAÑO Y MÁRGENES INTERNOS DE CADA FIGURA
+   (el nodo crece si el texto no entra)
+   ===================================================== */
+
+.flow-node--input {
+    min-width: 120px;
+    min-height: 55px;
+    padding: 8px 22px;
+}
+
+.flow-node--process {
+    min-width: 120px;
+    min-height: 55px;
+    padding: 8px 12px;
+}
+
+.flow-node--output {
+    min-width: 120px;
+    min-height: 55px;
+    padding: 8px 22px;
+}
+
+.flow-node--decision {
+    min-width: 120px;
+    min-height: 120px;
+    padding: 30px;
+}
+
+.flow-node--decision .flow-node__label {
+    max-width: 140px;
+}
+
+.flow-node--document {
+    min-width: 160px;
+    min-height: 90px;
+    padding: 8px 16px 24px;
+}
+
+.flow-node--io {
+    min-width: 160px;
+    min-height: 80px;
+    padding: 8px 32px;
+}
+
+.flow-node--preparation {
+    min-width: 160px;
+    min-height: 80px;
+    padding: 8px 32px;
+}
+
+.flow-node--connector {
+    min-width: 56px;
+    min-height: 56px;
+    padding: 6px;
+}
+
+/* Dado: el texto ocupa el lugar del punto central */
+.flow-node--random {
+    min-width: 88px;
+    min-height: 88px;
+    padding: 24px 16px;
+}
+
+
+/* =====================================================
+   EDICIÓN DE TEXTO
+   ===================================================== */
+
+/* Texto "fantasma": mantiene el tamaño mientras se edita */
+.flow-node__text.is-editing {
+    visibility: hidden;
+}
+
+/* El input se superpone al texto, sin cambiar el tamaño del nodo */
+.node-edit-input {
+    position: absolute;
+    inset: 0;
 
     width: 100%;
     height: 100%;
+    min-width: 0;
+    padding: 0;
+
+    border: none;
+    outline: none;
+    background: transparent;
+
+    text-align: center;
+    font: inherit;
+    color: inherit;
 }
 
 
-/* =========================================
-   ENTRADA
-   ========================================= */
-
-.node-input {
-    border-radius: 50%;
-
-    background: #e8ddff;
-}
-
-
-/* =========================================
-   PROCESO
-   ========================================= */
-
-.node-process {
-    border-radius: 6px;
-
-    background: #dcecff;
-}
-
-
-/* =========================================
-   SALIDA
-   ========================================= */
-
-.node-output {
-    min-width: 120px;
-
-    border-radius: 30px;
-
-    background: #dcf5df;
-}
-
-
-/* =========================================
-   DECISIÓN
-   ========================================= */
-
-.decision-node {
-
-    position: relative;
-
-    width: 120px;
-    height: 120px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-}
-
-
-/* =========================================
-   ROMBO
-   ========================================= */
-
-.decision-shape {
-
-    width: 78px;
-    height: 78px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    background: #ffe6bd;
-    border: 2px solid #444;
-    transform: rotate(45deg);
-    box-sizing: border-box;
-}
-
-
-/* =========================================
-   SIGNO ?
-   ========================================= */
-
-.decision-content {
-    font-size: 18px;
-    font-weight: bold;
-    transform: rotate(-45deg);
-
-}
-
-
-/* =========================================
-   HANDLES
-   ========================================= */
+/* =====================================================
+   DECISIÓN: HANDLES Y ETIQUETAS SI / NO
+   ===================================================== */
 
 .decision-handle {
     width: 10px;
     height: 10px;
-    background: #AF9BEF;
-    border: 2px solid #222;
 
+    background: var(--dg-decision-handle-bg);
+    border: 2px solid var(--dg-decision-handle-border);
 }
-
-
-/* =========================================
-   HANDLE SUPERIOR
-   ========================================= */
-
-.decision-handle-top {
-    top: 0;
-}
-
-
-/* =========================================
-   HANDLE IZQUIERDO - NO
-   ========================================= */
-
-.decision-handle-left {
-    left: 0;
-}
-
-
-/* =========================================
-   HANDLE DERECHO - SI
-   ========================================= */
-
-.decision-handle-right {
-    right: 0;
-}
-
-
-/* =========================================
-   ETIQUETAS SI / NO
-   ========================================= */
 
 .decision-label {
     position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+
     font-size: 11px;
     font-weight: 600;
-    color: #aaa;
+    color: var(--dg-decision-label);
+
     pointer-events: none;
-
 }
-
-
-/* NO */
 
 .decision-label-no {
-    left: -20px;
-    top: 50%;
-    transform: translateY(-50%);
+    right: calc(100% + 8px);
 }
 
-/* SI */
 .decision-label-yes {
-    right: -18px;
-    top: 50%;
-    transform: translateY(-50%);
-
+    left: calc(100% + 8px);
 }
-
-.node-edit-input {
-    width: 90%;
-    border: none;
-    outline: none;
-    background: transparent;
-    text-align: center;
-    font: inherit;
-    color: inherit;
-    padding: 2px 4px;
-}
-/* =====================================================
-   NUEVOS SÍMBOLOS
-   ===================================================== */
-
-.special-node {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-sizing: border-box;
-}
-
-
-/* =====================================================
-   DOCUMENTO
-   ===================================================== */
-
-.document-node {
-    width: 160px;
-    height: 90px;
-}
-
-.document-shape {
-    position: absolute;
-    inset: 0;
-
-    width: 100%;
-    height: 100%;
-
-    overflow: visible;
-}
-
-.document-shape path {
-    fill: #e8ddff;
-    stroke: #444;
-    stroke-width: 3;
-    stroke-linejoin: round;
-}
-
-.document-content {
-    position: relative;
-    z-index: 2;
-
-    width: 120px;
-    min-height: 40px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    text-align: center;
-}
-
-
-/* =====================================================
-   INPUT / OUTPUT
-   ===================================================== */
-
-.io-node {
-    width: 160px;
-    height: 80px;
-}
-
-.io-shape {
-    position: absolute;
-    inset: 0;
-
-    width: 100%;
-    height: 100%;
-}
-
-.io-shape polygon {
-    fill: #dcecff;
-    stroke: #444;
-    stroke-width: 3;
-    stroke-linejoin: round;
-}
-
-.io-content {
-    position: relative;
-    z-index: 2;
-
-    width: 110px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    text-align: center;
-}
-
-
-/* =====================================================
-   PREPARACIÓN
-   ===================================================== */
-
-.preparation-node {
-    width: 160px;
-    height: 80px;
-}
-
-.preparation-shape {
-    position: absolute;
-    inset: 0;
-
-    width: 100%;
-    height: 100%;
-}
-
-.preparation-shape polygon {
-    fill: #ffe6bd;
-    stroke: #444;
-    stroke-width: 3;
-    stroke-linejoin: round;
-}
-
-.preparation-content {
-    position: relative;
-    z-index: 2;
-
-    width: 105px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    text-align: center;
-}
-
-
-/* =====================================================
-   CONECTOR
-   ===================================================== */
-
-.connector-node {
-    width: 70px;
-    height: 70px;
-}
-
-.connector-shape {
-    width: 54px;
-    height: 54px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    background: #dcf5df;
-
-    border: 3px solid #444;
-    border-radius: 50%;
-
-    box-sizing: border-box;
-}
-
-/* =====================================================
-   CONNECTOR SYMBOL
-
-.connector-node {
-    width: 70px;
-    height: 70px;
-}
-
-.connector-shape {
-    width: 55px;
-    height: 55px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    background: #dcf5df;
-    border: 2px solid #444;
-    border-radius: 50%;
-
-    box-sizing: border-box;
-
-    font-weight: 600;
-}
-===================================================== */

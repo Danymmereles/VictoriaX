@@ -1,0 +1,48 @@
+/* =====================================================
+   FORMAS DEL DIAGRAMA
+   El grosor del contorno se define en shapes.jsx
+   (STROKE_WIDTH) para que sea igual en todas.
+   Los colores salen de DiagramaTheme.css.
+   ===================================================== */
+
+.flow-shape {
+    display: block;
+    overflow: visible;
+
+    stroke-linejoin: round;
+}
+
+.flow-shape--input,
+.flow-shape--document {
+    fill: var(--dg-purple-fill);
+    stroke: var(--dg-purple-stroke);
+}
+
+.flow-shape--process,
+.flow-shape--io {
+    fill: var(--dg-blue-fill);
+    stroke: var(--dg-blue-stroke);
+}
+
+.flow-shape--decision,
+.flow-shape--preparation {
+    fill: var(--dg-orange-fill);
+    stroke: var(--dg-orange-stroke);
+}
+
+.flow-shape--output,
+.flow-shape--connector {
+    fill: var(--dg-green-fill);
+    stroke: var(--dg-green-stroke);
+}
+
+.flow-shape--random {
+    fill: var(--dg-pink-fill);
+    stroke: var(--dg-pink-stroke);
+}
+
+/* Puntos del dado: del color del contorno, sin borde */
+.flow-shape--random .flow-shape__pip {
+    fill: var(--dg-pink-stroke);
+    stroke: none;
+}

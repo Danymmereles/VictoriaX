@@ -22,7 +22,14 @@ export default function SobreNosotros() {
             <h2 className="font-heading text-2xl font-semibold tracking-tight">
               Conocé la historia detrás de VictoriaX
             </h2>
-            <div className="mt-5 space-y-4 text-base leading-relaxed text-muted-foreground">
+            <div className="mt-5 flow-root space-y-4 text-base leading-relaxed text-muted-foreground">
+              <figure className="mb-4 sm:float-right sm:ml-6 sm:mb-2 sm:w-[280px] lg:w-[320px]">
+                <Image
+                  src={FOTO_UTN}
+                  alt="Entrada de la sede de UTN FRBA"
+                  className="block aspect-[4/3] w-full overflow-hidden rounded-xl border border-border"
+                />
+              </figure>
               <p>
                 VictoriaX nace como un proyecto académico desarrollado en el marco de las cátedras
                 de <strong className="font-semibold text-foreground">Simulación</strong> y{" "}
@@ -41,13 +48,6 @@ export default function SobreNosotros() {
                 durante el proceso de enseñanza y aprendizaje.
               </p>
             </div>
-            <figure className="mt-8 overflow-hidden rounded-2xl border border-border">
-              <Image
-                src={FOTO_UTN}
-                alt="Entrada de la sede de UTN FRBA"
-                className="block aspect-[16/10] w-full"
-              />
-            </figure>
           </section>
 
           <section>

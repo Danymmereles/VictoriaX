@@ -27,6 +27,7 @@ export default function Footer() {
             <ul className="mt-4 space-y-3 text-sm">
               <li><Link to="/#legado" className="hover:text-foreground text-muted-foreground">Legado Victoria</Link></li>
               <li><Link to="/#proyecto" className="hover:text-foreground text-muted-foreground">Cátedras</Link></li>
+              <li><Link to="/sobre-nosotros" className="hover:text-foreground text-muted-foreground">Sobre nosotros</Link></li>
             </ul>
           </div>
           <div>

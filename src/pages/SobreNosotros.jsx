@@ -2,6 +2,10 @@ import React from "react";
 import NavBar from "@/components/home/NavBar";
 import Footer from "@/components/home/Footer";
 import EquipoList from "@/components/equipo/EquipoList";
+import { Image } from "@/components/ui/image";
+
+const FOTO_UTN =
+  "https://base44.app/api/apps/6a71341ab9dae936a9cf65a7/files/mp/public/6a71341ab9dae936a9cf65a7/a5717d602_utn-frba-entrada.png";
 
 export default function SobreNosotros() {
   return (
@@ -20,20 +24,30 @@ export default function SobreNosotros() {
             </h2>
             <div className="mt-5 space-y-4 text-base leading-relaxed text-muted-foreground">
               <p>
-                VictoriaX nace como un proyecto académico desarrollado en conjunto con las cátedras
+                VictoriaX nace como un proyecto académico desarrollado en el marco de las cátedras
                 de <strong className="font-semibold text-foreground">Simulación</strong> y{" "}
                 <strong className="font-semibold text-foreground">Proyecto Final</strong> de la
-                carrera de Ingeniería en Sistemas de Información.
+                carrera de Ingeniería en Sistemas de Información de la Universidad Tecnológica
+                Nacional, Facultad Regional Buenos Aires (UTN FRBA).
               </p>
               <p>
                 Somos un equipo de cinco estudiantes que nos encontramos transitando la etapa final
                 de nuestra carrera, unidos por el interés de aplicar nuestros conocimientos para
-                desarrollar soluciones tecnológicas que aporten valor a la educación. Además, dos
-                integrantes de nuestro equipo se desempeñan como ayudantes de cátedra, lo que nos
-                permite conocer de cerca las necesidades y los desafíos que surgen durante el
-                proceso de enseñanza y aprendizaje.
+                desarrollar soluciones tecnológicas que aporten valor a la educación.
+              </p>
+              <p>
+                Además, dos integrantes de nuestro equipo se desempeñan como ayudantes de cátedra,
+                lo que nos permite conocer de cerca las necesidades y los desafíos que surgen
+                durante el proceso de enseñanza y aprendizaje.
               </p>
             </div>
+            <figure className="mt-8 overflow-hidden rounded-2xl border border-border">
+              <Image
+                src={FOTO_UTN}
+                alt="Entrada de la sede de UTN FRBA"
+                className="block aspect-[16/10] w-full"
+              />
+            </figure>
           </section>
 
           <section>

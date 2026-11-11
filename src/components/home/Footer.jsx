@@ -33,7 +33,7 @@ export default function Footer() {
             <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">Institución</p>
             <ul className="mt-4 space-y-3 text-sm">
               <li><a href="https://www.frba.utn.edu.ar" target="_blank" rel="noreferrer" className="hover:text-foreground text-muted-foreground">UTN.BA</a></li>
-              <li><a href="mailto:victoriax@frba.utn.edu.ar" className="hover:text-foreground text-muted-foreground">Contacto</a></li>
+              <li><Link to="/contacto" className="hover:text-foreground text-muted-foreground">Contacto</Link></li>
             </ul>
           </div>
         </div>

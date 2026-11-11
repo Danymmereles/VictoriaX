@@ -1,0 +1,66 @@
+{
+  "name": "MensajeContacto",
+  "type": "object",
+  "properties": {
+    "nombre": {
+      "type": "string",
+      "description": "Nombre de la persona que env\u00eda el mensaje"
+    },
+    "email": {
+      "type": "string",
+      "format": "email",
+      "description": "Correo electr\u00f3nico de contacto del remitente"
+    },
+    "motivo": {
+      "type": "string",
+      "enum": [
+        "Consulta",
+        "Sugerencia",
+        "Inconveniente t\u00e9cnico",
+        "Otro"
+      ],
+      "description": "Motivo del contacto",
+      "enumColors": [
+        "blue",
+        "purple",
+        "red",
+        "gray"
+      ]
+    },
+    "mensaje": {
+      "type": "string",
+      "description": "Contenido del mensaje enviado desde el formulario de contacto"
+    }
+  },
+  "required": [
+    "nombre",
+    "email",
+    "motivo",
+    "mensaje"
+  ],
+  "rls": {
+    "create": {},
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

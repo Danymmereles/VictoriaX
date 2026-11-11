@@ -36,7 +36,7 @@ export default function ContactoForm() {
     }
     setEnviando(true);
     try {
-      await base44.entities.MensajeContacto.create({
+      await base44.functions.invoke("enviarMensajeContacto", {
         nombre: form.nombre.trim(),
         email: form.email.trim(),
         motivo: form.motivo,

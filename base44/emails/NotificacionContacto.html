@@ -1,0 +1,50 @@
+<mjml>
+  <mj-head>
+    <mj-title>Nuevo mensaje de contacto</mj-title>
+    <mj-preview>{{nombre}} te escribió desde el formulario de contacto</mj-preview>
+    <mj-attributes>
+      <mj-all font-family="Inter, Helvetica, Arial, sans-serif" />
+      <mj-section background-color="#ffffff" padding="0 36px" />
+      <mj-column padding="0" />
+      <mj-text color="#0a0d14" font-size="15px" line-height="1.6" padding="0" />
+      <mj-button background-color="#9073e7" color="#0a0d14" border-radius="24px" font-size="15px" font-weight="700" inner-padding="14px 28px" padding="0" align="left" />
+      <mj-class name="h" font-family="'Inter Tight', Helvetica, Arial, sans-serif" font-weight="700" />
+      <mj-class name="label" font-size="11px" letter-spacing="2px" text-transform="uppercase" font-weight="700" color="#6b7280" />
+    </mj-attributes>
+  </mj-head>
+  <mj-body background-color="#0a0d14" width="600px">
+    <mj-wrapper padding="28px 12px" background-color="#0a0d14">
+      <mj-section background-color="#9073e7" padding="24px 36px" border-radius="24px 24px 0 0">
+        <mj-column>
+          <mj-image src="https://media.base44.com/images/public/6a71341ab9dae936a9cf65a7/01ce563af_logo.png" alt="VICTORIA: The Kinetic Blueprint" width="40px" align="center" padding="0 0 12px" />
+          <mj-text align="center" font-size="12px" letter-spacing="4px" font-weight="700" text-transform="uppercase" color="#0a0d14">VICTORIA: The Kinetic Blueprint</mj-text>
+        </mj-column>
+      </mj-section>
+      <mj-section padding="40px 36px 8px">
+        <mj-column>
+          <mj-text mj-class="h" font-size="26px" line-height="1.25" padding="0 0 8px">Nuevo mensaje de contacto</mj-text>
+          <mj-text font-size="16px" line-height="1.7" padding="0 0 24px">{{nombre}} te escribió desde el formulario de contacto.</mj-text>
+
+          <mj-text mj-class="label" padding="0 0 4px">Nombre</mj-text>
+          <mj-text font-size="15px" padding="0 0 16px">{{nombre}}</mj-text>
+
+          <mj-text mj-class="label" padding="0 0 4px">Correo electrónico</mj-text>
+          <mj-text font-size="15px" padding="0 0 16px">{{email}}</mj-text>
+
+          <mj-text mj-class="label" padding="0 0 4px">Motivo</mj-text>
+          <mj-text font-size="15px" padding="0 0 16px">{{motivo}}</mj-text>
+
+          <mj-text mj-class="label" padding="0 0 4px">Mensaje</mj-text>
+          <mj-text font-size="15px" line-height="1.7" padding="0 0 24px">{{mensaje}}</mj-text>
+
+          <mj-button href="mailto:{{email}}">Responder a {{nombre}}</mj-button>
+        </mj-column>
+      </mj-section>
+      <mj-section background-color="#0a0d14" padding="26px 36px 30px" border-radius="0 0 24px 24px">
+        <mj-column>
+          <mj-text align="center" font-size="12px" line-height="1.7" color="#ffffff" padding="0">Mensaje enviado desde el formulario de contacto de VICTORIA: The Kinetic Blueprint.</mj-text>
+        </mj-column>
+      </mj-section>
+    </mj-wrapper>
+  </mj-body>
+</mjml>

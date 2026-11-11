@@ -11,6 +11,7 @@ const links = [
   { label: "Cómo funciona", href: "#flujo" },
   { label: "Legado", href: "#legado" },
   { label: "Proyecto", href: "#proyecto" },
+  { label: "Sobre nosotros", href: "sobre-nosotros" },
   { label: "Contacto", href: "contacto" },
 ];
 

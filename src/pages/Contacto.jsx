@@ -2,6 +2,7 @@ import React from "react";
 import { Mail } from "lucide-react";
 import NavBar from "@/components/home/NavBar";
 import Footer from "@/components/home/Footer";
+import EquipoList from "@/components/equipo/EquipoList";
 
 const EMAIL_CONTACTO = "victoria.x.simulacion@gmail.com";
 
@@ -32,6 +33,17 @@ export default function Contacto() {
             <Mail className="h-6 w-6 text-primary" />
             {EMAIL_CONTACTO}
           </a>
+        </div>
+
+        <div className="mt-16 border-t border-border/60 pt-10">
+          <h2 className="font-heading text-2xl font-semibold tracking-tight">Nuestro equipo</h2>
+          <p className="mt-3 text-base leading-relaxed text-muted-foreground">
+            Detrás de VictoriaX hay cinco estudiantes de Ingeniería en Sistemas de Información.
+            Podés contactarlos directamente por LinkedIn o por correo electrónico.
+          </p>
+          <div className="mt-8">
+            <EquipoList mostrarEmail />
+          </div>
         </div>
 
         <p className="mt-12 text-lg font-medium">¡Esperamos tu mensaje!</p>

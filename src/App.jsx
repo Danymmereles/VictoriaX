@@ -19,6 +19,7 @@ import Diagrama from './pages/Diagrama';
 import Cursos from './pages/Cursos';
 import CursoDetalle from './pages/CursoDetalle';
 import Contacto from './pages/Contacto';
+import SobreNosotros from './pages/SobreNosotros';
 import { SesionUsuarioProvider } from '@/lib/sesionUsuario';
 
 const AppRoutes = () => {
@@ -30,6 +31,7 @@ const AppRoutes = () => {
       <Route path="/modo-libre" element={<ModoLibre />} />
       <Route path="/modo-libre/diagrama" element={<Diagrama />} />
       <Route path="/contacto" element={<Contacto />} />
+      <Route path="/sobre-nosotros" element={<SobreNosotros />} />
       <Route element={<ProtectedRoute />}>
         <Route path="/modo-estudio" element={<ModoEstudio />} />
         <Route path="/modo-estudio/:id" element={<EjercicioEstudio />} />

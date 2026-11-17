@@ -39,7 +39,7 @@ export default function NavBar() {
     <header className="sticky top-0 z-50 border-b border-border/60 bg-background/70 backdrop-blur-xl">
       <div className="mx-auto flex h-20 max-w-[100rem] items-center justify-between px-6 lg:px-12">
         <Wordmark />
-        <nav className="hidden md:flex items-center gap-10">
+        <nav className="hidden lg:flex items-center gap-10">
           {links.map((l) => (
             <Link key={l.href} to={`/${l.href}`} className="text-sm text-muted-foreground transition-colors hover:text-foreground">
               {l.label}
@@ -53,11 +53,11 @@ export default function NavBar() {
             onClick={() => setMenuAbierto((abierto) => !abierto)}
             aria-label={menuAbierto ? "Cerrar menú" : "Abrir menú"}
             aria-expanded={menuAbierto}
-            className="grid h-10 w-10 place-items-center rounded-full border border-border text-muted-foreground transition-colors hover:text-foreground md:hidden"
+            className="grid h-10 w-10 place-items-center rounded-full border border-border text-muted-foreground transition-colors hover:text-foreground lg:hidden"
           >
             {menuAbierto ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
-          <div className="hidden md:flex items-center gap-3">
+          <div className="hidden lg:flex items-center gap-3">
             {usuario ? (
               <>
                 <Link to="/cursos" className="hidden items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground sm:inline-flex">
@@ -88,7 +88,7 @@ export default function NavBar() {
       </div>
 
       {menuAbierto && (
-        <div className="border-t border-border/60 bg-background/95 px-6 py-4 md:hidden">
+        <div className="border-t border-border/60 bg-background/95 px-6 py-4 lg:hidden">
           <nav className="flex flex-col">
             {links.map((l) => (
               <Link key={l.href} to={`/${l.href}`} onClick={cerrarMenu} className={itemMovil}>

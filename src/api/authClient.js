@@ -13,11 +13,11 @@ export let isLocalAuthEnabled = false;
 
 function setAuthSource(source) {
   localStorage.setItem(AUTH_SOURCE_KEY, source);
-  isLocalAuthEnabled = import.meta.env.DEV && source === "local";
+  isLocalAuthEnabled = source === "local";
 }
 
 function isLocalDemoEmail(email) {
-  return import.meta.env.DEV && localAuth.isDemoEmail(email);
+  return localAuth.isDemoEmail(email);
 }
 
 function toAppUser(user) {
@@ -99,7 +99,7 @@ export const authClient = {
       isLocalAuthEnabled = false;
       return null;
     }
-    if (import.meta.env.DEV && authSource === "local") {
+    if (authSource === "local") {
       const demoUser = await localAuth.me();
       if (demoUser) {
         setAuthSource("local");
@@ -115,7 +115,7 @@ export const authClient = {
       setAuthSource("supabase");
     }
 
-    if (!authSource && import.meta.env.DEV) {
+    if (!authSource) {
       const demoUser = await localAuth.me();
       if (demoUser) {
         setAuthSource("local");

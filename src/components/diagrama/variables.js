@@ -105,7 +105,25 @@ export const CATEGORIAS_ANALISIS = {
     resultado: "Variable de Resultado",
 };
 
-export const esImportada = (variable) => Boolean(variable.origen);
+/*
+ * Otros orígenes, además de las cuatro categorías del análisis:
+ *   futuro:   sigla de la tabla de Eventos Futuros (TPLL, TPS). Viene del
+ *             Análisis Previo: su nombre no se edita acá.
+ *   generada: agregada al generar el diagrama (T, TF, HV, índices...).
+ *             Se puede renombrar o borrar como una propia.
+ */
+export const ORIGEN_FUTURO = "futuro";
+export const ORIGEN_GENERADA = "generada";
+
+const ORIGENES = {
+    ...CATEGORIAS_ANALISIS,
+    [ORIGEN_FUTURO]: "Evento futuro",
+    [ORIGEN_GENERADA]: "Agregada al generar el diagrama",
+};
+
+// Viene del Análisis Previo: nombre fijo, no se borra en el diagrama
+export const esImportada = (variable) =>
+    Boolean(variable.origen) && variable.origen !== ORIGEN_GENERADA;
 
 /*
  * Toma TODAS las variables cargadas en el Análisis Previo
@@ -188,11 +206,11 @@ export function sincronizarConAnalisis(actuales, analisis) {
 
 // Texto descriptivo de una variable importada (para el tooltip)
 export function detalleVariable(variable) {
-    if (!esImportada(variable)) {
+    if (!ORIGENES[variable.origen]) {
         return "";
     }
 
-    const partes = [CATEGORIAS_ANALISIS[variable.origen]];
+    const partes = [ORIGENES[variable.origen]];
 
     if (variable.descripcion) {
         partes.push(variable.descripcion);

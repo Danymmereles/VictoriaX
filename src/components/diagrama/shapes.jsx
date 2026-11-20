@@ -105,6 +105,25 @@ const SHAPES = {
             </>
         );
     },
+
+    // Fin: óvalo con un anillo interno (se distingue de la Entrada
+    // y hace par con las barras del Contexto, que es el inicio)
+    end: (w, h, s) => {
+        const k = Math.max(3, Math.min(5, h * 0.1));
+
+        return (
+            <>
+                <ellipse cx={w / 2} cy={h / 2} rx={(w - s) / 2} ry={(h - s) / 2} />
+                <ellipse
+                    className="flow-shape__line"
+                    cx={w / 2}
+                    cy={h / 2}
+                    rx={Math.max((w - s) / 2 - k, 1)}
+                    ry={Math.max((h - s) / 2 - k, 1)}
+                />
+            </>
+        );
+    },
 };
 
 export function FlowShape({

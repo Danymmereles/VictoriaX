@@ -14,7 +14,8 @@
 
 .flow-shape--input,
 .flow-shape--document,
-.flow-shape--context {
+.flow-shape--context,
+.flow-shape--end {
     fill: var(--dg-purple-fill);
     stroke: var(--dg-purple-stroke);
 }
@@ -37,7 +38,7 @@
     stroke: var(--dg-green-stroke);
 }
 
-/* Líneas internas (barras del Contexto): solo trazo */
+/* Líneas internas (barras del Contexto, anillo del Fin): solo trazo */
 .flow-shape__line {
     fill: none;
 }

@@ -13,7 +13,11 @@ export const NODE_NAMES = {
     preparation: "Preparación",
     connector: "Conector",
     context: "Contexto",
+    end: "Fin",
 };
+
+// Nodo Fin: su texto es fijo ("Fin") y no se edita
+export const END_NODE_TYPE = "end";
 
 /*
  * Texto de ayuda de un nodo sin texto: se ve atenuado y desaparece al

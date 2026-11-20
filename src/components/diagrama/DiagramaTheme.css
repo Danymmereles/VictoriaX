@@ -210,7 +210,8 @@
 
 .diagram-flow-area .react-flow__minimap-node.minimap-node--input,
 .diagram-flow-area .react-flow__minimap-node.minimap-node--document,
-.diagram-flow-area .react-flow__minimap-node.minimap-node--context {
+.diagram-flow-area .react-flow__minimap-node.minimap-node--context,
+.diagram-flow-area .react-flow__minimap-node.minimap-node--end {
     fill: var(--dg-purple-fill) !important;
     stroke: var(--dg-purple-stroke) !important;
 }

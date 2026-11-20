@@ -28,6 +28,8 @@ import DiagramaTabs, {
 } from "../components/diagrama/DiagramaTabs.jsx";
 import ExecutionView from "../components/diagrama/ExecutionView.jsx";
 import PageBar from "../components/diagrama/PageBar.jsx";
+import GenerationNotice from "../components/diagrama/GenerationNotice.jsx";
+import { generarDiagrama } from "../components/diagrama/generacion/index.js";
 import {
     CALL_NODE_TYPE,
     MAIN_PAGE_ID,
@@ -35,6 +37,8 @@ import {
     crearPaginaFuncion,
     derivarPaginas,
     emptyPage,
+    esAncla,
+    esContexto,
     nombreLlamadaPorDefecto,
     problemasDeNodos,
     sincronizarAncla,
@@ -74,6 +78,33 @@ const ANCHOR_TOP = 70;
 // Igual con el Contexto al abrir el diagrama. Ancho mínimo: 180px.
 const CONTEXT_WIDTH = 180;
 
+// Tipo de conector al entrar (también el de los generados)
+const INITIAL_EDGE_TYPE = "default";
+
+/*
+ * Viewport que deja el inicio de la página (Contexto o ancla)
+ * centrado arriba, a tamaño real. Los nodos generados se ubican
+ * por su centro superior (origin [0.5, 0]); los demás, por su
+ * esquina superior izquierda.
+ */
+function initialViewport(nodes, canvasWidth) {
+    const start = nodes.find((node) => esContexto(node) || esAncla(node));
+
+    if (!start) {
+        return DEFAULT_VIEWPORT;
+    }
+
+    const width = esContexto(start) ? CONTEXT_WIDTH : ANCHOR_WIDTH;
+    const centered = start.origin?.[0] === 0.5;
+    const centerX = start.position.x + (centered ? 0 : width / 2);
+
+    return {
+        x: Math.max(canvasWidth / 2, width / 2) - centerX,
+        y: ANCHOR_TOP - start.position.y,
+        zoom: 1,
+    };
+}
+
 const deselect = (items) =>
     items.map((item) => (item.selected ? { ...item, selected: false } : item));
 
@@ -93,23 +124,6 @@ const preventContextMenu = (event) => {
  */
 function Flow({ active = true, onRun }) {
 
-    // Main arranca siempre con el nodo Contexto (inicio fijo)
-    const [nodes, setNodes, onNodesChange] =
-        useNodesState(() => [crearNodoContexto()]);
-
-    const [edges, setEdges, onEdgesChange] =
-        useEdgesState([]);
-
-    const {
-        screenToFlowPosition,
-        getNodes,
-        getEdges,
-        getViewport,
-        setViewport,
-    } = useReactFlow();
-
-    const [type] = useDnD();
-
     // Análisis Previo (se guarda en cada cambio, por eso está
     // al día al "Pasar a Diagramar")
     const [analisis] = useState(cargarAnalisis);
@@ -126,26 +140,74 @@ function Flow({ active = true, onRun }) {
         [funciones]
     );
 
+    // Lista de páginas: Main + una por variable de datos
+    const pages = useMemo(
+        () => derivarPaginas(funciones),
+        [funciones]
+    );
+
+    // Diagrama generado desde el Análisis Previo, una sola vez al
+    // entrar (ver generacion/). Si no se puede generar, Main arranca
+    // solo con el Contexto, como antes.
+    const [generacion] = useState(() =>
+        generarDiagrama(analisis, {
+            paginas: pages,
+            edgeType: INITIAL_EDGE_TYPE,
+        })
+    );
+
+    // Aviso de lo generado y de lo que falta completar
+    const [showNotice, setShowNotice] = useState(true);
+
+    // Main arranca siempre con el nodo Contexto (inicio fijo)
+    const [nodes, setNodes, onNodesChange] =
+        useNodesState(() =>
+            generacion.generado ? generacion.main.nodes : [crearNodoContexto()]
+        );
+
+    const [edges, setEdges, onEdgesChange] =
+        useEdgesState(() =>
+            generacion.generado ? generacion.main.edges : []
+        );
+
+    const {
+        screenToFlowPosition,
+        getNodes,
+        getEdges,
+        getViewport,
+        setViewport,
+    } = useReactFlow();
+
+    const [type] = useDnD();
+
     // Variables con valor inicial: Control, Estado y Resultado
-    // del Análisis Previo, más las que se agreguen a mano
+    // del Análisis Previo, más las que agrega la generación
+    // (T, TF, HV, tiempos de los eventos...) y las que se
+    // agreguen a mano
     const [variables, setVariables] =
-        useState(() => sincronizarConAnalisis([], analisis));
+        useState(() => [
+            ...sincronizarConAnalisis([], analisis),
+            ...(generacion.variables ?? []),
+        ]);
 
     // Tipo de conector global: aplica a todos los edges
     // de TODAS las páginas
     const [edgeType, setEdgeType] =
-        useState("default");
+        useState(INITIAL_EDGE_TYPE);
 
 
     // ---------------------------------------------------
     // Páginas del algoritmo: Main + una por cada variable de
     // datos (ver pages.js). React Flow muestra solo la página
-    // activa; las demás quedan guardadas acá.
+    // activa; las demás quedan guardadas acá. Las páginas de
+    // datos generadas arrancan guardadas.
     // ---------------------------------------------------
     const [activePage, setActivePage] =
         useState(MAIN_PAGE_ID);
 
-    const pagesStoreRef = useRef({});
+    const pagesStoreRef = useRef(
+        generacion.generado ? { ...generacion.paginas } : {}
+    );
     // Fuerza un render al cambiar lo guardado (p. ej. hasDiagram)
     const [, setStoreVersion] = useState(0);
 
@@ -182,13 +244,6 @@ function Flow({ active = true, onRun }) {
     });
 
     const { takeSnapshot } = history;
-
-
-    // Lista de páginas: Main + una por variable de datos
-    const pages = useMemo(
-        () => derivarPaginas(funciones),
-        [funciones]
-    );
 
     const currentPage = useMemo(
         () => pages.find((page) => page.id === activePage),
@@ -231,11 +286,7 @@ function Flow({ active = true, onRun }) {
     useEffect(() => {
         const width = canvasRef.current?.clientWidth ?? 0;
 
-        setViewport({
-            x: Math.max(width / 2 - CONTEXT_WIDTH / 2, 0),
-            y: ANCHOR_TOP,
-            zoom: 1,
-        });
+        setViewport(initialViewport(nodes, width));
         // Solo al montar
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -258,23 +309,16 @@ function Flow({ active = true, onRun }) {
             const width = canvasRef.current?.clientWidth ?? 0;
 
             // Primera vez que se abre una variable: arranca con
-            // su nodo ancla, centrado arriba
+            // su nodo ancla (o con lo generado), centrado arriba
             const target =
                 pagesStoreRef.current[pageId] ??
                 (pageId === MAIN_PAGE_ID || !page
                     ? emptyPage()
-                    : {
-                        ...crearPaginaFuncion(page),
-                        viewport: {
-                            x: Math.max(width / 2 - ANCHOR_WIDTH / 2, 0),
-                            y: ANCHOR_TOP,
-                            zoom: 1,
-                        },
-                    });
+                    : crearPaginaFuncion(page));
 
             setNodes(deselect(target.nodes));
             setEdges(deselect(target.edges));
-            setViewport(target.viewport ?? DEFAULT_VIEWPORT);
+            setViewport(target.viewport ?? initialViewport(target.nodes, width));
 
             setActivePage(pageId);
             setStoreVersion((v) => v + 1);
@@ -523,6 +567,14 @@ function Flow({ active = true, onRun }) {
 
                             </ReactFlow>
                         </PageProvider>
+
+                        {/* Qué se generó desde el Análisis Previo */}
+                        {showNotice && (
+                            <GenerationNotice
+                                generacion={generacion}
+                                onClose={() => setShowNotice(false)}
+                            />
+                        )}
                     </div>
 
                     {/* Páginas: Main + variables de datos */}

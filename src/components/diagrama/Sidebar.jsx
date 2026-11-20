@@ -17,6 +17,7 @@ const SIDEBAR_TYPES = [
     "io",
     "preparation",
     "connector",
+    "end",
 ];
 
 // Tamaño (px) de cada figura en la barra lateral
@@ -29,6 +30,7 @@ const PREVIEW_SIZES = {
     io: [46, 34],
     preparation: [46, 34],
     connector: [34, 34],
+    end: [44, 30],
 };
 
 function SidebarItem({ type, label }) {

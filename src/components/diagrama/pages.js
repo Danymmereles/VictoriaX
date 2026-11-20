@@ -107,22 +107,24 @@ export function derivarPaginas(funciones) {
  */
 export function crearPaginaFuncion(pagina, posicion = { x: 0, y: 0 }) {
     return {
-        nodes: [
-            {
-                id: anchorIdDe(pagina.id),
-                type: "custom",
-                position: posicion,
-                // React Flow no lo borra con Supr
-                deletable: false,
-                data: {
-                    type: CALL_NODE_TYPE,
-                    label: pagina.nombre,
-                    anchorOf: pagina.id,
-                },
-            },
-        ],
+        nodes: [crearNodoAncla(pagina, posicion)],
         edges: [],
         viewport: null,
+    };
+}
+
+export function crearNodoAncla(pagina, posicion = { x: 0, y: 0 }) {
+    return {
+        id: anchorIdDe(pagina.id),
+        type: "custom",
+        position: posicion,
+        // React Flow no lo borra con Supr
+        deletable: false,
+        data: {
+            type: CALL_NODE_TYPE,
+            label: pagina.nombre,
+            anchorOf: pagina.id,
+        },
     };
 }
 
@@ -180,8 +182,10 @@ export function validarNombreNodo({ data, nombre, pagina }) {
 /*
  * Problemas de los nodos de la página actual (no bloquean, se marcan):
  *   { [nodeId]: mensaje }
- * Llamadas (nodos Preparación, menos el ancla) cuyo nombre no es una
- * variable de datos, o es una variable repetida.
+ * - Nodos generados desde el Análisis Previo que el usuario tiene que
+ *   completar (data.pending, ver generacion/). Se marcan hasta editarlos.
+ * - Llamadas (nodos Preparación, menos el ancla) cuyo nombre no es una
+ *   variable de datos, o es una variable repetida.
  */
 export function problemasDeNodos({ nodes, pagina, paginas }) {
     const problemas = {};
@@ -205,6 +209,13 @@ export function problemasDeNodos({ nodes, pagina, paginas }) {
             } else if (coincidencias.length > 1) {
                 problemas[node.id] = `Hay más de una variable de datos "${nombre}".`;
             }
+        });
+
+    // Lo que falta completar explica mejor qué hacer: tiene prioridad
+    nodes
+        .filter((node) => node.data?.pending)
+        .forEach((node) => {
+            problemas[node.id] = node.data.pending;
         });
 
     return problemas;

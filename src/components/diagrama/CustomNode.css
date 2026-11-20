@@ -184,6 +184,17 @@
     text-align: left;
 }
 
+/* Fin: óvalo chico con texto fijo (no se edita) */
+.flow-node--end {
+    min-width: 100px;
+    min-height: 48px;
+    padding: 8px 22px;
+}
+
+.flow-node--end .flow-node__text {
+    cursor: default;
+}
+
 /* Nodo vacío: se ve su nombre atenuado ("Proceso", "Contexto"...),
    como ayuda. Desaparece al editar. */
 .flow-node__text.is-empty {
@@ -248,22 +259,24 @@
     border: 2px solid var(--dg-decision-handle-border);
 }
 
+/* Arriba del punto de salida: la flecha sale por debajo
+   de la etiqueta sin taparla */
 .decision-label {
     position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
+    bottom: calc(50% + 7px);
 
     font-size: 11px;
     font-weight: 600;
+    line-height: 1;
     color: var(--dg-decision-label);
 
     pointer-events: none;
 }
 
 .decision-label-no {
-    right: calc(100% + 8px);
+    right: calc(100% - 2px);
 }
 
 .decision-label-yes {
-    left: calc(100% + 8px);
+    left: calc(100% - 2px);
 }

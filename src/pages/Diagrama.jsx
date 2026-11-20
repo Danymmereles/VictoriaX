@@ -84,38 +84,6 @@ const preventContextMenu = (event) => {
 };
 
 
-// Obtener texto del nodo
-function getNodeLabel(type) {
-    switch (type) {
-        case "input":
-            return "Entrada";
-
-        case "process":
-            return "Proceso";
-
-        case "decision":
-            return "Decisión";
-
-        case "output":
-            return "Salida";
-
-        case "document":
-            return "Documento";
-
-        case "io":
-            return "Entrada / Salida";
-
-        case "preparation":
-            return "Preparación";
-
-        case "connector":
-            return "A";
-
-        default:
-            return "Nodo";
-    }
-}
-
 
 /*
  * Editor del diagrama.
@@ -422,16 +390,18 @@ function Flow({ active = true, onRun }) {
                 });
 
 
-            // Una llamada (Preparación) nueva arranca con el nombre de
-            // una variable de datos que se pueda llamar desde acá
+            // Los nodos nacen vacíos: muestran su nombre atenuado
+            // como ayuda (ver nodeNames.js). Una llamada (Preparación)
+            // arranca con una variable de datos que se pueda llamar
+            // desde acá, si hay alguna.
             const label =
                 type === CALL_NODE_TYPE
                     ? nombreLlamadaPorDefecto({
                         pagina: currentPage,
                         paginas: pages,
-                        generico: getNodeLabel(type),
+                        generico: "",
                     })
-                    : getNodeLabel(type);
+                    : "";
 
 
             const newNode = {

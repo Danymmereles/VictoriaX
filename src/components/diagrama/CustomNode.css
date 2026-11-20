@@ -184,7 +184,8 @@
     text-align: left;
 }
 
-/* Contexto vacío: se ve "Contexto" atenuado, como ayuda */
+/* Nodo vacío: se ve su nombre atenuado ("Proceso", "Contexto"...),
+   como ayuda. Desaparece al editar. */
 .flow-node__text.is-empty {
     opacity: 0.5;
 }

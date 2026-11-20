@@ -9,6 +9,7 @@ import {
 import { FlowShape } from "./shapes";
 import { useHistory } from "./HistoryContext";
 import { usePageContext } from "./PageContext";
+import { placeholderDe } from "./nodeNames";
 import "./CustomNode.css";
 
 /*
@@ -177,10 +178,8 @@ export default function CustomNode({ id, data, selected }) {
 
         stopEditing();
 
-        // El Contexto puede quedar vacío; los demás nodos no
-        const newLabel = multiline
-            ? text.replace(/\s+$/, "")
-            : text.trim() || data.label;
+        // Un nodo puede quedar vacío: vuelve a mostrar su texto de ayuda
+        const newLabel = multiline ? text.replace(/\s+$/, "") : text.trim();
 
         if (newLabel === data.label) {
             return;
@@ -255,12 +254,17 @@ export default function CustomNode({ id, data, selected }) {
                     ? "Doble clic: cambiar de lado · Enter o F2: editar la etiqueta"
                     : undefined);
 
-    // Texto que define el tamaño del nodo (ver flow-node__label)
-    const mirrorText = editing
-        ? (text || "\u00a0") + (text.endsWith("\n") ? "\u00a0" : "")
-        : data.label;
-
+    // Nodo sin texto: muestra su nombre atenuado como ayuda
+    // (p. ej. "Proceso"), que desaparece al editar
+    const placeholder = placeholderDe(data.type);
     const isEmpty = !editing && !String(data.label ?? "").trim();
+
+    // Texto que define el tamaño del nodo (ver flow-node__label).
+    // Al editar un nodo vacío se mide con el texto de ayuda, así
+    // la figura no cambia de tamaño al empezar a escribir.
+    const mirrorText = editing
+        ? (text || placeholder) + (text.endsWith("\n") ? "\u00a0" : "")
+        : data.label;
 
     return (
         <div
@@ -320,7 +324,7 @@ export default function CustomNode({ id, data, selected }) {
                         .filter(Boolean)
                         .join(" ")}
                 >
-                    {isEmpty && isContext ? "Contexto" : mirrorText}
+                    {isEmpty ? placeholder : mirrorText}
                 </span>
 
                 {editing && (multiline ? (

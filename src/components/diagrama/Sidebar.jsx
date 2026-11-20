@@ -2,8 +2,22 @@ import { useDnD } from "./DnDContext";
 import { FlowShape } from "./shapes";
 import EdgeTypeSelector from "./EdgeTypeSelector";
 import HistoryControls from "./HistoryControls";
+import { NODE_NAMES } from "./nodeNames";
 import BackToAnalysisLink from "./BackToAnalysisLink";
 import "./Sidebar.css";
+
+// Figuras que se pueden arrastrar, en orden (el Contexto no:
+// es fijo en Main)
+const SIDEBAR_TYPES = [
+    "input",
+    "process",
+    "decision",
+    "output",
+    "document",
+    "io",
+    "preparation",
+    "connector",
+];
 
 // Tamaño (px) de cada figura en la barra lateral
 const PREVIEW_SIZES = {
@@ -58,15 +72,9 @@ export default function Sidebar({ edgeType, onEdgeTypeChange, onRun, hasDiagram 
             />
 
             <div className="sidebar-items">
-                <SidebarItem type="input" label="Entrada" />
-                <SidebarItem type="process" label="Proceso" />
-                <SidebarItem type="decision" label="Decisión" />
-                <SidebarItem type="output" label="Salida" />
-
-                <SidebarItem type="document" label="Documento" />
-                <SidebarItem type="io" label="Entrada / Salida" />
-                <SidebarItem type="preparation" label="Preparación" />
-                <SidebarItem type="connector" label="Conector" />
+                {SIDEBAR_TYPES.map((type) => (
+                    <SidebarItem key={type} type={type} label={NODE_NAMES[type]} />
+                ))}
             </div>
 
             {/* Ejecutar: abre la vista de ejecución */}

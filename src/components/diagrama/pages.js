@@ -198,7 +198,9 @@ export function problemasDeNodos({ nodes, pagina, paginas }) {
             const nombre = String(node.data?.label ?? "").trim();
             const coincidencias = funciones.filter((p) => mismoNombre(p.nombre, nombre));
 
-            if (coincidencias.length === 0) {
+            if (!nombre) {
+                problemas[node.id] = "Escribí el nombre de una variable de datos.";
+            } else if (coincidencias.length === 0) {
                 problemas[node.id] = `"${nombre}" no es una variable de datos del Análisis Previo.`;
             } else if (coincidencias.length > 1) {
                 problemas[node.id] = `Hay más de una variable de datos "${nombre}".`;

@@ -3,6 +3,7 @@ import {
     Handle,
     Position,
     useReactFlow,
+    useUpdateNodeInternals,
 } from "@xyflow/react";
 
 import { FlowShape } from "./shapes";
@@ -53,8 +54,45 @@ function useNodeSize(ref) {
 // Tiempo que se muestra el aviso de un nombre rechazado
 const NOTICE_MS = 2800;
 
+// Conector: un único punto de conexión a un costado, que sirve de
+// entrada y de salida (dos handles superpuestos, ver ConnectorHandle)
+const CONNECTOR_SIDES = {
+    right: Position.Right,
+    left: Position.Left,
+};
+
+const otherSide = (side) => (side === "left" ? "right" : "left");
+
+/*
+ * Punto único del Conector. Son dos handles en el mismo lugar:
+ * uno de entrada (target) y otro de salida (source). React Flow
+ * elige el de tipo opuesto al conectar, así que para el usuario
+ * es un solo punto que recibe o envía flechas.
+ */
+function ConnectorHandle({ side }) {
+    const position = CONNECTOR_SIDES[side] ?? Position.Right;
+
+    return (
+        <>
+            <Handle
+                type="target"
+                position={position}
+                id="c-in"
+                className="connector-handle"
+            />
+            <Handle
+                type="source"
+                position={position}
+                id="c-out"
+                className="connector-handle"
+            />
+        </>
+    );
+}
+
 export default function CustomNode({ id, data, selected }) {
     const { setNodes } = useReactFlow();
+    const updateNodeInternals = useUpdateNodeInternals();
     const { takeSnapshot } = useHistory();
     const { nodeIssues, validateLabel } = usePageContext();
 
@@ -80,12 +118,42 @@ export default function CustomNode({ id, data, selected }) {
     }, [notice]);
 
     const isDecision = data.type === "decision";
+    const isConnector = data.type === "connector";
+
+    // Contexto: inicio fijo de Main, donde se declaran variables
+    // (una por línea). Solo tiene salida y se edita en varias líneas.
+    const isContext = data.type === "context";
 
     // Nodo ancla: encabeza la página de su variable de datos.
     // Es el inicio (solo salida) y su nombre viene del Análisis Previo.
     const isAnchor = Boolean(data.anchorOf);
 
+    // Inicio del algoritmo de la página: no recibe conexiones
+    const isStart = isAnchor || isContext;
+
+    const multiline = isContext;
+
+    const connectorSide = data.handleSide === "left" ? "left" : "right";
+
+    // React Flow guarda la posición de los handles: al cambiar
+    // de lado hay que avisarle para que las flechas lo sigan
+    useEffect(() => {
+        if (isConnector) {
+            updateNodeInternals(id);
+        }
+    }, [isConnector, connectorSide, id, updateNodeInternals]);
+
     const issue = nodeIssues?.[id];
+
+    const updateData = (changes) => {
+        setNodes((nodes) =>
+            nodes.map((node) =>
+                node.id === id
+                    ? { ...node, data: { ...node.data, ...changes } }
+                    : node
+            )
+        );
+    };
 
     const startEditing = () => {
         if (isAnchor) {
@@ -109,7 +177,10 @@ export default function CustomNode({ id, data, selected }) {
 
         stopEditing();
 
-        const newLabel = text.trim() || data.label;
+        // El Contexto puede quedar vacío; los demás nodos no
+        const newLabel = multiline
+            ? text.replace(/\s+$/, "")
+            : text.trim() || data.label;
 
         if (newLabel === data.label) {
             return;
@@ -124,32 +195,72 @@ export default function CustomNode({ id, data, selected }) {
         }
 
         takeSnapshot();
-
-        setNodes((nodes) =>
-            nodes.map((node) =>
-                node.id === id
-                    ? {
-                        ...node,
-                        data: {
-                            ...node.data,
-                            label: newLabel,
-                        },
-                    }
-                    : node
-            )
-        );
+        updateData({ label: newLabel });
     };
 
     const handleKeyDown = (event) => {
-        if (event.key === "Enter") {
-            saveText();
-        }
-
         if (event.key === "Escape") {
             setText(data.label);
             stopEditing();
+            return;
+        }
+
+        // En varias líneas, Enter agrega un renglón y
+        // Ctrl/Cmd + Enter guarda
+        if (event.key === "Enter" && (!multiline || event.ctrlKey || event.metaKey)) {
+            event.preventDefault();
+            saveText();
         }
     };
+
+    // Conector: doble clic cambia el lado del punto de conexión
+    const toggleConnectorSide = () => {
+        takeSnapshot();
+        updateData({ handleSide: otherSide(connectorSide) });
+    };
+
+    const handleDoubleClick = isConnector ? toggleConnectorSide : startEditing;
+
+    // Conector: con el nodo seleccionado, Enter o F2 edita la etiqueta
+    // (el doble clic quedó para cambiar de lado)
+    useEffect(() => {
+        const wrapper = nodeRef.current?.closest(".react-flow__node");
+
+        if (!isConnector || !wrapper) {
+            return undefined;
+        }
+
+        const onKeyDown = (event) => {
+            if (
+                (event.key === "Enter" || event.key === "F2") &&
+                !editingRef.current &&
+                event.target === wrapper
+            ) {
+                event.preventDefault();
+                startEditing();
+            }
+        };
+
+        wrapper.addEventListener("keydown", onKeyDown);
+        return () => wrapper.removeEventListener("keydown", onKeyDown);
+    });
+
+    const tooltip =
+        issue ||
+        (isAnchor
+            ? "Inicio de la variable de datos. Su nombre se cambia en el Análisis Previo."
+            : isContext
+                ? "Inicio del algoritmo. Doble clic para declarar variables (una por línea; Ctrl+Enter guarda)."
+                : isConnector
+                    ? "Doble clic: cambiar de lado · Enter o F2: editar la etiqueta"
+                    : undefined);
+
+    // Texto que define el tamaño del nodo (ver flow-node__label)
+    const mirrorText = editing
+        ? (text || "\u00a0") + (text.endsWith("\n") ? "\u00a0" : "")
+        : data.label;
+
+    const isEmpty = !editing && !String(data.label ?? "").trim();
 
     return (
         <div
@@ -163,14 +274,10 @@ export default function CustomNode({ id, data, selected }) {
             ]
                 .filter(Boolean)
                 .join(" ")}
-            title={
-                issue ||
-                (isAnchor
-                    ? "Inicio de la variable de datos. Su nombre se cambia en el Análisis Previo."
-                    : undefined)
-            }
+            title={tooltip}
+            onDoubleClick={isConnector ? handleDoubleClick : undefined}
         >
-            {isAnchor && (
+            {isStart && (
                 <span className="flow-node__badge" aria-hidden="true">
                     Inicio
                 </span>
@@ -185,8 +292,8 @@ export default function CustomNode({ id, data, selected }) {
                 />
             )}
 
-            {/* El ancla es el inicio: no recibe conexiones */}
-            {!isAnchor && (
+            {/* Entrada arriba (el inicio y el conector no la tienen ahí) */}
+            {!isStart && !isConnector && (
                 <Handle
                     type="target"
                     position={Position.Top}
@@ -200,15 +307,34 @@ export default function CustomNode({ id, data, selected }) {
               * el que define el tamaño del nodo; el input se superpone
               * encima sin ocupar espacio. Así la figura no se deforma.
               */}
-            <div className="flow-node__label">
+            <div
+                className="flow-node__label"
+                onDoubleClick={isConnector ? undefined : handleDoubleClick}
+            >
                 <span
-                    className={`flow-node__text ${editing ? "is-editing" : ""}`}
-                    onDoubleClick={startEditing}
+                    className={[
+                        "flow-node__text",
+                        editing && "is-editing",
+                        isEmpty && "is-empty",
+                    ]
+                        .filter(Boolean)
+                        .join(" ")}
                 >
-                    {editing ? text || "\u00a0" : data.label}
+                    {isEmpty && isContext ? "Contexto" : mirrorText}
                 </span>
 
-                {editing && (
+                {editing && (multiline ? (
+                    <textarea
+                        autoFocus
+                        value={text}
+                        onChange={(event) => setText(event.target.value)}
+                        onBlur={saveText}
+                        onKeyDown={handleKeyDown}
+                        className="node-edit-input node-edit-input--multiline nodrag nowheel"
+                        aria-label="Declaración de variables"
+                        spellCheck={false}
+                    />
+                ) : (
                     <input
                         autoFocus
                         value={text}
@@ -218,10 +344,12 @@ export default function CustomNode({ id, data, selected }) {
                         className="node-edit-input nodrag"
                         aria-label="Texto del nodo"
                     />
-                )}
+                ))}
             </div>
 
-            {isDecision ? (
+            {isConnector ? (
+                <ConnectorHandle side={connectorSide} />
+            ) : isDecision ? (
                 <>
                     <Handle
                         type="source"

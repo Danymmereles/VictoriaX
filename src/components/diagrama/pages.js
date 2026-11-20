@@ -29,6 +29,45 @@ export const esAncla = (node) => Boolean(node?.data?.anchorOf);
 
 export const anchorIdDe = (pageId) => `anchor-${pageId}`;
 
+
+// ---------------------------------------------------------------------------
+// Nodo Contexto: inicio fijo de Main (20/11). Reemplaza al "Inicio" ovalado.
+// Ahí el usuario declara variables, una por línea. No está en la barra
+// lateral, no se borra y solo tiene salida (abajo).
+// ---------------------------------------------------------------------------
+export const CONTEXT_NODE_TYPE = "context";
+export const CONTEXT_NODE_ID = "context-main";
+
+export const esContexto = (node) => node?.data?.type === CONTEXT_NODE_TYPE;
+
+export function crearNodoContexto(posicion = { x: 0, y: 0 }) {
+    return {
+        id: CONTEXT_NODE_ID,
+        type: "custom",
+        position: posicion,
+        deletable: false,
+        data: {
+            type: CONTEXT_NODE_TYPE,
+            label: "",
+        },
+    };
+}
+
+// Nodos que el usuario no crea ni puede borrar (Contexto y anclas)
+export const esNodoFijo = (node) => esAncla(node) || esContexto(node);
+
+// ¿La página tiene algo hecho por el usuario?
+export function tieneContenido({ nodes = [], edges = [] }) {
+    return (
+        edges.length > 0 ||
+        nodes.some(
+            (node) =>
+                !esNodoFijo(node) ||
+                (esContexto(node) && String(node.data?.label ?? "").trim())
+        )
+    );
+}
+
 const clave = (nombre) => String(nombre ?? "").trim().toUpperCase();
 
 export const mismoNombre = (a, b) => clave(a) === clave(b);

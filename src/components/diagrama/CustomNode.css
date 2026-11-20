@@ -171,11 +171,27 @@
     padding: 6px;
 }
 
-/* Dado: el texto ocupa el lugar del punto central */
-.flow-node--random {
-    min-width: 88px;
-    min-height: 88px;
-    padding: 24px 16px;
+/* Contexto: declaraciones alineadas a la izquierda, una por línea.
+   Los márgenes laterales dejan lugar a las barras de la figura. */
+.flow-node--context {
+    min-width: 180px;
+    min-height: 80px;
+    padding: 12px 28px;
+}
+
+.flow-node--context .flow-node__label {
+    max-width: 320px;
+    text-align: left;
+}
+
+/* Contexto vacío: se ve "Contexto" atenuado, como ayuda */
+.flow-node__text.is-empty {
+    opacity: 0.5;
+}
+
+/* Conector: un solo punto lateral (entrada y salida superpuestas) */
+.flow-node--connector {
+    cursor: pointer;
 }
 
 
@@ -205,6 +221,17 @@
     text-align: center;
     font: inherit;
     color: inherit;
+}
+
+/* Varias líneas (Contexto): Enter agrega un renglón */
+.node-edit-input--multiline {
+    resize: none;
+    overflow: hidden;
+
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    text-align: inherit;
+    line-height: inherit;
 }
 
 

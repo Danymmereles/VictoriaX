@@ -91,39 +91,17 @@ const SHAPES = {
         <ellipse cx={w / 2} cy={h / 2} rx={(w - s) / 2} ry={(h - s) / 2} />
     ),
 
-    // Dado (función random): cara del 5. En el lienzo el punto central
-    // se reemplaza por el texto del nodo; en la barra lateral se dibuja.
-    random: (w, h, s, { centerPip = false } = {}) => {
-        const lado = Math.min(w, h);
-        const r = Math.max(lado * 0.065, 2);
-        const inset = lado * 0.25;
-
-        const pips = [
-            [inset, inset],
-            [w - inset, inset],
-            [inset, h - inset],
-            [w - inset, h - inset],
-            ...(centerPip ? [[w / 2, h / 2]] : []),
-        ];
+    // Contexto: rectángulo con dos barras verticales a los costados
+    context: (w, h, s) => {
+        const k = Math.min(14, w * 0.09);
 
         return (
             <>
-                <rect
-                    x={s / 2}
-                    y={s / 2}
-                    width={w - s}
-                    height={h - s}
-                    rx={lado * 0.18}
+                <rect x={s / 2} y={s / 2} width={w - s} height={h - s} rx={6} />
+                <path
+                    className="flow-shape__line"
+                    d={`M ${k} ${s / 2} V ${h - s / 2} M ${w - k} ${s / 2} V ${h - s / 2}`}
                 />
-                {pips.map(([cx, cy]) => (
-                    <circle
-                        key={`${cx}-${cy}`}
-                        className="flow-shape__pip"
-                        cx={cx}
-                        cy={cy}
-                        r={r}
-                    />
-                ))}
             </>
         );
     },
@@ -135,8 +113,6 @@ export function FlowShape({
     height,
     strokeWidth = STROKE_WIDTH,
     className = "",
-    // Detalles opcionales de algunas figuras (p. ej. { centerPip } del dado)
-    options,
 }) {
     const draw = SHAPES[type] ?? SHAPES.process;
 
@@ -153,7 +129,7 @@ export function FlowShape({
             strokeWidth={strokeWidth}
             aria-hidden="true"
         >
-            {draw(width, height, strokeWidth, options)}
+            {draw(width, height, strokeWidth)}
         </svg>
     );
 }

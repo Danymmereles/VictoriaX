@@ -31,12 +31,14 @@ import PageBar from "../components/diagrama/PageBar.jsx";
 import {
     CALL_NODE_TYPE,
     MAIN_PAGE_ID,
+    crearNodoContexto,
     crearPaginaFuncion,
     derivarPaginas,
     emptyPage,
     nombreLlamadaPorDefecto,
     problemasDeNodos,
     sincronizarAncla,
+    tieneContenido,
     validarNombreNodo,
 } from "../components/diagrama/pages.js";
 import { PageProvider } from "../components/diagrama/PageContext.jsx";
@@ -68,6 +70,9 @@ const DEFAULT_VIEWPORT = { x: 0, y: 0, zoom: 1 };
 // nodo ancla (inicio) queda centrado arriba. Ancho del nodo: 160px.
 const ANCHOR_WIDTH = 160;
 const ANCHOR_TOP = 70;
+
+// Igual con el Contexto al abrir el diagrama. Ancho mínimo: 180px.
+const CONTEXT_WIDTH = 180;
 
 const deselect = (items) =>
     items.map((item) => (item.selected ? { ...item, selected: false } : item));
@@ -106,9 +111,6 @@ function getNodeLabel(type) {
         case "connector":
             return "A";
 
-        case "random":
-            return "Random";
-
         default:
             return "Nodo";
     }
@@ -123,8 +125,9 @@ function getNodeLabel(type) {
  */
 function Flow({ active = true, onRun }) {
 
+    // Main arranca siempre con el nodo Contexto (inicio fijo)
     const [nodes, setNodes, onNodesChange] =
-        useNodesState([]);
+        useNodesState(() => [crearNodoContexto()]);
 
     const [edges, setEdges, onEdgesChange] =
         useEdgesState([]);
@@ -255,6 +258,21 @@ function Flow({ active = true, onRun }) {
     const canvasRef = useRef(null);
 
 
+    // Al abrir el diagrama, el Contexto (inicio de Main) queda
+    // centrado arriba, a tamaño real
+    useEffect(() => {
+        const width = canvasRef.current?.clientWidth ?? 0;
+
+        setViewport({
+            x: Math.max(width / 2 - CONTEXT_WIDTH / 2, 0),
+            y: ANCHOR_TOP,
+            zoom: 1,
+        });
+        // Solo al montar
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+
     // Cambiar de página: guardar la actual y cargar la otra
     const switchPage = useCallback(
         (pageId) => {
@@ -314,13 +332,12 @@ function Flow({ active = true, onRun }) {
     }, [pages, activePage, switchPage]);
 
 
-    // ¿Hay algo dibujado en alguna página?
+    // ¿El usuario hizo algo en alguna página? (los nodos fijos,
+    // Contexto y anclas, no cuentan salvo que se haya escrito en él)
     const hasDiagram =
-        nodes.length > 0 ||
-        edges.length > 0 ||
+        tieneContenido({ nodes, edges }) ||
         Object.entries(pagesStoreRef.current).some(
-            ([pageId, page]) =>
-                pageId !== activePage && page.nodes.length > 0
+            ([pageId, page]) => pageId !== activePage && tieneContenido(page)
         );
 
 
@@ -519,8 +536,6 @@ function Flow({ active = true, onRun }) {
                                 onNodeContextMenu={preventContextMenu}
                                 onEdgeContextMenu={preventContextMenu}
                                 onSelectionContextMenu={preventContextMenu}
-
-                                fitView
                             >
 
                                 <Background />

@@ -1,12 +1,13 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AlertTriangle, ArrowRight, RotateCcw } from "lucide-react";
-import { analisisVacio, validarAnalisis, METODOLOGIAS } from "@/lib/analisisPrevio";
+import { analisisVacio, validarAnalisis, camposConError, METODOLOGIAS } from "@/lib/analisisPrevio";
 import { cargarAnalisis, guardarAnalisis, limpiarAnalisis } from "@/lib/analisisPrevioStorage";
 import NavBar from "@/components/home/NavBar";
 import Footer from "@/components/home/Footer";
 import MetodologiaSelector from "@/components/analisis/MetodologiaSelector";
 import VariableList from "@/components/analisis/VariableList";
+import ErrorBadge from "@/components/analisis/ErrorBadge";
 import TablaEventos from "@/components/analisis/TablaEventos";
 import EventosFuturos from "@/components/analisis/EventosFuturos";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -21,7 +22,12 @@ export default function ModoLibre() {
   }, [analisis]);
 
   const validacion = useMemo(() => validarAnalisis(analisis), [analisis]);
+  const campos = useMemo(() => camposConError(validacion), [validacion]);
   const controlVacio = analisis.variables.control.length === 0;
+
+  const idsConError = (lista) => lista.filter((v) => campos.has(`variable:${v.id}`)).map((v) => v.id);
+  const filasConError = analisis.eventos.filas.filter((f) => campos.has(`evento:${f.id}`)).map((f) => f.id);
+  const variablesConError = [...campos].some((c) => c.startsWith("variables.") || c.startsWith("variable:"));
 
   function setMetodologia(m) {
     setAnalisis((a) => ({ ...a, metodologia: m, eventos: { filas: [] } }));
@@ -67,31 +73,58 @@ export default function ModoLibre() {
 
         <Pasos activo={1} />
 
-        <Seccion titulo="1 · Metodología" desc="Define la estructura de la tabla de eventos.">
-          <MetodologiaSelector value={analisis.metodologia} onChange={setMetodologia} />
+        <Seccion titulo="1 · Metodología" desc="Define la estructura de la tabla de eventos." error={campos.has("metodologia")}>
+          <MetodologiaSelector value={analisis.metodologia} onChange={setMetodologia} error={campos.has("metodologia")} />
         </Seccion>
 
-        <Seccion titulo="2 · Variables" desc="Exógenas (Datos y Control) y Endógenas (Estado y Resultado).">
+        <Seccion titulo="2 · Variables" desc="Exógenas (Datos y Control) y Endógenas (Estado y Resultado)." error={variablesConError}>
           <div className="space-y-8">
             <div>
               <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Exógenas</p>
               <div className="mt-4 grid gap-8 lg:grid-cols-2">
-                <VariableList titulo="Variables de Datos" variables={analisis.variables.datos} onChange={(datos) => setVariables({ datos })} />
-                <VariableList titulo="Variables de Control" variables={analisis.variables.control} onChange={(control) => setVariables({ control })} />
+                <VariableList
+                  titulo="Variables de Datos"
+                  variables={analisis.variables.datos}
+                  onChange={(datos) => setVariables({ datos })}
+                  error={campos.has("variables.datos")}
+                  idsConError={idsConError(analisis.variables.datos)}
+                />
+                <VariableList
+                  titulo="Variables de Control"
+                  variables={analisis.variables.control}
+                  onChange={(control) => setVariables({ control })}
+                  idsConError={idsConError(analisis.variables.control)}
+                />
               </div>
             </div>
             <div>
               <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Endógenas</p>
               <div className="mt-4 grid gap-8 lg:grid-cols-2">
-                <VariableList titulo="Variables de Estado" variables={analisis.variables.estado} onChange={(estado) => setVariables({ estado })} permitirVector controlVars={analisis.variables.control} />
-                <VariableList titulo="Variables de Resultado" variables={analisis.variables.resultado} onChange={(resultado) => setVariables({ resultado })} permitirVector controlVars={analisis.variables.control} />
+                <VariableList
+                  titulo="Variables de Estado"
+                  variables={analisis.variables.estado}
+                  onChange={(estado) => setVariables({ estado })}
+                  permitirVector
+                  controlVars={analisis.variables.control}
+                  error={campos.has("variables.estado")}
+                  idsConError={idsConError(analisis.variables.estado)}
+                />
+                <VariableList
+                  titulo="Variables de Resultado"
+                  variables={analisis.variables.resultado}
+                  onChange={(resultado) => setVariables({ resultado })}
+                  permitirVector
+                  controlVars={analisis.variables.control}
+                  error={campos.has("variables.resultado")}
+                  idsConError={idsConError(analisis.variables.resultado)}
+                />
               </div>
             </div>
           </div>
         </Seccion>
 
-        <Seccion titulo="3 · Tabla de Eventos" desc={analisis.metodologia === METODOLOGIAS.DELTA_T_CONSTANTE ? "Delta T Constante." : "Evento a Evento."}>
-          <TablaEventos analisis={analisis} onChange={setEventos} />
+        <Seccion titulo="3 · Tabla de Eventos" desc={analisis.metodologia === METODOLOGIAS.DELTA_T_CONSTANTE ? "Delta T Constante." : "Evento a Evento."} error={campos.has("eventos")}>
+          <TablaEventos analisis={analisis} onChange={setEventos} error={campos.has("eventos")} filasConError={filasConError} />
         </Seccion>
 
         <Seccion titulo="4 · Tabla de Eventos Futuros" desc="Listado de siglas de tiempo ligadas a eventos.">
@@ -138,10 +171,13 @@ export default function ModoLibre() {
   );
 }
 
-function Seccion({ titulo, desc, children }) {
+function Seccion({ titulo, desc, children, error = false }) {
   return (
-    <section className="mt-10 rounded-2xl border border-border bg-card/40 p-6">
-      <h2 className="font-heading text-2xl font-semibold">{titulo}</h2>
+    <section className={`mt-10 rounded-2xl border p-6 transition-colors ${error ? "border-destructive/60 bg-destructive/5" : "border-border bg-card/40"}`}>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className={`font-heading text-2xl font-semibold ${error ? "text-destructive" : ""}`}>{titulo}</h2>
+        {error && <ErrorBadge>Revisar este bloque</ErrorBadge>}
+      </div>
       {desc && <p className="mt-1 text-sm text-muted-foreground">{desc}</p>}
       <div className="mt-5">{children}</div>
     </section>

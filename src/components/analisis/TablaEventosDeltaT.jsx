@@ -2,8 +2,9 @@ import React, { useState } from "react";
 import { Plus, Trash2, Settings } from "lucide-react";
 import { nuevoEventoDeltaT } from "@/lib/analisisPrevio";
 import VectorConfigDialog from "./VectorConfigDialog";
+import ErrorBadge from "./ErrorBadge";
 
-export default function TablaEventosDeltaT({ filas, onChange, controlVars }) {
+export default function TablaEventosDeltaT({ filas, onChange, controlVars, filasConError = [] }) {
   const [vectorPara, setVectorPara] = useState(null);
 
   function actualizar(i, patch) {
@@ -38,48 +39,54 @@ export default function TablaEventosDeltaT({ filas, onChange, controlVars }) {
       </div>
       <div className="mt-4 space-y-4">
         {filas.length === 0 && <p className="text-sm text-muted-foreground">Sin filas.</p>}
-        {filas.map((f, i) => (
-          <div key={f.id} className="rounded-xl border border-border bg-card p-4">
-            <div className="flex items-center justify-between">
-              <span className="text-xs uppercase tracking-wider text-muted-foreground">Fila {i + 1}</span>
-              <button onClick={() => quitar(i)} className="inline-flex items-center gap-1 text-sm text-destructive hover:underline">
-                <Trash2 className="w-4 h-4" /> Quitar fila
-              </button>
-            </div>
-            <div className="mt-3 grid gap-4 md:grid-cols-3">
-              <div>
-                <label className="text-xs font-medium text-muted-foreground">Eventos Propios</label>
-                <input
-                  value={f.propios.nombre}
-                  onChange={(e) => actualizarPropios(i, { nombre: e.target.value })}
-                  placeholder="Nombre"
-                  className="mt-2 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
-                />
-                <div className="mt-2 flex items-center gap-3">
-                  <label className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <input
-                      type="checkbox"
-                      checked={f.propios.esVector}
-                      onChange={() =>
-                        f.propios.esVector
-                          ? actualizarPropios(i, { esVector: false, dimension: null })
-                          : setVectorPara(i)
-                      }
-                    />{" "}
-                    Vector
-                  </label>
-                  {f.propios.esVector && (
-                    <button onClick={() => setVectorPara(i)} className="inline-flex items-center gap-1 text-xs text-[#AF9BEF] hover:underline">
-                      <Settings className="w-3 h-3" /> {f.propios.dimension ? "Editar" : "Configurar"}
-                    </button>
-                  )}
+        {filas.map((f, i) => {
+          const conError = filasConError.includes(f.id);
+          return (
+            <div key={f.id} className={`rounded-xl border p-4 ${conError ? "border-destructive/60 bg-destructive/5" : "border-border bg-card"}`}>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-3">
+                  <span className="text-xs uppercase tracking-wider text-muted-foreground">Fila {i + 1}</span>
+                  {conError && <ErrorBadge>Revisá esta fila</ErrorBadge>}
                 </div>
+                <button onClick={() => quitar(i)} className="inline-flex items-center gap-1 text-sm text-destructive hover:underline">
+                  <Trash2 className="w-4 h-4" /> Quitar fila
+                </button>
               </div>
-              <ListaEventos titulo="Comprometidos Anteriores" items={f.anteriores} onChange={(idx, v) => actualizarLista(i, "anteriores", idx, v)} onAdd={() => agregarALista(i, "anteriores")} onRemove={(idx) => quitarDeLista(i, "anteriores", idx)} />
-              <ListaEventos titulo="Comprometidos Posteriores" items={f.posteriores} onChange={(idx, v) => actualizarLista(i, "posteriores", idx, v)} onAdd={() => agregarALista(i, "posteriores")} onRemove={(idx) => quitarDeLista(i, "posteriores", idx)} />
+              <div className="mt-3 grid gap-4 md:grid-cols-3">
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground">Eventos Propios</label>
+                  <input
+                    value={f.propios.nombre}
+                    onChange={(e) => actualizarPropios(i, { nombre: e.target.value })}
+                    placeholder="Nombre"
+                    className="mt-2 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
+                  />
+                  <div className="mt-2 flex items-center gap-3">
+                    <label className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <input
+                        type="checkbox"
+                        checked={f.propios.esVector}
+                        onChange={() =>
+                          f.propios.esVector
+                            ? actualizarPropios(i, { esVector: false, dimension: null })
+                            : setVectorPara(i)
+                        }
+                      />{" "}
+                      Vector
+                    </label>
+                    {f.propios.esVector && (
+                      <button onClick={() => setVectorPara(i)} className="inline-flex items-center gap-1 text-xs text-[#AF9BEF] hover:underline">
+                        <Settings className="w-3 h-3" /> {f.propios.dimension ? "Editar" : "Configurar"}
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <ListaEventos titulo="Comprometidos Anteriores" items={f.anteriores} onChange={(idx, v) => actualizarLista(i, "anteriores", idx, v)} onAdd={() => agregarALista(i, "anteriores")} onRemove={(idx) => quitarDeLista(i, "anteriores", idx)} />
+                <ListaEventos titulo="Comprometidos Posteriores" items={f.posteriores} onChange={(idx, v) => actualizarLista(i, "posteriores", idx, v)} onAdd={() => agregarALista(i, "posteriores")} onRemove={(idx) => quitarDeLista(i, "posteriores", idx)} />
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <VectorConfigDialog

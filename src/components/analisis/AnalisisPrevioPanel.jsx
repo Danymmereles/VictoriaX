@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo } from "react";
 import { AlertTriangle } from "lucide-react";
-import { validarAnalisis } from "@/lib/analisisPrevio";
+import { camposConError, validarAnalisis } from "@/lib/analisisPrevio";
+import ErrorBadge from "./ErrorBadge";
 import MetodologiaSelector from "./MetodologiaSelector";
 import VariableList from "./VariableList";
 import VariableControlImplicita from "./VariableControlImplicita";
@@ -28,7 +29,12 @@ export default function AnalisisPrevioPanel({ analisis, setAnalisis, onValidacio
   }
 
   const validacion = useMemo(() => validarAnalisis(analisis), [analisis]);
+  const campos = useMemo(() => camposConError(validacion), [validacion]);
   const controlOk = Boolean(analisis.controlImplicita) || analisis.variables.control.length > 0;
+
+  const idsConError = (lista) => lista.filter((v) => campos.has(`variable:${v.id}`)).map((v) => v.id);
+  const filasConError = analisis.eventos.filas.filter((f) => campos.has(`evento:${f.id}`)).map((f) => f.id);
+  const variablesConError = [...campos].some((c) => c.startsWith("variables.") || c.startsWith("variable:"));
 
   useEffect(() => {
     onValidacionChange?.({ ...validacion, esValido: validacion.esValido && controlOk });
@@ -37,36 +43,60 @@ export default function AnalisisPrevioPanel({ analisis, setAnalisis, onValidacio
 
   return (
     <div className="space-y-8">
-      <Seccion titulo="Metodología" desc="Define la estructura de la tabla de eventos.">
-        <MetodologiaSelector value={analisis.metodologia} onChange={setMetodologia} />
+      <Seccion titulo="Metodología" desc="Define la estructura de la tabla de eventos." error={campos.has("metodologia")}>
+        <MetodologiaSelector value={analisis.metodologia} onChange={setMetodologia} error={campos.has("metodologia")} />
       </Seccion>
 
-      <Seccion titulo="Variables" desc="Exógenas (Datos y Control) y Endógenas (Estado y Resultado).">
+      <Seccion titulo="Variables" desc="Exógenas (Datos y Control) y Endógenas (Estado y Resultado)." error={variablesConError}>
         <div className="space-y-8">
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Exógenas</p>
             <div className="mt-4 grid gap-8 lg:grid-cols-2">
-              <VariableList titulo="Variables de Datos" variables={analisis.variables.datos} onChange={(datos) => setVariables({ datos })} />
+              <VariableList
+                titulo="Variables de Datos"
+                variables={analisis.variables.datos}
+                onChange={(datos) => setVariables({ datos })}
+                error={campos.has("variables.datos")}
+                idsConError={idsConError(analisis.variables.datos)}
+              />
               <VariableControlImplicita
                 variables={analisis.variables.control}
                 onChange={(control) => setVariables({ control })}
                 implicita={Boolean(analisis.controlImplicita)}
                 onChangeImplicita={setControlImplicita}
+                error={!controlOk}
+                idsConError={idsConError(analisis.variables.control)}
               />
             </div>
           </div>
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Endógenas</p>
             <div className="mt-4 grid gap-8 lg:grid-cols-2">
-              <VariableList titulo="Variables de Estado" variables={analisis.variables.estado} onChange={(estado) => setVariables({ estado })} permitirVector controlVars={analisis.variables.control} />
-              <VariableList titulo="Variables de Resultado" variables={analisis.variables.resultado} onChange={(resultado) => setVariables({ resultado })} permitirVector controlVars={analisis.variables.control} />
+              <VariableList
+                titulo="Variables de Estado"
+                variables={analisis.variables.estado}
+                onChange={(estado) => setVariables({ estado })}
+                permitirVector
+                controlVars={analisis.variables.control}
+                error={campos.has("variables.estado")}
+                idsConError={idsConError(analisis.variables.estado)}
+              />
+              <VariableList
+                titulo="Variables de Resultado"
+                variables={analisis.variables.resultado}
+                onChange={(resultado) => setVariables({ resultado })}
+                permitirVector
+                controlVars={analisis.variables.control}
+                error={campos.has("variables.resultado")}
+                idsConError={idsConError(analisis.variables.resultado)}
+              />
             </div>
           </div>
         </div>
       </Seccion>
 
-      <Seccion titulo="Tabla de Eventos" desc="Según la metodología seleccionada.">
-        <TablaEventos analisis={analisis} onChange={setEventos} />
+      <Seccion titulo="Tabla de Eventos" desc="Según la metodología seleccionada." error={campos.has("eventos")}>
+        <TablaEventos analisis={analisis} onChange={setEventos} error={campos.has("eventos")} filasConError={filasConError} />
       </Seccion>
 
       <Seccion titulo="Tabla de Eventos Futuros" desc="Listado de siglas de tiempo ligadas a eventos.">
@@ -78,10 +108,13 @@ export default function AnalisisPrevioPanel({ analisis, setAnalisis, onValidacio
   );
 }
 
-function Seccion({ titulo, desc, children }) {
+function Seccion({ titulo, desc, children, error = false }) {
   return (
-    <section className="rounded-2xl border border-border bg-card/40 p-6">
-      <h3 className="font-heading text-xl font-semibold">{titulo}</h3>
+    <section className={`rounded-2xl border p-6 transition-colors ${error ? "border-destructive/60 bg-destructive/5" : "border-border bg-card/40"}`}>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h3 className={`font-heading text-xl font-semibold ${error ? "text-destructive" : ""}`}>{titulo}</h3>
+        {error && <ErrorBadge>Revisar este bloque</ErrorBadge>}
+      </div>
       {desc && <p className="mt-1 text-sm text-muted-foreground">{desc}</p>}
       <div className="mt-5">{children}</div>
     </section>

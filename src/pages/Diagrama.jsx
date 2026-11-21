@@ -28,15 +28,21 @@ import DiagramaTabs, {
 } from "../components/diagrama/DiagramaTabs.jsx";
 import ExecutionView from "../components/diagrama/ExecutionView.jsx";
 import PageBar from "../components/diagrama/PageBar.jsx";
+import GenerationNotice from "../components/diagrama/GenerationNotice.jsx";
+import { generarDiagrama } from "../components/diagrama/generacion/index.js";
 import {
     CALL_NODE_TYPE,
     MAIN_PAGE_ID,
+    crearNodoContexto,
     crearPaginaFuncion,
     derivarPaginas,
     emptyPage,
+    esAncla,
+    esContexto,
     nombreLlamadaPorDefecto,
     problemasDeNodos,
     sincronizarAncla,
+    tieneContenido,
     validarNombreNodo,
 } from "../components/diagrama/pages.js";
 import { PageProvider } from "../components/diagrama/PageContext.jsx";
@@ -50,6 +56,7 @@ import {
     useDnD,
 } from "../components/diagrama/DnDContext.jsx";
 import useUndoRedo from "../components/diagrama/useUndoRedo.js";
+import { itemDeBarra } from "../components/diagrama/sidebarItems.js";
 import { HistoryProvider } from "../components/diagrama/HistoryContext.jsx";
 
 import "../components/diagrama/DiagramaTheme.css";
@@ -69,6 +76,36 @@ const DEFAULT_VIEWPORT = { x: 0, y: 0, zoom: 1 };
 const ANCHOR_WIDTH = 160;
 const ANCHOR_TOP = 70;
 
+// Igual con el Contexto al abrir el diagrama. Ancho mínimo: 180px.
+const CONTEXT_WIDTH = 180;
+
+// Tipo de conector al entrar (también el de los generados)
+const INITIAL_EDGE_TYPE = "default";
+
+/*
+ * Viewport que deja el inicio de la página (Contexto o ancla)
+ * centrado arriba, a tamaño real. Los nodos generados se ubican
+ * por su centro superior (origin [0.5, 0]); los demás, por su
+ * esquina superior izquierda.
+ */
+function initialViewport(nodes, canvasWidth) {
+    const start = nodes.find((node) => esContexto(node) || esAncla(node));
+
+    if (!start) {
+        return DEFAULT_VIEWPORT;
+    }
+
+    const width = esContexto(start) ? CONTEXT_WIDTH : ANCHOR_WIDTH;
+    const centered = start.origin?.[0] === 0.5;
+    const centerX = start.position.x + (centered ? 0 : width / 2);
+
+    return {
+        x: Math.max(canvasWidth / 2, width / 2) - centerX,
+        y: ANCHOR_TOP - start.position.y,
+        zoom: 1,
+    };
+}
+
 const deselect = (items) =>
     items.map((item) => (item.selected ? { ...item, selected: false } : item));
 
@@ -79,41 +116,6 @@ const preventContextMenu = (event) => {
 };
 
 
-// Obtener texto del nodo
-function getNodeLabel(type) {
-    switch (type) {
-        case "input":
-            return "Entrada";
-
-        case "process":
-            return "Proceso";
-
-        case "decision":
-            return "Decisión";
-
-        case "output":
-            return "Salida";
-
-        case "document":
-            return "Documento";
-
-        case "io":
-            return "Entrada / Salida";
-
-        case "preparation":
-            return "Preparación";
-
-        case "connector":
-            return "A";
-
-        case "random":
-            return "Random";
-
-        default:
-            return "Nodo";
-    }
-}
-
 
 /*
  * Editor del diagrama.
@@ -122,22 +124,6 @@ function getNodeLabel(type) {
  *   onRun:  botón Ejecutar de la barra lateral.
  */
 function Flow({ active = true, onRun }) {
-
-    const [nodes, setNodes, onNodesChange] =
-        useNodesState([]);
-
-    const [edges, setEdges, onEdgesChange] =
-        useEdgesState([]);
-
-    const {
-        screenToFlowPosition,
-        getNodes,
-        getEdges,
-        getViewport,
-        setViewport,
-    } = useReactFlow();
-
-    const [type] = useDnD();
 
     // Análisis Previo (se guarda en cada cambio, por eso está
     // al día al "Pasar a Diagramar")
@@ -155,26 +141,75 @@ function Flow({ active = true, onRun }) {
         [funciones]
     );
 
+    // Lista de páginas: Main + una por variable de datos
+    const pages = useMemo(
+        () => derivarPaginas(funciones),
+        [funciones]
+    );
+
+    // Diagrama generado desde el Análisis Previo, una sola vez al
+    // entrar (ver generacion/). Si no se puede generar, Main arranca
+    // solo con el Contexto, como antes.
+    const [generacion] = useState(() =>
+        generarDiagrama(analisis, {
+            paginas: pages,
+            edgeType: INITIAL_EDGE_TYPE,
+        })
+    );
+
+    // Aviso de lo generado y de lo que falta completar
+    const [showNotice, setShowNotice] = useState(true);
+
+    // Main arranca siempre con el nodo Contexto (inicio fijo)
+    const [nodes, setNodes, onNodesChange] =
+        useNodesState(() =>
+            generacion.generado ? generacion.main.nodes : [crearNodoContexto()]
+        );
+
+    const [edges, setEdges, onEdgesChange] =
+        useEdgesState(() =>
+            generacion.generado ? generacion.main.edges : []
+        );
+
+    const {
+        screenToFlowPosition,
+        getNodes,
+        getEdges,
+        getViewport,
+        setViewport,
+    } = useReactFlow();
+
+    // Elemento de la barra lateral que se está arrastrando
+    const [dragItemId] = useDnD();
+
     // Variables con valor inicial: Control, Estado y Resultado
-    // del Análisis Previo, más las que se agreguen a mano
+    // del Análisis Previo, más las que agrega la generación
+    // (T, TF, HV, tiempos de los eventos...) y las que se
+    // agreguen a mano
     const [variables, setVariables] =
-        useState(() => sincronizarConAnalisis([], analisis));
+        useState(() => [
+            ...sincronizarConAnalisis([], analisis),
+            ...(generacion.variables ?? []),
+        ]);
 
     // Tipo de conector global: aplica a todos los edges
     // de TODAS las páginas
     const [edgeType, setEdgeType] =
-        useState("default");
+        useState(INITIAL_EDGE_TYPE);
 
 
     // ---------------------------------------------------
     // Páginas del algoritmo: Main + una por cada variable de
     // datos (ver pages.js). React Flow muestra solo la página
-    // activa; las demás quedan guardadas acá.
+    // activa; las demás quedan guardadas acá. Las páginas de
+    // datos generadas arrancan guardadas.
     // ---------------------------------------------------
     const [activePage, setActivePage] =
         useState(MAIN_PAGE_ID);
 
-    const pagesStoreRef = useRef({});
+    const pagesStoreRef = useRef(
+        generacion.generado ? { ...generacion.paginas } : {}
+    );
     // Fuerza un render al cambiar lo guardado (p. ej. hasDiagram)
     const [, setStoreVersion] = useState(0);
 
@@ -212,13 +247,6 @@ function Flow({ active = true, onRun }) {
 
     const { takeSnapshot } = history;
 
-
-    // Lista de páginas: Main + una por variable de datos
-    const pages = useMemo(
-        () => derivarPaginas(funciones),
-        [funciones]
-    );
-
     const currentPage = useMemo(
         () => pages.find((page) => page.id === activePage),
         [pages, activePage]
@@ -255,6 +283,17 @@ function Flow({ active = true, onRun }) {
     const canvasRef = useRef(null);
 
 
+    // Al abrir el diagrama, el Contexto (inicio de Main) queda
+    // centrado arriba, a tamaño real
+    useEffect(() => {
+        const width = canvasRef.current?.clientWidth ?? 0;
+
+        setViewport(initialViewport(nodes, width));
+        // Solo al montar
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+
     // Cambiar de página: guardar la actual y cargar la otra
     const switchPage = useCallback(
         (pageId) => {
@@ -272,23 +311,16 @@ function Flow({ active = true, onRun }) {
             const width = canvasRef.current?.clientWidth ?? 0;
 
             // Primera vez que se abre una variable: arranca con
-            // su nodo ancla, centrado arriba
+            // su nodo ancla (o con lo generado), centrado arriba
             const target =
                 pagesStoreRef.current[pageId] ??
                 (pageId === MAIN_PAGE_ID || !page
                     ? emptyPage()
-                    : {
-                        ...crearPaginaFuncion(page),
-                        viewport: {
-                            x: Math.max(width / 2 - ANCHOR_WIDTH / 2, 0),
-                            y: ANCHOR_TOP,
-                            zoom: 1,
-                        },
-                    });
+                    : crearPaginaFuncion(page));
 
             setNodes(deselect(target.nodes));
             setEdges(deselect(target.edges));
-            setViewport(target.viewport ?? DEFAULT_VIEWPORT);
+            setViewport(target.viewport ?? initialViewport(target.nodes, width));
 
             setActivePage(pageId);
             setStoreVersion((v) => v + 1);
@@ -314,13 +346,12 @@ function Flow({ active = true, onRun }) {
     }, [pages, activePage, switchPage]);
 
 
-    // ¿Hay algo dibujado en alguna página?
+    // ¿El usuario hizo algo en alguna página? (los nodos fijos,
+    // Contexto y anclas, no cuentan salvo que se haya escrito en él)
     const hasDiagram =
-        nodes.length > 0 ||
-        edges.length > 0 ||
+        tieneContenido({ nodes, edges }) ||
         Object.entries(pagesStoreRef.current).some(
-            ([pageId, page]) =>
-                pageId !== activePage && page.nodes.length > 0
+            ([pageId, page]) => pageId !== activePage && tieneContenido(page)
         );
 
 
@@ -393,9 +424,13 @@ function Flow({ active = true, onRun }) {
 
             event.preventDefault();
 
-            if (!type) {
+            const item = itemDeBarra(dragItemId);
+
+            if (!item) {
                 return;
             }
+
+            const { type } = item;
 
 
             const position =
@@ -405,16 +440,18 @@ function Flow({ active = true, onRun }) {
                 });
 
 
-            // Una llamada (Preparación) nueva arranca con el nombre de
-            // una variable de datos que se pueda llamar desde acá
+            // Los nodos nacen vacíos: muestran su nombre atenuado
+            // como ayuda (ver nodeNames.js). Una llamada (Preparación)
+            // arranca con una variable de datos que se pueda llamar
+            // desde acá, si hay alguna.
             const label =
                 type === CALL_NODE_TYPE
                     ? nombreLlamadaPorDefecto({
                         pagina: currentPage,
                         paginas: pages,
-                        generico: getNodeLabel(type),
+                        generico: "",
                     })
-                    : getNodeLabel(type);
+                    : "";
 
 
             const newNode = {
@@ -428,6 +465,8 @@ function Flow({ active = true, onRun }) {
                 data: {
                     type,
                     label,
+                    // p. ej. el lado del punto de un Conector
+                    ...item.data,
                 },
 
             };
@@ -442,7 +481,7 @@ function Flow({ active = true, onRun }) {
 
         },
         [
-            type,
+            dragItemId,
             screenToFlowPosition,
             setNodes,
             takeSnapshot,
@@ -519,8 +558,6 @@ function Flow({ active = true, onRun }) {
                                 onNodeContextMenu={preventContextMenu}
                                 onEdgeContextMenu={preventContextMenu}
                                 onSelectionContextMenu={preventContextMenu}
-
-                                fitView
                             >
 
                                 <Background />
@@ -538,6 +575,14 @@ function Flow({ active = true, onRun }) {
 
                             </ReactFlow>
                         </PageProvider>
+
+                        {/* Qué se generó desde el Análisis Previo */}
+                        {showNotice && (
+                            <GenerationNotice
+                                generacion={generacion}
+                                onClose={() => setShowNotice(false)}
+                            />
+                        )}
                     </div>
 
                     {/* Páginas: Main + variables de datos */}

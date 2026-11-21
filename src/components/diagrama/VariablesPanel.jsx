@@ -128,7 +128,7 @@ export default function VariablesPanel({ variables, onChange, reservedNames = []
                                                 }
                                                 aria-label="Nombre de la variable"
                                                 aria-invalid={Boolean(error?.nombre)}
-                                                title={error?.nombre}
+                                                title={error?.nombre || detalleVariable(variable) || undefined}
                                                 spellCheck={false}
                                                 autoComplete="off"
                                             />

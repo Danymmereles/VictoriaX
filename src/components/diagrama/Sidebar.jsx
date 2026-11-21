@@ -2,6 +2,7 @@ import { useDnD } from "./DnDContext";
 import { FlowShape } from "./shapes";
 import EdgeTypeSelector from "./EdgeTypeSelector";
 import HistoryControls from "./HistoryControls";
+import { SIDEBAR_ITEMS } from "./sidebarItems";
 import BackToAnalysisLink from "./BackToAnalysisLink";
 import "./Sidebar.css";
 
@@ -15,41 +16,40 @@ const PREVIEW_SIZES = {
     io: [46, 34],
     preparation: [46, 34],
     connector: [34, 34],
-    random: [34, 34],
+    end: [44, 30],
 };
 
-// Detalles de figura propios de la barra lateral
-const PREVIEW_OPTIONS = {
-    random: { centerPip: true },
-};
-
-function SidebarItem({ type, label }) {
+function SidebarItem({ item }) {
+    const { id, type, label, data } = item;
     const [, setType] = useDnD();
     const [width, height] = PREVIEW_SIZES[type];
 
     const onDragStart = (event) => {
-        setType(type);
+        // Se arrastra el elemento (p. ej. "connector-left"), no solo el tipo
+        setType(id);
         event.dataTransfer.effectAllowed = "move";
     };
 
     return (
         <div
-            className={`sidebar-item sidebar-${type}`}
+            className={`sidebar-item sidebar-${id}`}
             draggable
             onDragStart={onDragStart}
             title={label}
             aria-label={label}
         >
             <div className="sidebar-preview">
-                <FlowShape
-                    type={type}
-                    width={width}
-                    height={height}
-                    options={PREVIEW_OPTIONS[type]}
-                />
+                <FlowShape type={type} width={width} height={height} />
 
                 {type === "connector" && (
-                    <span className="sidebar-preview-letter">A</span>
+                    <>
+                        <span className="sidebar-preview-letter">A</span>
+                        {/* Punto de conexión del lado que corresponde */}
+                        <span
+                            className={`sidebar-preview-handle sidebar-preview-handle--${data.handleSide}`}
+                            aria-hidden="true"
+                        />
+                    </>
                 )}
             </div>
         </div>
@@ -69,16 +69,9 @@ export default function Sidebar({ edgeType, onEdgeTypeChange, onRun, hasDiagram 
             />
 
             <div className="sidebar-items">
-                <SidebarItem type="input" label="Entrada" />
-                <SidebarItem type="process" label="Proceso" />
-                <SidebarItem type="decision" label="Decisión" />
-                <SidebarItem type="output" label="Salida" />
-
-                <SidebarItem type="document" label="Documento" />
-                <SidebarItem type="io" label="Entrada / Salida" />
-                <SidebarItem type="preparation" label="Preparación" />
-                <SidebarItem type="connector" label="Conector" />
-                <SidebarItem type="random" label="Random (número entre 0 y 1)" />
+                {SIDEBAR_ITEMS.map((item) => (
+                    <SidebarItem key={item.id} item={item} />
+                ))}
             </div>
 
             {/* Ejecutar: abre la vista de ejecución */}

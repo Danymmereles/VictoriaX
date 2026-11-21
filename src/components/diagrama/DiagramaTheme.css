@@ -16,13 +16,11 @@
     --dg-blue-fill: #dcecff;
     --dg-orange-fill: #ffe6bd;
     --dg-green-fill: #dcf5df;
-    --dg-pink-fill: #fde1ee;
 
     --dg-purple-stroke: #444;
     --dg-blue-stroke: #444;
     --dg-orange-stroke: #444;
     --dg-green-stroke: #444;
-    --dg-pink-stroke: #444;
 
     --dg-node-text: #1f1f1f;
     --dg-decision-label: #8a8a8a;
@@ -85,13 +83,11 @@
     --dg-blue-fill: #172a40;
     --dg-orange-fill: #3a2c17;
     --dg-green-fill: #173325;
-    --dg-pink-fill: #3a1c2b;
 
     --dg-purple-stroke: #c4b5fd;
     --dg-blue-stroke: #8ccdf2;
     --dg-orange-stroke: #f6cd8b;
     --dg-green-stroke: #97e0a5;
-    --dg-pink-stroke: #f2a7c8;
 
     --dg-node-text: hsl(var(--foreground));
     --dg-decision-label: #8b93a7;
@@ -213,7 +209,9 @@
    ===================================================== */
 
 .diagram-flow-area .react-flow__minimap-node.minimap-node--input,
-.diagram-flow-area .react-flow__minimap-node.minimap-node--document {
+.diagram-flow-area .react-flow__minimap-node.minimap-node--document,
+.diagram-flow-area .react-flow__minimap-node.minimap-node--context,
+.diagram-flow-area .react-flow__minimap-node.minimap-node--end {
     fill: var(--dg-purple-fill) !important;
     stroke: var(--dg-purple-stroke) !important;
 }
@@ -234,9 +232,4 @@
 .diagram-flow-area .react-flow__minimap-node.minimap-node--connector {
     fill: var(--dg-green-fill) !important;
     stroke: var(--dg-green-stroke) !important;
-}
-
-.diagram-flow-area .react-flow__minimap-node.minimap-node--random {
-    fill: var(--dg-pink-fill) !important;
-    stroke: var(--dg-pink-stroke) !important;
 }

@@ -29,6 +29,45 @@ export const esAncla = (node) => Boolean(node?.data?.anchorOf);
 
 export const anchorIdDe = (pageId) => `anchor-${pageId}`;
 
+
+// ---------------------------------------------------------------------------
+// Nodo Contexto: inicio fijo de Main (20/11). Reemplaza al "Inicio" ovalado.
+// Ahí el usuario declara variables, una por línea. No está en la barra
+// lateral, no se borra y solo tiene salida (abajo).
+// ---------------------------------------------------------------------------
+export const CONTEXT_NODE_TYPE = "context";
+export const CONTEXT_NODE_ID = "context-main";
+
+export const esContexto = (node) => node?.data?.type === CONTEXT_NODE_TYPE;
+
+export function crearNodoContexto(posicion = { x: 0, y: 0 }) {
+    return {
+        id: CONTEXT_NODE_ID,
+        type: "custom",
+        position: posicion,
+        deletable: false,
+        data: {
+            type: CONTEXT_NODE_TYPE,
+            label: "",
+        },
+    };
+}
+
+// Nodos que el usuario no crea ni puede borrar (Contexto y anclas)
+export const esNodoFijo = (node) => esAncla(node) || esContexto(node);
+
+// ¿La página tiene algo hecho por el usuario?
+export function tieneContenido({ nodes = [], edges = [] }) {
+    return (
+        edges.length > 0 ||
+        nodes.some(
+            (node) =>
+                !esNodoFijo(node) ||
+                (esContexto(node) && String(node.data?.label ?? "").trim())
+        )
+    );
+}
+
 const clave = (nombre) => String(nombre ?? "").trim().toUpperCase();
 
 export const mismoNombre = (a, b) => clave(a) === clave(b);
@@ -68,22 +107,24 @@ export function derivarPaginas(funciones) {
  */
 export function crearPaginaFuncion(pagina, posicion = { x: 0, y: 0 }) {
     return {
-        nodes: [
-            {
-                id: anchorIdDe(pagina.id),
-                type: "custom",
-                position: posicion,
-                // React Flow no lo borra con Supr
-                deletable: false,
-                data: {
-                    type: CALL_NODE_TYPE,
-                    label: pagina.nombre,
-                    anchorOf: pagina.id,
-                },
-            },
-        ],
+        nodes: [crearNodoAncla(pagina, posicion)],
         edges: [],
         viewport: null,
+    };
+}
+
+export function crearNodoAncla(pagina, posicion = { x: 0, y: 0 }) {
+    return {
+        id: anchorIdDe(pagina.id),
+        type: "custom",
+        position: posicion,
+        // React Flow no lo borra con Supr
+        deletable: false,
+        data: {
+            type: CALL_NODE_TYPE,
+            label: pagina.nombre,
+            anchorOf: pagina.id,
+        },
     };
 }
 
@@ -141,8 +182,10 @@ export function validarNombreNodo({ data, nombre, pagina }) {
 /*
  * Problemas de los nodos de la página actual (no bloquean, se marcan):
  *   { [nodeId]: mensaje }
- * Llamadas (nodos Preparación, menos el ancla) cuyo nombre no es una
- * variable de datos, o es una variable repetida.
+ * - Nodos generados desde el Análisis Previo que el usuario tiene que
+ *   completar (data.pending, ver generacion/). Se marcan hasta editarlos.
+ * - Llamadas (nodos Preparación, menos el ancla) cuyo nombre no es una
+ *   variable de datos, o es una variable repetida.
  */
 export function problemasDeNodos({ nodes, pagina, paginas }) {
     const problemas = {};
@@ -159,11 +202,20 @@ export function problemasDeNodos({ nodes, pagina, paginas }) {
             const nombre = String(node.data?.label ?? "").trim();
             const coincidencias = funciones.filter((p) => mismoNombre(p.nombre, nombre));
 
-            if (coincidencias.length === 0) {
+            if (!nombre) {
+                problemas[node.id] = "Escribí el nombre de una variable de datos.";
+            } else if (coincidencias.length === 0) {
                 problemas[node.id] = `"${nombre}" no es una variable de datos del Análisis Previo.`;
             } else if (coincidencias.length > 1) {
                 problemas[node.id] = `Hay más de una variable de datos "${nombre}".`;
             }
+        });
+
+    // Lo que falta completar explica mejor qué hacer: tiene prioridad
+    nodes
+        .filter((node) => node.data?.pending)
+        .forEach((node) => {
+            problemas[node.id] = node.data.pending;
         });
 
     return problemas;

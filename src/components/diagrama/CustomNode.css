@@ -195,7 +195,7 @@
     cursor: default;
 }
 
-/* Nodo vacío: se ve su nombre atenuado ("Proceso", "Contexto"...),
+/* Nodo vacío: se ve su nombre atenuado ("Asignación", "Contexto"...),
    como ayuda. Desaparece al editar. */
 .flow-node__text.is-empty {
     opacity: 0.5;

@@ -7,7 +7,7 @@
 //       → por cada comprometido anterior C:  T >= TPC ?  SÍ: C → TPC = HV
 //       → por cada evento propio P:          P
 //       → por cada comprometido posterior Q: ¿ocurre Q? SÍ: Q → programar C
-//   → T > TF ?  SÍ: resultados → Fin   NO: (1)
+//   → T > TF ?  SÍ: calcular resultados → Resultado → Fin   NO: (1)
 //
 // El análisis no tiene las condiciones de los posteriores ni qué hace cada
 // evento: esos nodos quedan para completar. Cada posterior compromete al
@@ -15,7 +15,7 @@
 // ===========================================================================
 
 import { VALOR_HV, eventosDeltaT } from "./lectura.js";
-import { completar, conLlegada, nodo, proceso, secuencia, si } from "./bloques.js";
+import { completar, conLlegada, nodo, asignacion, secuencia, si } from "./bloques.js";
 import {
     ETIQUETA_CICLO,
     actualizarEstado,
@@ -41,13 +41,13 @@ export function construirDeltaT({ analisis, lectura }) {
 
     const comprometidos = anteriores.map((nombre) => ({ nombre, tef: tefDe(nombre) }));
 
-    const pasos = [proceso(`T = T + ${DT}`)];
+    const pasos = [asignacion(`T = T + ${DT}`)];
 
     comprometidos.forEach((c) => {
         pasos.push(
             si(
                 `T >= ${c.tef}`,
-                secuencia(actualizarEstado(c.nombre, nombres.estado), proceso(`${c.tef} = HV`))
+                secuencia(actualizarEstado(c.nombre, nombres.estado), asignacion(`${c.tef} = HV`))
             )
         );
     });

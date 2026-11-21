@@ -2,7 +2,7 @@
 // Bloques del diagrama generado: la estructura del algoritmo, sin
 // coordenadas. Los arma eventoAEvento.js / deltaT.js y los ubica ubicar.js.
 //
-//   nodo        un nodo suelto (Proceso, Preparación, Fin, Conector...)
+//   nodo        un nodo suelto (Asignación, Función Generada, Resultado, Fin, Conector...)
 //   secuencia   bloques uno debajo del otro
 //   si          Decisión con rama SÍ (derecha) y rama NO (izquierda); las
 //               dos ramas se vuelven a unir en el bloque siguiente
@@ -20,8 +20,8 @@ export const nodo = (type, label = "", extra = {}) => ({
     spec: { type, label, ...extra },
 });
 
-// Proceso: una sentencia por línea
-export const proceso = (lineas, extra) =>
+// Asignación (tipo process): una sentencia por línea
+export const asignacion = (lineas, extra) =>
     nodo("process", [].concat(lineas).join("\n"), extra);
 
 /*

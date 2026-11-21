@@ -134,7 +134,7 @@ export default function CustomNode({ id, data, selected }) {
     // Inicio del algoritmo de la página: no recibe conexiones
     const isStart = isAnchor || isContext;
 
-    // Varias líneas: el Contexto (declaraciones) y el Proceso
+    // Varias líneas: el Contexto (declaraciones) y la Asignación
     // (una sentencia por línea, ver BNF)
     const multiline = isContext || data.type === "process";
 
@@ -264,7 +264,7 @@ export default function CustomNode({ id, data, selected }) {
                             : undefined);
 
     // Nodo sin texto: muestra su nombre atenuado como ayuda
-    // (p. ej. "Proceso"), que desaparece al editar. Los nodos
+    // (p. ej. "Asignación"), que desaparece al editar. Los nodos
     // generados traen una ayuda propia (p. ej. "Actualizar estado").
     const placeholder = data.hint || placeholderDe(data.type);
     const isEmpty = !isEnd && !editing && !String(data.label ?? "").trim();
@@ -351,7 +351,7 @@ export default function CustomNode({ id, data, selected }) {
                         aria-label={
                             isContext
                                 ? "Declaración de variables"
-                                : "Sentencias del proceso"
+                                : "Sentencias de la asignación"
                         }
                         spellCheck={false}
                     />

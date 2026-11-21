@@ -45,7 +45,7 @@ const SHAPES = {
         />
     ),
 
-    // Documento: rectángulo con base ondulada
+    // Resultado (tipo document): rectángulo con base ondulada
     document: (w, h, s) => {
         // Trazo original diseñado en 160x90 (x: 4..156, y: 4..76)
         const X = (x) => s / 2 + ((x - 4) / 152) * (w - s);

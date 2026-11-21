@@ -10,14 +10,14 @@
 //   Contexto
 //   (1) → [búsqueda del menor de cada evento vector]
 //       → selección del próximo evento → rama de cada evento
-//   → T > TF ?  SÍ: resultados → Fin   NO: (1)
+//   → T > TF ?  SÍ: calcular resultados → Resultado → Fin   NO: (1)
 // ===========================================================================
 
 import { VALOR_HV } from "./lectura.js";
 import {
     conLlegada,
     nodo,
-    proceso,
+    asignacion,
     salto,
     secuencia,
     seleccion3,
@@ -85,7 +85,7 @@ export function construirEventoAEvento({ eventos, lectura }) {
         // Avanzar el tiempo. Si el evento no se vuelve a programar,
         // su tiempo pasa a HV para que no se repita (corrige GV2).
         const pasos = [
-            proceso(e.seReprograma ? `T = ${e.ref}` : [`T = ${e.ref}`, `${e.ref} = HV`]),
+            asignacion(e.seReprograma ? `T = ${e.ref}` : [`T = ${e.ref}`, `${e.ref} = HV`]),
         ];
 
         if (e.efnc) {
@@ -107,7 +107,7 @@ export function construirEventoAEvento({ eventos, lectura }) {
                     condicion,
                     secuencia(programarEvento(e.efc, e)),
                     // Si se condiciona a sí mismo y no se cumple: HV (GV2)
-                    buscar(e.efc) === e ? proceso(`${e.ref} = HV`) : null
+                    buscar(e.efc) === e ? asignacion(`${e.ref} = HV`) : null
                 )
             );
         }
@@ -128,7 +128,7 @@ export function construirEventoAEvento({ eventos, lectura }) {
         const dimension = e.dimension || "?";
 
         return secuencia(
-            proceso([`${I} = 1`, `${H} = 2`]),
+            asignacion([`${I} = 1`, `${H} = 2`]),
             conLlegada(
                 etiqueta,
                 si(
@@ -139,8 +139,8 @@ export function construirEventoAEvento({ eventos, lectura }) {
                             : { pending: `Falta la dimensión del evento "${e.nombre}".` }
                     ),
                     secuencia(
-                        si(`${e.tef}[${H}] < ${e.tef}[${I}]`, proceso(`${I} = ${H}`)),
-                        proceso(`${H}++`),
+                        si(`${e.tef}[${H}] < ${e.tef}[${I}]`, asignacion(`${I} = ${H}`)),
+                        asignacion(`${H}++`),
                         salto(etiqueta)
                     )
                 )
@@ -188,9 +188,9 @@ export function construirEventoAEvento({ eventos, lectura }) {
         );
 
         const busqueda = [
-            proceso([`${MEN} = ${r[0]}`, `${EV} = 1`]),
+            asignacion([`${MEN} = ${r[0]}`, `${EV} = 1`]),
             ...r.slice(1).map((ref, k) =>
-                si(`${ref} < ${MEN}`, proceso([`${MEN} = ${ref}`, `${EV} = ${k + 2}`]))
+                si(`${ref} < ${MEN}`, asignacion([`${MEN} = ${ref}`, `${EV} = ${k + 2}`]))
             ),
         ];
 

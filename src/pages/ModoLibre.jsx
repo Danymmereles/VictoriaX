@@ -7,7 +7,6 @@ import NavBar from "@/components/home/NavBar";
 import Footer from "@/components/home/Footer";
 import MetodologiaSelector from "@/components/analisis/MetodologiaSelector";
 import VariableList from "@/components/analisis/VariableList";
-import ErrorBadge from "@/components/analisis/ErrorBadge";
 import TablaEventos from "@/components/analisis/TablaEventos";
 import EventosFuturos from "@/components/analisis/EventosFuturos";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -174,10 +173,7 @@ export default function ModoLibre() {
 function Seccion({ titulo, desc, children, error = false }) {
   return (
     <section className={`mt-10 rounded-2xl border bg-card/40 p-6 ${error ? "border-destructive" : "border-border"}`}>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className={`font-heading text-2xl font-semibold ${error ? "text-destructive" : ""}`}>{titulo}</h2>
-        {error && <ErrorBadge />}
-      </div>
+      <h2 className={`font-heading text-2xl font-semibold ${error ? "text-destructive" : ""}`}>{titulo}</h2>
       {desc && <p className="mt-1 text-sm text-muted-foreground">{desc}</p>}
       <div className="mt-5">{children}</div>
     </section>

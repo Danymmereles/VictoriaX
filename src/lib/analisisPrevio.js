@@ -86,13 +86,19 @@ export function validarAnalisis(a) {
   grupos.forEach((lista) => {
     lista.forEach((v, i) => {
       if (!v.sigla?.trim()) error(claveVariable(v, i), "Todas las variables deben tener siglas.");
-      if (!v.descripcion?.trim()) {
-        advertencias.push(
-          `La variable "${v.sigla || "(sin sigla)"}" no tiene descripción / nombre.`
-        );
-      }
     });
   });
+
+  // Variables sin descripción: una sola advertencia agrupada.
+  const sinDescripcion = grupos
+    .flatMap((lista) => lista)
+    .filter((v) => !v.descripcion?.trim())
+    .map((v) => v.sigla?.trim() || "(sin sigla)");
+  if (sinDescripcion.length > 0) {
+    advertencias.push(
+      `Las siguientes variables no tienen descripción / nombre: ${sinDescripcion.join(", ")}.`
+    );
+  }
   [...a.variables.estado, ...a.variables.resultado].forEach((v, i) => {
     if (v.esVector && !dimensionValida(v.dimension)) {
       error(claveVariable(v, i), `La variable "${v.sigla || "(sin sigla)"}" es vector sin dimensión configurada.`);

@@ -11,7 +11,6 @@ const PREVIEW_SIZES = {
     input: [35, 35],
     process: [35, 35],
     decision: [38, 38],
-    output: [40, 35],
     document: [46, 34],
     io: [46, 34],
     preparation: [46, 34],

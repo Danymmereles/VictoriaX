@@ -5,12 +5,12 @@
 
 export const NODE_NAMES = {
     input: "Entrada",
-    process: "Proceso",
+    process: "Asignación",
     decision: "Decisión",
     output: "Salida",
-    document: "Documento",
+    document: "Resultado",
     io: "Entrada / Salida",
-    preparation: "Preparación",
+    preparation: "Función Generada",
     connector: "Conector",
     context: "Contexto",
     end: "Fin",

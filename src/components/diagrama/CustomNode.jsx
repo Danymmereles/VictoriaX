@@ -3,7 +3,6 @@ import {
     Handle,
     Position,
     useReactFlow,
-    useUpdateNodeInternals,
 } from "@xyflow/react";
 
 import { FlowShape } from "./shapes";
@@ -56,13 +55,13 @@ function useNodeSize(ref) {
 const NOTICE_MS = 2800;
 
 // Conector: un único punto de conexión a un costado, que sirve de
-// entrada y de salida (dos handles superpuestos, ver ConnectorHandle)
+// entrada y de salida (dos handles superpuestos, ver ConnectorHandle).
+// El lado se elige al arrastrarlo desde la barra lateral (hay un
+// Conector para cada lado) y no cambia después.
 const CONNECTOR_SIDES = {
     right: Position.Right,
     left: Position.Left,
 };
-
-const otherSide = (side) => (side === "left" ? "right" : "left");
 
 /*
  * Punto único del Conector. Son dos handles en el mismo lugar:
@@ -93,7 +92,6 @@ function ConnectorHandle({ side }) {
 
 export default function CustomNode({ id, data, selected }) {
     const { setNodes } = useReactFlow();
-    const updateNodeInternals = useUpdateNodeInternals();
     const { takeSnapshot } = useHistory();
     const { nodeIssues, validateLabel } = usePageContext();
 
@@ -146,14 +144,6 @@ export default function CustomNode({ id, data, selected }) {
 
     const connectorSide = data.handleSide === "left" ? "left" : "right";
 
-    // React Flow guarda la posición de los handles: al cambiar
-    // de lado hay que avisarle para que las flechas lo sigan
-    useEffect(() => {
-        if (isConnector) {
-            updateNodeInternals(id);
-        }
-    }, [isConnector, connectorSide, id, updateNodeInternals]);
-
     const issue = nodeIssues?.[id];
 
     const updateData = (changes) => {
@@ -167,7 +157,9 @@ export default function CustomNode({ id, data, selected }) {
     };
 
     const startEditing = () => {
-        if (isAnchor || isEnd) {
+        // Ya editando (p. ej. doble clic dentro del campo para
+        // seleccionar una palabra): no reiniciar el texto
+        if (isAnchor || isEnd || editingRef.current) {
             return;
         }
 
@@ -233,16 +225,8 @@ export default function CustomNode({ id, data, selected }) {
         }
     };
 
-    // Conector: doble clic cambia el lado del punto de conexión
-    const toggleConnectorSide = () => {
-        takeSnapshot();
-        updateData({ handleSide: otherSide(connectorSide) });
-    };
-
-    const handleDoubleClick = isConnector ? toggleConnectorSide : startEditing;
-
-    // Conector: con el nodo seleccionado, Enter o F2 edita la etiqueta
-    // (el doble clic quedó para cambiar de lado)
+    // Conector: también se edita con el nodo seleccionado y Enter o F2
+    // (es chico, así es más cómodo con el teclado)
     useEffect(() => {
         const wrapper = nodeRef.current?.closest(".react-flow__node");
 
@@ -272,7 +256,7 @@ export default function CustomNode({ id, data, selected }) {
             : isContext
                 ? "Inicio del algoritmo. Doble clic para declarar variables (una por línea; Ctrl+Enter guarda)."
                 : isConnector
-                    ? "Doble clic: cambiar de lado · Enter o F2: editar la etiqueta"
+                    ? "Doble clic para editar la etiqueta. Los conectores con la misma etiqueta están vinculados."
                     : isEnd
                         ? "Fin: el algoritmo de esta página termina acá."
                         : multiline
@@ -307,7 +291,7 @@ export default function CustomNode({ id, data, selected }) {
                 .filter(Boolean)
                 .join(" ")}
             title={tooltip}
-            onDoubleClick={isConnector ? handleDoubleClick : undefined}
+            onDoubleClick={isConnector ? startEditing : undefined}
         >
             {isStart && (
                 <span className="flow-node__badge" aria-hidden="true">
@@ -342,7 +326,7 @@ export default function CustomNode({ id, data, selected }) {
               */}
             <div
                 className="flow-node__label"
-                onDoubleClick={isConnector ? undefined : handleDoubleClick}
+                onDoubleClick={isConnector ? undefined : startEditing}
             >
                 <span
                     className={[

@@ -56,6 +56,7 @@ import {
     useDnD,
 } from "../components/diagrama/DnDContext.jsx";
 import useUndoRedo from "../components/diagrama/useUndoRedo.js";
+import { itemDeBarra } from "../components/diagrama/sidebarItems.js";
 import { HistoryProvider } from "../components/diagrama/HistoryContext.jsx";
 
 import "../components/diagrama/DiagramaTheme.css";
@@ -178,7 +179,8 @@ function Flow({ active = true, onRun }) {
         setViewport,
     } = useReactFlow();
 
-    const [type] = useDnD();
+    // Elemento de la barra lateral que se está arrastrando
+    const [dragItemId] = useDnD();
 
     // Variables con valor inicial: Control, Estado y Resultado
     // del Análisis Previo, más las que agrega la generación
@@ -422,9 +424,13 @@ function Flow({ active = true, onRun }) {
 
             event.preventDefault();
 
-            if (!type) {
+            const item = itemDeBarra(dragItemId);
+
+            if (!item) {
                 return;
             }
+
+            const { type } = item;
 
 
             const position =
@@ -459,6 +465,8 @@ function Flow({ active = true, onRun }) {
                 data: {
                     type,
                     label,
+                    // p. ej. el lado del punto de un Conector
+                    ...item.data,
                 },
 
             };
@@ -473,7 +481,7 @@ function Flow({ active = true, onRun }) {
 
         },
         [
-            type,
+            dragItemId,
             screenToFlowPosition,
             setNodes,
             takeSnapshot,

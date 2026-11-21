@@ -2,23 +2,9 @@ import { useDnD } from "./DnDContext";
 import { FlowShape } from "./shapes";
 import EdgeTypeSelector from "./EdgeTypeSelector";
 import HistoryControls from "./HistoryControls";
-import { NODE_NAMES } from "./nodeNames";
+import { SIDEBAR_ITEMS } from "./sidebarItems";
 import BackToAnalysisLink from "./BackToAnalysisLink";
 import "./Sidebar.css";
-
-// Figuras que se pueden arrastrar, en orden (el Contexto no:
-// es fijo en Main)
-const SIDEBAR_TYPES = [
-    "input",
-    "process",
-    "decision",
-    "output",
-    "document",
-    "io",
-    "preparation",
-    "connector",
-    "end",
-];
 
 // Tamaño (px) de cada figura en la barra lateral
 const PREVIEW_SIZES = {
@@ -33,18 +19,20 @@ const PREVIEW_SIZES = {
     end: [44, 30],
 };
 
-function SidebarItem({ type, label }) {
+function SidebarItem({ item }) {
+    const { id, type, label, data } = item;
     const [, setType] = useDnD();
     const [width, height] = PREVIEW_SIZES[type];
 
     const onDragStart = (event) => {
-        setType(type);
+        // Se arrastra el elemento (p. ej. "connector-left"), no solo el tipo
+        setType(id);
         event.dataTransfer.effectAllowed = "move";
     };
 
     return (
         <div
-            className={`sidebar-item sidebar-${type}`}
+            className={`sidebar-item sidebar-${id}`}
             draggable
             onDragStart={onDragStart}
             title={label}
@@ -54,7 +42,14 @@ function SidebarItem({ type, label }) {
                 <FlowShape type={type} width={width} height={height} />
 
                 {type === "connector" && (
-                    <span className="sidebar-preview-letter">A</span>
+                    <>
+                        <span className="sidebar-preview-letter">A</span>
+                        {/* Punto de conexión del lado que corresponde */}
+                        <span
+                            className={`sidebar-preview-handle sidebar-preview-handle--${data.handleSide}`}
+                            aria-hidden="true"
+                        />
+                    </>
                 )}
             </div>
         </div>
@@ -74,8 +69,8 @@ export default function Sidebar({ edgeType, onEdgeTypeChange, onRun, hasDiagram 
             />
 
             <div className="sidebar-items">
-                {SIDEBAR_TYPES.map((type) => (
-                    <SidebarItem key={type} type={type} label={NODE_NAMES[type]} />
+                {SIDEBAR_ITEMS.map((item) => (
+                    <SidebarItem key={item.id} item={item} />
                 ))}
             </div>
 

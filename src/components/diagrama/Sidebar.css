@@ -279,3 +279,26 @@
 
     pointer-events: none;
 }
+
+/* Conector: punto de conexión del lado que corresponde */
+.sidebar-preview-handle {
+    position: absolute;
+    top: 50%;
+
+    width: 7px;
+    height: 7px;
+
+    background: var(--dg-green-stroke);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+
+    pointer-events: none;
+}
+
+.sidebar-preview-handle--left {
+    left: calc(50% - 17px);
+}
+
+.sidebar-preview-handle--right {
+    left: calc(50% + 17px);
+}

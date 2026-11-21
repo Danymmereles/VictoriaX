@@ -11,7 +11,7 @@ export default function TablaEventos({ analisis, onChange, error = false, filasC
 
   if (!metodologia) {
     return (
-      <p className={`text-sm ${error ? "text-destructive" : "text-muted-foreground"}`}>
+      <p className="text-sm text-muted-foreground">
         Seleccioná una metodología para ver la tabla de eventos correspondiente.
       </p>
     );

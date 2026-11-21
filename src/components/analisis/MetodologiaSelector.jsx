@@ -1,4 +1,5 @@
 import React from "react";
+import { X } from "lucide-react";
 import { METODOLOGIAS } from "@/lib/analisisPrevio";
 import ErrorBadge from "./ErrorBadge";
 
@@ -18,21 +19,15 @@ const opciones = [
 export default function MetodologiaSelector({ value, onChange, error = false }) {
   return (
     <div>
-      {error && <ErrorBadge className="mb-3">Elegí una metodología</ErrorBadge>}
       <div className="grid gap-4 sm:grid-cols-2">
         {opciones.map((o) => {
           const activo = value === o.key;
-          const estado = activo
-            ? "border-[#AF9BEF] bg-[#AF9BEF]/5"
-            : error
-            ? "border-destructive/50 bg-destructive/5 hover:border-destructive"
-            : "border-border hover:border-[#AF9BEF]/50";
           return (
             <button
               key={o.key}
               type="button"
               onClick={() => onChange(o.key)}
-              className={`rounded-2xl border p-6 text-left transition-all ${estado}`}
+              className={`rounded-2xl border p-6 text-left transition-all ${activo ? "border-[#AF9BEF] bg-[#AF9BEF]/5" : "border-border hover:border-[#AF9BEF]/50"}`}
             >
               <div className="flex items-center gap-3">
                 <span className={`grid h-5 w-5 place-items-center rounded-full border ${activo ? "border-[#AF9BEF] bg-[#AF9BEF]" : "border-border"}`}>
@@ -45,6 +40,20 @@ export default function MetodologiaSelector({ value, onChange, error = false }) 
           );
         })}
       </div>
+      {(error || value) && (
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+          <div>{error && <ErrorBadge />}</div>
+          {value && (
+            <button
+              type="button"
+              onClick={() => onChange(null)}
+              className="inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-destructive"
+            >
+              <X className="w-4 h-4" /> Quitar elección
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }

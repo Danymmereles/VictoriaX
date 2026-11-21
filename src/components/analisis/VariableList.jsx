@@ -28,27 +28,22 @@ export default function VariableList({
   }
 
   return (
-    <div className={error ? "-m-4 rounded-2xl border border-destructive/50 bg-destructive/5 p-4" : ""}>
+    <div>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h4 className={`font-heading text-lg font-semibold ${error ? "text-destructive" : ""}`}>{titulo}</h4>
         <div className="flex items-center gap-3">
-          {error && <ErrorBadge>Falta cargar</ErrorBadge>}
+          {error && <ErrorBadge />}
           <button onClick={agregar} className="inline-flex items-center gap-1 text-sm font-medium text-[#AF9BEF] hover:underline">
             <Plus className="w-4 h-4" /> Agregar
           </button>
         </div>
       </div>
       <div className="mt-4 space-y-3">
-        {variables.length === 0 && (
-          <p className={`text-sm ${error ? "text-destructive" : "text-muted-foreground"}`}>Sin variables.</p>
-        )}
+        {variables.length === 0 && <p className="text-sm text-muted-foreground">Sin variables.</p>}
         {variables.map((v, i) => {
           const conError = idsConError.includes(v.id);
           return (
-            <div
-              key={v.id}
-              className={`rounded-xl border p-4 ${conError ? "border-destructive/60 bg-destructive/5" : "border-border bg-card"}`}
-            >
+            <div key={v.id} className="rounded-xl border border-border bg-card p-4">
               <div className="grid gap-3 sm:grid-cols-[120px_1fr_auto]">
                 <input value={v.sigla} onChange={(e) => actualizar(i, { sigla: e.target.value })} placeholder="Siglas" className="rounded-lg border border-input bg-background px-3 py-2 text-sm" />
                 <input value={v.descripcion} onChange={(e) => actualizar(i, { descripcion: e.target.value })} placeholder="Descripción" className="rounded-lg border border-input bg-background px-3 py-2 text-sm" />
@@ -78,7 +73,7 @@ export default function VariableList({
                   )}
                 </div>
               )}
-              {conError && <ErrorBadge className="mt-3">Revisá esta variable</ErrorBadge>}
+              {conError && <ErrorBadge className="mt-3" />}
             </div>
           );
         })}

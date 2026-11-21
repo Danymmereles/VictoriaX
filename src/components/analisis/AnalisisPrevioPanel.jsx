@@ -110,10 +110,10 @@ export default function AnalisisPrevioPanel({ analisis, setAnalisis, onValidacio
 
 function Seccion({ titulo, desc, children, error = false }) {
   return (
-    <section className={`rounded-2xl border p-6 transition-colors ${error ? "border-destructive/60 bg-destructive/5" : "border-border bg-card/40"}`}>
+    <section className="rounded-2xl border border-border bg-card/40 p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h3 className={`font-heading text-xl font-semibold ${error ? "text-destructive" : ""}`}>{titulo}</h3>
-        {error && <ErrorBadge>Revisar este bloque</ErrorBadge>}
+        {error && <ErrorBadge />}
       </div>
       {desc && <p className="mt-1 text-sm text-muted-foreground">{desc}</p>}
       <div className="mt-5">{children}</div>

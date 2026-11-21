@@ -42,11 +42,11 @@ export default function TablaEventosDeltaT({ filas, onChange, controlVars, filas
         {filas.map((f, i) => {
           const conError = filasConError.includes(f.id);
           return (
-            <div key={f.id} className={`rounded-xl border p-4 ${conError ? "border-destructive/60 bg-destructive/5" : "border-border bg-card"}`}>
+            <div key={f.id} className="rounded-xl border border-border bg-card p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-3">
-                  <span className="text-xs uppercase tracking-wider text-muted-foreground">Fila {i + 1}</span>
-                  {conError && <ErrorBadge>Revisá esta fila</ErrorBadge>}
+                  <span className={`text-xs uppercase tracking-wider ${conError ? "text-destructive" : "text-muted-foreground"}`}>Fila {i + 1}</span>
+                  {conError && <ErrorBadge />}
                 </div>
                 <button onClick={() => quitar(i)} className="inline-flex items-center gap-1 text-sm text-destructive hover:underline">
                   <Trash2 className="w-4 h-4" /> Quitar fila

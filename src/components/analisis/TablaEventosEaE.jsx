@@ -48,8 +48,8 @@ export default function TablaEventosEaE({ filas, onChange, controlVars, filasCon
             {filas.map((f, i) => {
               const conError = filasConError.includes(f.id);
               return (
-                <tr key={f.id} className={`border-t border-border align-top ${conError ? "bg-destructive/5" : ""}`}>
-                  <td className={`border-l-2 px-3 py-3 ${conError ? "border-l-destructive" : "border-l-transparent"}`}>
+                <tr key={f.id} className="border-t border-border align-top">
+                  <td className="px-3 py-3">
                     <div className="flex items-center gap-2">
                       <input
                         value={f.evento.nombre}
@@ -95,7 +95,7 @@ export default function TablaEventosEaE({ filas, onChange, controlVars, filasCon
                   </td>
                   <td className="px-3 py-3 text-right">
                     <div className="flex flex-col items-end gap-2">
-                      {conError && <ErrorBadge>Revisá</ErrorBadge>}
+                      {conError && <ErrorBadge />}
                       <button onClick={() => quitar(i)} className="grid place-items-center rounded-lg border border-border px-2 py-2 hover:bg-destructive/10 hover:text-destructive">
                         <Trash2 className="w-4 h-4" />
                       </button>

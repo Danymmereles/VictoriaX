@@ -46,7 +46,7 @@ export default function VariableList({
             <div key={v.id} className="rounded-xl border border-border bg-card p-4">
               <div className="grid gap-3 sm:grid-cols-[120px_1fr_auto]">
                 <input value={v.sigla} onChange={(e) => actualizar(i, { sigla: e.target.value })} placeholder="Siglas" className="rounded-lg border border-input bg-background px-3 py-2 text-sm" />
-                <input value={v.descripcion} onChange={(e) => actualizar(i, { descripcion: e.target.value })} placeholder="Descripción" className="rounded-lg border border-input bg-background px-3 py-2 text-sm" />
+                <input value={v.descripcion} onChange={(e) => actualizar(i, { descripcion: e.target.value })} placeholder="Descripción / Nombre de variable" className="rounded-lg border border-input bg-background px-3 py-2 text-sm" />
                 <button onClick={() => quitar(i)} className="grid place-items-center rounded-lg border border-border px-3 hover:bg-destructive/10 hover:text-destructive">
                   <Trash2 className="w-4 h-4" />
                 </button>

@@ -11,7 +11,6 @@ export const SIDEBAR_ITEMS = [
     { id: "input", type: "input" },
     { id: "process", type: "process" },
     { id: "decision", type: "decision" },
-    { id: "output", type: "output" },
     { id: "document", type: "document" },
     { id: "io", type: "io" },
     { id: "preparation", type: "preparation" },

@@ -88,6 +88,17 @@ export function validarAnalisis(a) {
       if (!v.sigla?.trim()) error(claveVariable(v, i), "Todas las variables deben tener siglas.");
     });
   });
+
+  // Variables sin descripción: una sola advertencia agrupada.
+  const sinDescripcion = grupos
+    .flatMap((lista) => lista)
+    .filter((v) => !v.descripcion?.trim())
+    .map((v) => v.sigla?.trim() || "(sin sigla)");
+  if (sinDescripcion.length > 0) {
+    advertencias.push(
+      `Las siguientes variables no tienen descripción / nombre: ${sinDescripcion.join(", ")}.`
+    );
+  }
   [...a.variables.estado, ...a.variables.resultado].forEach((v, i) => {
     if (v.esVector && !dimensionValida(v.dimension)) {
       error(claveVariable(v, i), `La variable "${v.sigla || "(sin sigla)"}" es vector sin dimensión configurada.`);
@@ -95,6 +106,15 @@ export function validarAnalisis(a) {
   });
 
   if (a.metodologia === METODOLOGIAS.EVENTO_A_EVENTO) {
+    const eventosCargados = a.eventos.filas.filter((f) => f.evento?.nombre?.trim());
+    if (eventosCargados.length === 0) {
+      error("eventos", "Debe haber al menos un evento en la Tabla de Eventos.");
+    }
+    const futurosCargados = (a.eventosFuturos || []).filter((e) => e.sigla?.trim());
+    if (futurosCargados.length === 0) {
+      error("eventosFuturos", "Debe haber al menos un evento en la Tabla de Eventos Futuros.");
+    }
+
     const declarados = a.eventos.filas.map((f) => f.evento?.nombre).filter((n) => n && n.trim());
     a.eventos.filas.forEach((f, i) => {
       const campo = claveFila(f, i);

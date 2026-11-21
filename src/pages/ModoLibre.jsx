@@ -9,12 +9,14 @@ import MetodologiaSelector from "@/components/analisis/MetodologiaSelector";
 import VariableList from "@/components/analisis/VariableList";
 import TablaEventos from "@/components/analisis/TablaEventos";
 import EventosFuturos from "@/components/analisis/EventosFuturos";
+import AdvertenciasDialog from "@/components/analisis/AdvertenciasDialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 export default function ModoLibre() {
   const navigate = useNavigate();
   const [analisis, setAnalisis] = useState(() => cargarAnalisis() || analisisVacio());
   const [mostrarImplicita, setMostrarImplicita] = useState(false);
+  const [mostrarAdvertencias, setMostrarAdvertencias] = useState(false);
 
   useEffect(() => {
     guardarAnalisis(analisis);
@@ -41,12 +43,20 @@ export default function ModoLibre() {
     setAnalisis((a) => ({ ...a, eventosFuturos }));
   }
 
+  function continuarAlDiagrama() {
+    if (validacion.advertencias.length > 0) {
+      setMostrarAdvertencias(true);
+      return;
+    }
+    navigate("/modo-libre/diagrama");
+  }
+
   function irADiagrama() {
     if (controlVacio) {
       setMostrarImplicita(true);
       return;
     }
-    navigate("/modo-libre/diagrama");
+    continuarAlDiagrama();
   }
 
   function reiniciar() {
@@ -126,7 +136,7 @@ export default function ModoLibre() {
           <TablaEventos analisis={analisis} onChange={setEventos} error={campos.has("eventos")} filasConError={filasConError} />
         </Seccion>
 
-        <Seccion titulo="4 · Tabla de Eventos Futuros" desc="Listado de siglas de tiempo ligadas a eventos.">
+        <Seccion titulo="4 · Tabla de Eventos Futuros" desc="Listado de siglas de tiempo ligadas a eventos." error={campos.has("eventosFuturos")}>
           <EventosFuturos analisis={analisis} onChange={setEventosFuturos} />
         </Seccion>
 
@@ -162,10 +172,17 @@ export default function ModoLibre() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Volver a editar</AlertDialogCancel>
-            <AlertDialogAction onClick={() => navigate("/modo-libre/diagrama")}>Confirmar y diagramar</AlertDialogAction>
+            <AlertDialogAction onClick={() => { setMostrarImplicita(false); continuarAlDiagrama(); }}>Confirmar y diagramar</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AdvertenciasDialog
+        open={mostrarAdvertencias}
+        onOpenChange={setMostrarAdvertencias}
+        advertencias={validacion.advertencias}
+        onContinuar={() => navigate("/modo-libre/diagrama")}
+      />
     </div>
   );
 }

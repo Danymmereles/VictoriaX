@@ -1,6 +1,6 @@
 import React from "react";
 import { Plus, Trash2 } from "lucide-react";
-import { nuevoEventoFuturo, eventosDeclarados } from "@/lib/analisisPrevio";
+import { nuevoEventoFuturo, eventosDeclarados, METODOLOGIAS } from "@/lib/analisisPrevio";
 
 export default function EventosFuturos({ analisis, onChange }) {
   const { eventosFuturos, metodologia } = analisis;
@@ -24,7 +24,11 @@ export default function EventosFuturos({ analisis, onChange }) {
           <Plus className="w-4 h-4" /> Agregar
         </button>
       </div>
-      <p className="mt-1 text-sm text-muted-foreground">Puede estar vacía. Cada sigla representa el tiempo de ejecución de un evento.</p>
+      <p className="mt-1 text-sm text-muted-foreground">
+        {metodologia === METODOLOGIAS.EVENTO_A_EVENTO
+          ? "Obligatoria en Evento a Evento: cargá al menos un evento futuro. Cada sigla representa el tiempo de ejecución de un evento."
+          : "Cada sigla representa el tiempo de ejecución de un evento."}
+      </p>
       <div className="mt-4 space-y-3">
         {eventosFuturos.length === 0 && <p className="text-sm text-muted-foreground">Sin eventos futuros.</p>}
         {eventosFuturos.map((e, i) => (

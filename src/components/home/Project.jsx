@@ -1,7 +1,7 @@
 import React from "react";
 import { Image } from "@/components/ui/image";
 
-const UTN_LOGO = "https://base44.app/api/apps/6a71341ab9dae936a9cf65a7/files/mp/public/6a71341ab9dae936a9cf65a7/dd7d7623d_utn-frba.png";
+const UTN_LOGO = "https://base44.app/api/apps/6a71341ab9dae936a9cf65a7/files/mp/public/6a71341ab9dae936a9cf65a7/90871eaf0_utn-frba-logo.png";
 
 export default function Project() {
   return (
@@ -37,7 +37,7 @@ export default function Project() {
             <Image
               src={UTN_LOGO}
               alt="Universidad Tecnológica Nacional — Facultad Regional Buenos Aires"
-              className="mx-auto w-full max-w-md object-contain"
+              className="mx-auto block w-full max-w-md object-contain"
               fittingType="fit"
             />
           </div>

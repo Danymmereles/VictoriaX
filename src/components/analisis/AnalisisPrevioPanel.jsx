@@ -98,7 +98,7 @@ export default function AnalisisPrevioPanel({ analisis, setAnalisis, onValidacio
         <TablaEventos analisis={analisis} onChange={setEventos} error={campos.has("eventos")} filasConError={filasConError} />
       </Seccion>
 
-      <Seccion titulo="Tabla de Eventos Futuros" desc="Listado de siglas de tiempo ligadas a eventos.">
+      <Seccion titulo="Tabla de Eventos Futuros" desc="Listado de siglas de tiempo ligadas a eventos." error={campos.has("eventosFuturos")}>
         <EventosFuturos analisis={analisis} onChange={setEventosFuturos} />
       </Seccion>
 

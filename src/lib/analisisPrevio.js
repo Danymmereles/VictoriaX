@@ -86,6 +86,12 @@ export function validarAnalisis(a) {
   grupos.forEach((lista) => {
     lista.forEach((v, i) => {
       if (!v.sigla?.trim()) error(claveVariable(v, i), "Todas las variables deben tener siglas.");
+      if (!v.descripcion?.trim()) {
+        error(
+          claveVariable(v, i),
+          `La variable "${v.sigla || "(sin sigla)"}" debe tener descripción / nombre.`
+        );
+      }
     });
   });
   [...a.variables.estado, ...a.variables.resultado].forEach((v, i) => {
@@ -95,6 +101,15 @@ export function validarAnalisis(a) {
   });
 
   if (a.metodologia === METODOLOGIAS.EVENTO_A_EVENTO) {
+    const eventosCargados = a.eventos.filas.filter((f) => f.evento?.nombre?.trim());
+    if (eventosCargados.length === 0) {
+      error("eventos", "Debe haber al menos un evento en la Tabla de Eventos.");
+    }
+    const futurosCargados = (a.eventosFuturos || []).filter((e) => e.sigla?.trim());
+    if (futurosCargados.length === 0) {
+      error("eventosFuturos", "Debe haber al menos un evento en la Tabla de Eventos Futuros.");
+    }
+
     const declarados = a.eventos.filas.map((f) => f.evento?.nombre).filter((n) => n && n.trim());
     a.eventos.filas.forEach((f, i) => {
       const campo = claveFila(f, i);

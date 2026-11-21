@@ -123,7 +123,7 @@ export default function ModoLibre() {
           </div>
         </Seccion>
 
-        <Seccion titulo="3 · Tabla de Eventos" desc={analisis.metodologia === METODOLOGIAS.DELTA_T_CONSTANTE ? "Delta T Constante." : "Evento a Evento."} error={campos.has("eventos")}>
+        <Seccion titulo="3 · Tabla de Eventos" desc={analisis.metodologia === METODOLOGIAS.DELTA_T_CONSTANTE ? "Delta T Constante." : "Evento a Evento."} error={campos.has("eventos") || filasConError.length > 0}>
           <TablaEventos analisis={analisis} onChange={setEventos} error={campos.has("eventos")} filasConError={filasConError} />
         </Seccion>
 
@@ -173,7 +173,7 @@ export default function ModoLibre() {
 
 function Seccion({ titulo, desc, children, error = false }) {
   return (
-    <section className="mt-10 rounded-2xl border border-border bg-card/40 p-6">
+    <section className={`mt-10 rounded-2xl border bg-card/40 p-6 ${error ? "border-destructive" : "border-border"}`}>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className={`font-heading text-2xl font-semibold ${error ? "text-destructive" : ""}`}>{titulo}</h2>
         {error && <ErrorBadge />}

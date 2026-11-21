@@ -95,7 +95,7 @@ export default function AnalisisPrevioPanel({ analisis, setAnalisis, onValidacio
         </div>
       </Seccion>
 
-      <Seccion titulo="Tabla de Eventos" desc="Según la metodología seleccionada." error={campos.has("eventos")}>
+      <Seccion titulo="Tabla de Eventos" desc="Según la metodología seleccionada." error={campos.has("eventos") || filasConError.length > 0}>
         <TablaEventos analisis={analisis} onChange={setEventos} error={campos.has("eventos")} filasConError={filasConError} />
       </Seccion>
 
@@ -110,7 +110,7 @@ export default function AnalisisPrevioPanel({ analisis, setAnalisis, onValidacio
 
 function Seccion({ titulo, desc, children, error = false }) {
   return (
-    <section className="rounded-2xl border border-border bg-card/40 p-6">
+    <section className={`rounded-2xl border bg-card/40 p-6 ${error ? "border-destructive" : "border-border"}`}>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h3 className={`font-heading text-xl font-semibold ${error ? "text-destructive" : ""}`}>{titulo}</h3>
         {error && <ErrorBadge />}

@@ -21,12 +21,14 @@ export default function Hero() {
           <span className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-1.5 text-xs tracking-[0.2em] uppercase text-muted-foreground">
             <Sparkles className="w-3.5 h-3.5 text-[#EA84B4]" /> Simulación evento a evento
           </span>
-          <h1 className="mt-8 font-heading text-5xl font-semibold leading-[1.05] tracking-tight sm:text-6xl xl:text-7xl">
-            De la teoría
+          <h1 className="mt-8 font-heading text-4xl font-semibold leading-[1.08] tracking-tight sm:text-5xl xl:text-6xl">
+            Dejá de imaginar
             <br />
             <span className="bg-gradient-to-r from-[#73C3EE] via-[#AF9BEF] to-[#EA84B4] bg-clip-text text-transparent">
-              al evento.
+              la simulación.
             </span>
+            <br />
+            Empezá a verla.
           </h1>
           <p className="mt-8 max-w-xl text-lg leading-relaxed text-muted-foreground">
             VictoriaX es la plataforma web para aprender, modelar y ejecutar simulaciones de

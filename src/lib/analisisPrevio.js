@@ -87,9 +87,8 @@ export function validarAnalisis(a) {
     lista.forEach((v, i) => {
       if (!v.sigla?.trim()) error(claveVariable(v, i), "Todas las variables deben tener siglas.");
       if (!v.descripcion?.trim()) {
-        error(
-          claveVariable(v, i),
-          `La variable "${v.sigla || "(sin sigla)"}" debe tener descripción / nombre.`
+        advertencias.push(
+          `La variable "${v.sigla || "(sin sigla)"}" no tiene descripción / nombre.`
         );
       }
     });

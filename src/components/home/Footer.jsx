@@ -1,8 +1,10 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import Wordmark from "@/components/brand/Wordmark";
+import { useSesionUsuario } from "@/lib/sesionUsuario";
 
 export default function Footer() {
+  const { usuario } = useSesionUsuario();
   return (
     <footer className="border-t border-border/60">
       <div className="mx-auto flex max-w-[100rem] flex-col gap-10 px-6 py-16 lg:flex-row lg:items-start lg:justify-between lg:px-12">
@@ -18,7 +20,11 @@ export default function Footer() {
             <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">Plataforma</p>
             <ul className="mt-4 space-y-3 text-sm">
               <li><Link to="/modo-libre" className="hover:text-foreground text-muted-foreground">Modo Libre</Link></li>
-              <li><Link to="/login" className="hover:text-foreground text-muted-foreground">Modo Estudio</Link></li>
+              <li>
+                <Link to={usuario ? "/modo-estudio" : "/login"} className="hover:text-foreground text-muted-foreground">
+                  Modo Estudio
+                </Link>
+              </li>
               <li><Link to="/#flujo" className="hover:text-foreground text-muted-foreground">Cómo funciona</Link></li>
             </ul>
           </div>

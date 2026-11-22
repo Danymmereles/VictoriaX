@@ -1,4 +1,4 @@
-import { institucionDesdeEmail } from "@/lib/instituciones";
+import { institucionDesdeEmail, normalizarInstitucion } from "@/lib/instituciones";
 
 const SESSION_KEY = "victoriax-local-user";
 const USERS_KEY = "victoriax-local-users";
@@ -11,35 +11,35 @@ const SEED_USERS = [
     email: "alumno@frba.utn.edu.ar",
     nombre_completo: "Alumno de prueba",
     rol: "ALUMNO",
-    institucion: "UTN Facultad Buenos Aires",
+    institucion: "UTN FRBA",
   },
   {
     id_usuario: "22222222-2222-4222-8222-222222222222",
     email: "docente@frba.utn.edu.ar",
     nombre_completo: "Docente de prueba",
     rol: "DOCENTE",
-    institucion: "UTN Facultad Buenos Aires",
+    institucion: "UTN FRBA",
   },
   {
     id_usuario: "33333333-3333-4333-8333-333333333333",
     email: "admin@frba.utn.edu.ar",
     nombre_completo: "Administrador de prueba",
     rol: "ADMIN",
-    institucion: "UTN Facultad Buenos Aires",
+    institucion: "UTN FRBA",
   },
   {
     id_usuario: "44444444-4444-4444-8444-444444444444",
     email: "docente@frre.utn.edu.ar",
     nombre_completo: "Docente de prueba (Resistencia)",
     rol: "DOCENTE",
-    institucion: "UTN Facultad Resistencia",
+    institucion: "UTN FRRE",
   },
   {
     id_usuario: "55555555-5555-4555-8555-555555555555",
     email: "admin@frre.utn.edu.ar",
     nombre_completo: "Administrador de prueba (Resistencia)",
     rol: "ADMIN",
-    institucion: "UTN Facultad Resistencia",
+    institucion: "UTN FRRE",
   },
 ];
 const SEED_USER_IDS = new Set(SEED_USERS.map((user) => user.id_usuario));
@@ -161,7 +161,9 @@ async function readUsers() {
 async function sincronizarUsuarios(users) {
   const normalizados = users.map((user) => ({
     ...user,
-    institucion: user.institucion || institucionDesdeEmail(user.email),
+    institucion: normalizarInstitucion(
+      user.institucion || institucionDesdeEmail(user.email),
+    ),
   }));
 
   for (const seed of SEED_USERS) {

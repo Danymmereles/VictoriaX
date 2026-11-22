@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Loader2 } from "lucide-react";
-import { institucionDesdeEmail, LISTA_INSTITUCIONES } from "@/lib/instituciones";
+import { institucionDeUsuario, LISTA_INSTITUCIONES } from "@/lib/instituciones";
 
 // Formulario reutilizable de perfil (DER USUARIO).
 // `editable` se controla con permisos del diagrama de seguridad:
@@ -18,7 +18,7 @@ export default function PerfilForm({
     nombre_usuario: usuario?.nombre_usuario || "",
     email: usuario?.email || "",
     nombre_completo: usuario?.nombre_completo || "",
-    institucion: usuario?.institucion || institucionDesdeEmail(usuario?.email),
+    institucion: institucionDeUsuario(usuario),
     rol: usuario?.rol || "ESTUDIANTE",
   });
 

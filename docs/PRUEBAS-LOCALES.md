@@ -24,13 +24,13 @@ En desarrollo, estas cinco cuentas demo usan autenticación local automáticamen
 
 | Usuario | Contraseña | Rol | Institución |
 |---|---|---|---|
-| `alumno@frba.utn.edu.ar` | `VictoriaX123` | `ALUMNO` | UTN Facultad Buenos Aires |
-| `docente@frba.utn.edu.ar` | `VictoriaX123` | `DOCENTE` | UTN Facultad Buenos Aires |
-| `admin@frba.utn.edu.ar` | `VictoriaX123` | `ADMIN` | UTN Facultad Buenos Aires |
-| `docente@frre.utn.edu.ar` | `VictoriaX123` | `DOCENTE` | UTN Facultad Resistencia |
-| `admin@frre.utn.edu.ar` | `VictoriaX123` | `ADMIN` | UTN Facultad Resistencia |
+| `alumno@frba.utn.edu.ar` | `VictoriaX123` | `ALUMNO` | UTN FRBA |
+| `docente@frba.utn.edu.ar` | `VictoriaX123` | `DOCENTE` | UTN FRBA |
+| `admin@frba.utn.edu.ar` | `VictoriaX123` | `ADMIN` | UTN FRBA |
+| `docente@frre.utn.edu.ar` | `VictoriaX123` | `DOCENTE` | UTN FRRE |
+| `admin@frre.utn.edu.ar` | `VictoriaX123` | `ADMIN` | UTN FRRE |
 
-La institución se asigna por el dominio del email: `@frba.utn.edu.ar` corresponde a UTN Facultad Buenos Aires y `@frre.utn.edu.ar` a UTN Facultad Resistencia. En **Participantes**, docentes y administradores ven únicamente los usuarios de su misma institución.
+La institución se asigna por el dominio del email: `@frba.utn.edu.ar` corresponde a UTN FRBA y `@frre.utn.edu.ar` a UTN FRRE. En **Participantes**, docentes y administradores ven únicamente los usuarios de su misma institución.
 
 El admin demo puede editar los perfiles y roles de estas cuentas. Esos cambios quedan en el navegador; borrar sus datos del sitio los elimina. Registrarse con uno de los emails demo está reservado y se debe iniciar sesión con su contraseña de prueba.
 

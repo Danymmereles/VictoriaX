@@ -1,7 +1,15 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AlertTriangle, ArrowRight, RotateCcw } from "lucide-react";
-import { analisisVacio, validarAnalisis, camposConError, eventosVacio, METODOLOGIAS } from "@/lib/analisisPrevio";
+import {
+  analisisVacio,
+  validarAnalisis,
+  camposConError,
+  erroresPorCampo,
+  claveEventoFuturo,
+  eventosVacio,
+  METODOLOGIAS
+} from "@/lib/analisisPrevio";
 import { cargarAnalisis, guardarAnalisis, limpiarAnalisis } from "@/lib/analisisPrevioStorage";
 import NavBar from "@/components/home/NavBar";
 import Footer from "@/components/home/Footer";
@@ -27,12 +35,19 @@ export default function ModoLibre() {
   const controlVacio = analisis.variables.control.length === 0;
 
   const idsConError = (lista) => lista.filter((v) => campos.has(`variable:${v.id}`)).map((v) => v.id);
+  // Motivo de cada error, por id (para mostrar por qué una sigla no es válida)
+  const porCampo = useMemo(() => erroresPorCampo(validacion), [validacion]);
+  const erroresDe = (lista, clave) =>
+    Object.fromEntries(lista.map((x, i) => [x.id, porCampo.get(clave(x, i))]).filter(([, e]) => e));
+  const erroresVariables = (lista) => erroresDe(lista, (v) => `variable:${v.id}`);
+  const erroresFuturos = erroresDe(analisis.eventosFuturos || [], claveEventoFuturo);
   const filasConError = (analisis.eventos.filas || []).filter((f) => campos.has(`evento:${f.id}`)).map((f) => f.id);
   const variablesConError = [...campos].some((c) => c.startsWith("variables.") || c.startsWith("variable:"));
 
   function setMetodologia(m) {
-    setAnalisis((a) => ({ ...a, metodologia: m, eventos: eventosVacio() }));
+    setAnalisis((a) => ({...a, metodologia: m, eventos: eventosVacio() }));
   }
+  
   function setVariables(patch) {
     setAnalisis((a) => ({ ...a, variables: { ...a.variables, ...patch } }));
   }
@@ -97,12 +112,14 @@ export default function ModoLibre() {
                   onChange={(datos) => setVariables({ datos })}
                   error={campos.has("variables.datos")}
                   idsConError={idsConError(analisis.variables.datos)}
+                  errores={erroresVariables(analisis.variables.datos)}
                 />
                 <VariableList
                   titulo="Variables de Control"
                   variables={analisis.variables.control}
                   onChange={(control) => setVariables({ control })}
                   idsConError={idsConError(analisis.variables.control)}
+                  errores={erroresVariables(analisis.variables.control)}
                 />
               </div>
             </div>
@@ -117,6 +134,7 @@ export default function ModoLibre() {
                   controlVars={analisis.variables.control}
                   error={campos.has("variables.estado")}
                   idsConError={idsConError(analisis.variables.estado)}
+                  errores={erroresVariables(analisis.variables.estado)}
                 />
                 <VariableList
                   titulo="Variables de Resultado"
@@ -126,6 +144,7 @@ export default function ModoLibre() {
                   controlVars={analisis.variables.control}
                   error={campos.has("variables.resultado")}
                   idsConError={idsConError(analisis.variables.resultado)}
+                  errores={erroresVariables(analisis.variables.resultado)}
                 />
               </div>
             </div>
@@ -136,8 +155,8 @@ export default function ModoLibre() {
           <TablaEventos analisis={analisis} onChange={setEventos} error={campos.has("eventos")} filasConError={filasConError} />
         </Seccion>
 
-        <Seccion titulo="4 · Tabla de Eventos Futuros" desc="Listado de siglas de tiempo ligadas a eventos." error={campos.has("eventosFuturos")}>
-          <EventosFuturos analisis={analisis} onChange={setEventosFuturos} />
+        <Seccion titulo="4 · Tabla de Eventos Futuros" desc="Listado de siglas de tiempo ligadas a eventos." error={campos.has("eventosFuturos") || Object.keys(erroresFuturos).length > 0}>
+          <EventosFuturos analisis={analisis} onChange={setEventosFuturos} errores={erroresFuturos} />
         </Seccion>
 
         <Validacion validacion={validacion} />

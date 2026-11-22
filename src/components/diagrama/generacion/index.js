@@ -15,7 +15,7 @@
 
 import { METODOLOGIAS, validarAnalisis } from "@/lib/analisisPrevio";
 import { MAIN_PAGE_ID, anchorIdDe } from "../pages.js";
-import { fin, nodo, proceso, secuencia } from "./bloques.js";
+import { fin, nodo, asignacion, secuencia } from "./bloques.js";
 import { nuevaGenerada } from "./comun.js";
 import { ORIGEN_GENERADA } from "../variables.js";
 import { construirDeltaT } from "./deltaT.js";
@@ -33,7 +33,7 @@ function paginaDeDato(pagina) {
             anchorOf: pagina.id,
             deletable: false,
         }),
-        proceso(`${pagina.nombre} = RND()`, {
+        asignacion(`${pagina.nombre} = RND()`, {
             pending: `Escribí cómo se genera ${pagina.nombre}. RND() da un valor al azar entre 0 y 1: reemplazalo por el algoritmo de su distribución (el Análisis Previo todavía no tiene la fdp).`,
         }),
         fin()
@@ -70,7 +70,7 @@ const contarPendientes = (paginas) =>
  *     paginas: { [pageId]: { nodes, edges, viewport: null } },
  *     variables: [...], pendientes, avisos: [...] }
  */
-export function generarDiagrama(analisis, { paginas = [], edgeType = "default" } = {}) {
+export function generarDiagrama(analisis, { paginas = [], edgeType = "smoothstep" } = {}) {
     if (!analisis?.metodologia) {
         return sinGenerar();
     }

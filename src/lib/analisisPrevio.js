@@ -1,7 +1,11 @@
 // ===========================================================================
 // Modelo y validación del Análisis Previo (Modo Libre)
-// Lógica pura, sin dependencias. Usada por la página y los componentes.
+// Lógica pura. Usada por la página y los componentes.
+// Las siglas siguen la misma regla de nombres que el diagrama
+// (lib/lenguaje, BNF v0.14), para que el diagrama generado sea válido.
 // ===========================================================================
+
+import { motivoNombreInvalido } from "./lenguaje/nombres.js";
 
 export const METODOLOGIAS = {
   EVENTO_A_EVENTO: "EVENTO_A_EVENTO",
@@ -117,6 +121,8 @@ export function validarAnalisis(a) {
     });
   });
 
+  validarSiglas(a, { claveVariable, error, detalles, errores });
+
   // Variables sin descripción: una sola advertencia agrupada.
   const sinDescripcion = grupos
     .flatMap((lista) => lista)
@@ -188,7 +194,73 @@ export function validarAnalisis(a) {
   return { errores, detalles, advertencias, esValido: errores.length === 0 };
 }
 
+// Clave de una fila de la tabla de Eventos Futuros
+export const claveEventoFuturo = (e, i) => `eventoFuturo:${e.id || `idx-${i}`}`;
+
+/*
+ * Las siglas de las variables y de los Eventos Futuros son los nombres
+ * que se usan en el diagrama, así que siguen la regla de nombres de la BNF:
+ *   - válidas: letras, números y _, sin empezar con número, sin tildes,
+ *     espacios ni palabras reservadas (AND, OR, NOT, TRUE, FALSE, NULL, RND);
+ *   - únicas entre todas las secciones. Como en JavaScript, distinguen
+ *     mayúsculas: Ic e IC son dos siglas distintas.
+ * Los detalles de estos errores llevan tipo "sigla" (para resaltar el campo).
+ */
+function validarSiglas(a, { claveVariable, error, detalles, errores }) {
+  const errorDeSigla = (campo, mensaje) => {
+    error(campo, mensaje);
+    detalles[detalles.length - 1].tipo = "sigla";
+  };
+
+  const entradas = [
+    ...[a.variables.datos, a.variables.control, a.variables.estado, a.variables.resultado].flatMap((lista) =>
+      lista.map((v, i) => ({ campo: claveVariable(v, i), sigla: v.sigla?.trim() || "", que: "La sigla" }))
+    ),
+    ...(a.eventosFuturos || []).map((e, i) => ({
+      campo: claveEventoFuturo(e, i),
+      sigla: e.sigla?.trim() || "",
+      que: "La sigla del evento futuro",
+    })),
+  ].filter((x) => x.sigla);
+
+  const validas = [];
+  entradas.forEach((x) => {
+    const motivo = motivoNombreInvalido(x.sigla);
+    if (motivo) {
+      const detalle = motivo.charAt(0).toLowerCase() + motivo.slice(1);
+      errorDeSigla(x.campo, `${x.que} "${x.sigla}" no es válida: ${detalle}`);
+    }
+    else validas.push(x);
+  });
+
+  // Repetidas: un solo mensaje en la lista, y se marcan todas las filas
+  const porSigla = new Map();
+  validas.forEach((x) => porSigla.set(x.sigla, [...(porSigla.get(x.sigla) || []), x]));
+  porSigla.forEach((lista, sigla) => {
+    if (lista.length < 2) return;
+    const mensaje = `La sigla "${sigla}" está repetida: cada variable y cada evento futuro necesita una sigla distinta.`;
+    errores.push(mensaje);
+    lista.forEach((x) => detalles.push({ campo: x.campo, mensaje, tipo: "sigla" }));
+  });
+}
+
 // Bloques (metodología, grupos de variables, variables o filas) con error bloqueante.
 export function camposConError(validacion) {
   return new Set((validacion?.detalles || []).map((d) => d.campo));
+}
+
+/*
+ * Errores de cada bloque, para mostrarlos al lado del campo:
+ *   Map campo → { mensajes: [texto], sigla: boolean }
+ * sigla es true si el problema está en la sigla (para resaltar ese input).
+ */
+export function erroresPorCampo(validacion) {
+  const mapa = new Map();
+  (validacion?.detalles || []).forEach((d) => {
+    const actual = mapa.get(d.campo) || { mensajes: [], sigla: false };
+    if (!actual.mensajes.includes(d.mensaje)) actual.mensajes.push(d.mensaje);
+    if (d.tipo === "sigla") actual.sigla = true;
+    mapa.set(d.campo, actual);
+  });
+  return mapa;
 }

@@ -53,6 +53,8 @@ import {
 import CustomNode from "../components/diagrama/CustomNode.jsx";
 // Flechas editables (quiebres, tramos y curvas, como en Lucidchart)
 import { edgeTypes } from "../components/diagrama/edges/index.js";
+// Exportar a PNG, JPG o JSON
+import { useExportar } from "../components/diagrama/exportar/useExportar.js";
 import {
     DnDProvider,
     useDnD,
@@ -283,6 +285,16 @@ function Flow({ active = true, onRun }) {
 
     // Lienzo: para ubicar el nodo ancla al abrir una variable
     const canvasRef = useRef(null);
+
+    // Botón Exportar: imagen de la página actual o JSON de todo
+    const exportar = useExportar({
+        canvasRef,
+        pages,
+        activePage,
+        pagesStoreRef,
+        variables,
+        edgeType,
+    });
 
 
     // Al abrir el diagrama, el Contexto (inicio de Main) queda
@@ -516,6 +528,7 @@ function Flow({ active = true, onRun }) {
                     edgeType={edgeType}
                     onEdgeTypeChange={changeEdgeType}
                     onRun={onRun}
+                    onExport={exportar}
                     hasDiagram={hasDiagram}
                 />
 

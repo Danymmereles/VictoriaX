@@ -1,17 +1,31 @@
 import React, { useState } from "react";
 import { Loader2 } from "lucide-react";
+import { institucionDesdeEmail, LISTA_INSTITUCIONES } from "@/lib/instituciones";
 
 // Formulario reutilizable de perfil (DER USUARIO).
 // `editable` se controla con permisos del diagrama de seguridad:
 //   - perfil propio  -> puedoEditarPerfil
 //   - perfil ajeno   -> puedoEditarOtrosPerfiles (solo admin)
-export default function PerfilForm({ usuario, editable = true, rolEditable = editable, onSave, saving = false }) {
+export default function PerfilForm({
+  usuario,
+  editable = true,
+  rolEditable = editable,
+  institucionEditable = rolEditable,
+  onSave,
+  saving = false,
+}) {
   const [form, setForm] = useState({
     nombre_usuario: usuario?.nombre_usuario || "",
     email: usuario?.email || "",
     nombre_completo: usuario?.nombre_completo || "",
+    institucion: usuario?.institucion || institucionDesdeEmail(usuario?.email),
     rol: usuario?.rol || "ESTUDIANTE",
   });
+
+  const opcionesInstitucion =
+    form.institucion && !LISTA_INSTITUCIONES.includes(form.institucion)
+      ? [form.institucion, ...LISTA_INSTITUCIONES]
+      : LISTA_INSTITUCIONES;
 
   function cambiar(campo) {
     return (e) => setForm((f) => ({ ...f, [campo]: e.target.value }));
@@ -27,6 +41,20 @@ export default function PerfilForm({ usuario, editable = true, rolEditable = edi
       <Campo label="Nombre de usuario" valor={form.nombre_usuario} onChange={cambiar("nombre_usuario")} editable={editable} />
       <Campo label="Nombre completo" valor={form.nombre_completo} onChange={cambiar("nombre_completo")} editable={editable} />
       <Campo label="Email" type="email" valor={form.email} onChange={cambiar("email")} editable={editable} />
+
+      <div>
+        <label className="text-sm font-medium text-muted-foreground">Institución</label>
+        <select
+          value={form.institucion}
+          onChange={cambiar("institucion")}
+          disabled={!institucionEditable}
+          className="mt-2 w-full rounded-lg border border-input bg-background px-4 py-3 text-sm disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {opcionesInstitucion.map((institucion) => (
+            <option key={institucion} value={institucion}>{institucion}</option>
+          ))}
+        </select>
+      </div>
 
       <div>
         <label className="text-sm font-medium text-muted-foreground">Rol</label>

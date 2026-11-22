@@ -20,13 +20,17 @@ Abrí la dirección local que muestra Vite, normalmente `http://localhost:5173`.
 
 ## 2.1 Probar sin conectar una base
 
-En desarrollo, estas tres cuentas demo usan autenticación local automáticamente; no necesitan `.env.local`, Supabase, PostgreSQL ni la API. Las demás cuentas, y todos los registros nuevos, usan Supabase Auth.
+En desarrollo, estas cinco cuentas demo usan autenticación local automáticamente; no necesitan `.env.local`, Supabase, PostgreSQL ni la API. Las demás cuentas, y todos los registros nuevos, usan Supabase Auth.
 
-| Usuario | Contraseña | Rol |
-|---|---|---|
-| `alumno@frba.utn.edu.ar` | `VictoriaX123` | `ALUMNO` |
-| `docente@frba.utn.edu.ar` | `VictoriaX123` | `DOCENTE` |
-| `admin@frba.utn.edu.ar` | `VictoriaX123` | `ADMIN` |
+| Usuario | Contraseña | Rol | Institución |
+|---|---|---|---|
+| `alumno@frba.utn.edu.ar` | `VictoriaX123` | `ALUMNO` | UTN Facultad Buenos Aires |
+| `docente@frba.utn.edu.ar` | `VictoriaX123` | `DOCENTE` | UTN Facultad Buenos Aires |
+| `admin@frba.utn.edu.ar` | `VictoriaX123` | `ADMIN` | UTN Facultad Buenos Aires |
+| `docente@frre.utn.edu.ar` | `VictoriaX123` | `DOCENTE` | UTN Facultad Resistencia |
+| `admin@frre.utn.edu.ar` | `VictoriaX123` | `ADMIN` | UTN Facultad Resistencia |
+
+La institución se asigna por el dominio del email: `@frba.utn.edu.ar` corresponde a UTN Facultad Buenos Aires y `@frre.utn.edu.ar` a UTN Facultad Resistencia. En **Participantes**, docentes y administradores ven únicamente los usuarios de su misma institución.
 
 El admin demo puede editar los perfiles y roles de estas cuentas. Esos cambios quedan en el navegador; borrar sus datos del sitio los elimina. Registrarse con uno de los emails demo está reservado y se debe iniciar sesión con su contraseña de prueba.
 
@@ -47,7 +51,7 @@ Para simular el vencimiento sin esperar siete días, con una sesión iniciada ej
 
    Reemplazá los dos valores con la URL y la publishable key del proyecto. `.env.local` está ignorado por Git. No pongas claves `secret` o `service_role` en variables `VITE_`.
 4. Reiniciá `npm run dev` para que Vite cargue las variables. Las cuentas demo siguen usando autenticación local; las demás cuentas y los nuevos registros van a Supabase.
-5. En el formulario **Crear cuenta**, registrá un email de prueba distinto de las cuentas demo. El registro admite cualquier email; para iniciar sesión en Modo Estudio, el login requiere `@frba.utn.edu.ar`.
+5. En el formulario **Crear cuenta**, registrá un email de prueba distinto de las cuentas demo. El registro admite cualquier email; para iniciar sesión en Modo Estudio, el login requiere un email `@frba.utn.edu.ar` o `@frre.utn.edu.ar`.
 6. Si Supabase tiene habilitada la confirmación de email, abrí el correo de confirmación antes de iniciar sesión. Si está deshabilitada, el alta puede dejar la sesión iniciada directamente.
 7. Iniciá sesión, recargá la página y abrí otra pestaña del mismo sitio para comprobar que la sesión persiste y se comparte; luego cerrala desde **Salir**. En el panel **Authentication → Users** podés comprobar que la cuenta quedó creada.
 8. En **Mi perfil**, seleccioná **Cambiar contraseña**. En la página nueva, ingresá la contraseña actual, una nueva de al menos 8 caracteres y su confirmación. Para Supabase se verifica la contraseña actual antes de actualizarla; las cuentas demo guardan el cambio de forma local. Podés volver al perfil con el enlace de la parte superior.
@@ -66,7 +70,7 @@ La API y PostgreSQL de `backend/` tienen una configuración y un flujo de prueba
 
 ## Problemas frecuentes
 
-- **Quiero probar un usuario demo sin Supabase:** iniciá sesión con una de las tres cuentas de demo; no necesitás variables de Supabase para ese flujo.
+- **Quiero probar un usuario demo sin Supabase:** iniciá sesión con una de las cinco cuentas de demo; no necesitás variables de Supabase para ese flujo.
 - **Faltan variables de Supabase:** comprobá los nombres `VITE_SUPABASE_URL` y `VITE_SUPABASE_PUBLISHABLE_KEY`, sin comillas ni espacios alrededor del `=`.
 - **No llega el correo:** revisá la configuración SMTP/confirmación de email y la carpeta de spam del proyecto Supabase.
-- **Falla el acceso al Modo Estudio:** usá un email `@frba.utn.edu.ar`; el formulario de registro, en cambio, permite otros dominios.
+- **Falla el acceso al Modo Estudio:** usá un email `@frba.utn.edu.ar` o `@frre.utn.edu.ar`; el formulario de registro, en cambio, permite otros dominios.

@@ -1,3 +1,5 @@
+import { institucionDesdeEmail } from "@/lib/instituciones";
+
 const SESSION_KEY = "victoriax-local-user";
 const USERS_KEY = "victoriax-local-users";
 const LOCAL_PASSWORD = "VictoriaX123";
@@ -9,18 +11,35 @@ const SEED_USERS = [
     email: "alumno@frba.utn.edu.ar",
     nombre_completo: "Alumno de prueba",
     rol: "ALUMNO",
+    institucion: "UTN Facultad Buenos Aires",
   },
   {
     id_usuario: "22222222-2222-4222-8222-222222222222",
     email: "docente@frba.utn.edu.ar",
     nombre_completo: "Docente de prueba",
     rol: "DOCENTE",
+    institucion: "UTN Facultad Buenos Aires",
   },
   {
     id_usuario: "33333333-3333-4333-8333-333333333333",
     email: "admin@frba.utn.edu.ar",
     nombre_completo: "Administrador de prueba",
     rol: "ADMIN",
+    institucion: "UTN Facultad Buenos Aires",
+  },
+  {
+    id_usuario: "44444444-4444-4444-8444-444444444444",
+    email: "docente@frre.utn.edu.ar",
+    nombre_completo: "Docente de prueba (Resistencia)",
+    rol: "DOCENTE",
+    institucion: "UTN Facultad Resistencia",
+  },
+  {
+    id_usuario: "55555555-5555-4555-8555-555555555555",
+    email: "admin@frre.utn.edu.ar",
+    nombre_completo: "Administrador de prueba (Resistencia)",
+    rol: "ADMIN",
+    institucion: "UTN Facultad Resistencia",
   },
 ];
 const SEED_USER_IDS = new Set(SEED_USERS.map((user) => user.id_usuario));
@@ -124,7 +143,7 @@ async function readUsers() {
     ) {
       throw new Error("El registro de usuarios locales no tiene un formato válido.");
     }
-    return users;
+    return sincronizarUsuarios(users);
   }
 
   const users = await Promise.all(
@@ -135,6 +154,27 @@ async function readUsers() {
   );
   localStorage.setItem(USERS_KEY, JSON.stringify(users));
   return users;
+}
+
+// Agrega la institución a los usuarios guardados y suma las cuentas demo nuevas,
+// para que los navegadores que ya tenían cuentas locales las reciban igual.
+async function sincronizarUsuarios(users) {
+  const normalizados = users.map((user) => ({
+    ...user,
+    institucion: user.institucion || institucionDesdeEmail(user.email),
+  }));
+
+  for (const seed of SEED_USERS) {
+    if (!normalizados.some((user) => user.id_usuario === seed.id_usuario)) {
+      normalizados.push({ ...seed, ...(await hashPassword(LOCAL_PASSWORD)) });
+    }
+  }
+
+  const serializado = JSON.stringify(normalizados);
+  if (serializado !== localStorage.getItem(USERS_KEY)) {
+    localStorage.setItem(USERS_KEY, serializado);
+  }
+  return normalizados;
 }
 
 function toAppRole(role) {
@@ -270,6 +310,14 @@ export const localAuth = {
         throw new Error("El administrador no puede cambiar su propio rol local.");
       }
       updated.rol = role;
+    }
+    if (changes.institucion !== undefined) {
+      const institucion = String(changes.institucion).trim();
+      if (!institucion) throw new Error("La institución es obligatoria.");
+      if (institucion !== current.institucion && actor.rol !== "ADMIN") {
+        throw new Error("Solo el administrador local puede cambiar la institución de un usuario.");
+      }
+      updated.institucion = institucion;
     }
 
     const result = users.slice();

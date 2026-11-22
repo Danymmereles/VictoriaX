@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/lib/AuthContext";
+import { esEmailUtn } from "@/lib/instituciones";
 
 const VALID_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -33,11 +34,11 @@ export default function Register() {
     try {
       const result = await register({ nombreCompleto, email, password });
       if (result.accessToken) {
-        if (email.trim().toLowerCase().endsWith("@frba.utn.edu.ar")) {
+        if (esEmailUtn(email)) {
           navigate("/modo-estudio");
         } else {
           setConfirmationMessage(
-            "Tu cuenta se creó correctamente. Para usar el Modo Estudio necesitás una cuenta @frba.utn.edu.ar; mientras tanto podés acceder al Modo Libre.",
+            "Tu cuenta se creó correctamente. Para usar el Modo Estudio necesitás una cuenta @frba.utn.edu.ar o @frre.utn.edu.ar; mientras tanto podés acceder al Modo Libre.",
           );
         }
       } else {
@@ -108,7 +109,7 @@ export default function Register() {
           </div>
           <p className="text-xs text-muted-foreground">
             Podés registrarte con cualquier email. Para acceder al Modo Estudio,
-            recordá usar una cuenta @frba.utn.edu.ar.
+            recordá usar una cuenta @frba.utn.edu.ar o @frre.utn.edu.ar.
           </p>
         </div>
         <div className="space-y-2">

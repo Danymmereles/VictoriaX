@@ -1,12 +1,27 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Users, UserCircle } from "lucide-react";
+import { ArrowLeft, Search, Users } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { authClient, isLocalAuthEnabled } from "@/api/authClient";
 import { useSesionUsuario } from "@/lib/sesionUsuario";
+import { institucionDeUsuario } from "@/lib/instituciones";
 import NavBar from "@/components/home/NavBar";
 import Footer from "@/components/home/Footer";
 import PerfilForm from "@/components/perfil/PerfilForm";
+
+const FILTROS_ROL = [
+  { value: "TODOS", label: "Todos los roles" },
+  { value: "ADMINISTRADOR", label: "Administrador" },
+  { value: "DOCENTE", label: "Docente" },
+  { value: "ESTUDIANTE", label: "Estudiante" },
+];
+
+function normalizar(texto) {
+  return String(texto || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
 
 export default function Participantes() {
   const { usuario, permisos } = useSesionUsuario();
@@ -15,6 +30,10 @@ export default function Participantes() {
   const [seleccionado, setSeleccionado] = useState(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [busqueda, setBusqueda] = useState("");
+  const [rolFiltro, setRolFiltro] = useState("TODOS");
+
+  const institucionSesion = institucionDeUsuario(usuario);
 
   async function cargar() {
     setCargando(true);
@@ -36,6 +55,23 @@ export default function Participantes() {
     cargar();
   }, []);
 
+  const filtrados = useMemo(() => {
+    const termino = normalizar(busqueda.trim());
+    return lista
+      .filter((u) => institucionDeUsuario(u) === institucionSesion)
+      .filter((u) => rolFiltro === "TODOS" || u.rol === rolFiltro)
+      .filter((u) => {
+        if (!termino) return true;
+        return [
+          u.nombre_completo,
+          u.nombre_usuario,
+          u.email,
+          u.rol,
+          institucionDeUsuario(u),
+        ].some((campo) => normalizar(campo).includes(termino));
+      });
+  }, [lista, busqueda, rolFiltro, institucionSesion]);
+
   // Guarda de acceso: solo quien puede visualizar otros perfiles (Admin, Docente)
   if (!usuario || !permisos?.puedoVisualizarOtrosPerfiles) {
     return (
@@ -45,7 +81,7 @@ export default function Participantes() {
           <Users className="mx-auto w-10 h-10 text-[#AF9BEF]" />
           <h1 className="mt-6 font-heading text-3xl font-semibold">Acceso restringido</h1>
           <p className="mt-4 text-muted-foreground">
-            Solo los administradores pueden ver el listado completo de participantes.
+            Solo los administradores y docentes pueden ver el listado de participantes.
           </p>
           <Link to="/" className="mt-8 inline-block text-[#AF9BEF] hover:underline">Volver al inicio</Link>
         </main>
@@ -83,7 +119,9 @@ export default function Participantes() {
         <div className="mt-8">
           <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Administracion</p>
           <h1 className="mt-3 font-heading text-4xl font-semibold tracking-tight">Participantes</h1>
-          <p className="mt-4 text-muted-foreground">Listado completo de usuarios registrados en la plataforma.</p>
+          <p className="mt-4 text-muted-foreground">
+            Usuarios registrados en <span className="font-medium text-foreground">{institucionSesion}</span>.
+          </p>
           {isLocalAuthEnabled && (
             <p className="mt-3 rounded-lg border border-[#AF9BEF]/30 bg-[#AF9BEF]/5 p-3 text-sm text-muted-foreground">
               Modo local: las cuentas y los cambios de rol se guardan en este navegador.
@@ -116,6 +154,7 @@ export default function Participantes() {
                     usuario={seleccionado}
                     editable={permisos.puedoEditarOtrosPerfiles}
                     rolEditable={permisos.puedoCambiarRol}
+                    institucionEditable={permisos.puedoCambiarRol}
                     onSave={guardarOtro}
                     saving={saving}
                   />
@@ -124,26 +163,69 @@ export default function Participantes() {
             </aside>
           )}
 
+          <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 sm:flex-row sm:items-center">
+            <div className="relative flex-1">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="search"
+                value={busqueda}
+                onChange={(e) => setBusqueda(e.target.value)}
+                placeholder="Buscar por nombre, usuario, email, rol o institución"
+                className="w-full rounded-lg border border-input bg-background py-2.5 pl-10 pr-3 text-sm"
+                aria-label="Buscar participantes"
+              />
+            </div>
+            <select
+              value={rolFiltro}
+              onChange={(e) => setRolFiltro(e.target.value)}
+              className="rounded-lg border border-input bg-background px-3 py-2.5 text-sm"
+              aria-label="Filtrar por rol"
+            >
+              {FILTROS_ROL.map((opcion) => (
+                <option key={opcion.value} value={opcion.value}>{opcion.label}</option>
+              ))}
+            </select>
+            {(busqueda || rolFiltro !== "TODOS") && (
+              <button
+                onClick={() => {
+                  setBusqueda("");
+                  setRolFiltro("TODOS");
+                }}
+                className="text-sm text-muted-foreground hover:text-foreground"
+              >
+                Limpiar
+              </button>
+            )}
+          </div>
+
           <div className="w-full min-w-0 overflow-x-auto rounded-2xl border border-border bg-card">
-            <table className="w-full min-w-[680px] text-sm">
+            <table className="w-full min-w-[760px] text-sm">
               <thead className="bg-muted/50 text-left text-xs uppercase tracking-wider text-muted-foreground">
                 <tr>
                   <th className="px-5 py-4">Nombre completo</th>
                   <th className="px-5 py-4">Email</th>
                   <th className="px-5 py-4">Rol</th>
+                  <th className="px-5 py-4">Institución</th>
                   <th className="px-5 py-4 text-right">Accion</th>
                 </tr>
               </thead>
               <tbody>
                 {cargando ? (
-                  <tr><td colSpan={4} className="px-5 py-10 text-center text-muted-foreground">Cargando…</td></tr>
-                ) : lista.length === 0 ? (
-                  <tr><td colSpan={4} className="px-5 py-10 text-center text-muted-foreground">Sin participantes.</td></tr>
-                ) : lista.map((u) => (
+                  <tr><td colSpan={5} className="px-5 py-10 text-center text-muted-foreground">Cargando…</td></tr>
+                ) : filtrados.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-5 py-10 text-center text-muted-foreground">
+                      {lista.length === 0
+                        ? "Sin participantes."
+                        : "No hay participantes que coincidan con la búsqueda."}
+                    </td>
+                  </tr>
+                ) : filtrados.map((u) => (
                   <tr key={u.id} className="border-t border-border">
                     <td className="px-5 py-4 font-medium">{u.nombre_completo}</td>
                     <td className="px-5 py-4 text-muted-foreground">{u.email}</td>
                     <td className="px-5 py-4"><BadgeRol rol={u.rol} /></td>
+                    <td className="px-5 py-4 text-muted-foreground">{institucionDeUsuario(u)}</td>
                     <td className="px-5 py-4 text-right">
                       {permisos.puedoEditarOtrosPerfiles ? (
                         <button
@@ -162,12 +244,9 @@ export default function Participantes() {
             </table>
           </div>
 
-          {!seleccionado && permisos.puedoEditarOtrosPerfiles && (
-            <div className="mx-auto w-full max-w-md rounded-2xl border border-dashed border-border bg-card/50 p-5 text-center text-sm text-muted-foreground">
-                <UserCircle className="mx-auto w-8 h-8 text-muted-foreground" />
-                <p className="mt-3">Selecciona un participante para editar su perfil.</p>
-            </div>
-          )}
+          <p className="text-xs text-muted-foreground">
+            {filtrados.length} de {lista.filter((u) => institucionDeUsuario(u) === institucionSesion).length} participantes de tu institución.
+          </p>
         </div>
       </main>
       <Footer />

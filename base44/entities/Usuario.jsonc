@@ -17,6 +17,10 @@
       "type": "string",
       "description": "Nombre completo (diagrama de clases - Persona)"
     },
+    "institucion": {
+      "type": "string",
+      "description": "Instituci\u00f3n a la que pertenece el usuario, independientemente de su rol"
+    },
     "rol": {
       "type": "string",
       "enum": [

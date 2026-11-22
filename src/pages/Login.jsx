@@ -6,8 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/lib/AuthContext";
-
-const UTN_EMAIL = /^[^\s@]+@frba\.utn\.edu\.ar$/i;
+import { esEmailUtn } from "@/lib/instituciones";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -21,8 +20,8 @@ export default function Login() {
   async function handleSubmit(event) {
     event.preventDefault();
     setError("");
-    if (!UTN_EMAIL.test(email.trim())) {
-      setError("El Modo Estudio es exclusivo para la comunidad académica de UTN (@frba.utn.edu.ar).");
+    if (!esEmailUtn(email)) {
+      setError("El Modo Estudio es exclusivo para la comunidad académica de UTN (@frba.utn.edu.ar o @frre.utn.edu.ar).");
       return;
     }
 

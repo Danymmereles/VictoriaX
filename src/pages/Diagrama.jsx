@@ -51,6 +51,8 @@ import {
     sincronizarConAnalisis,
 } from "../components/diagrama/variables.js";
 import CustomNode from "../components/diagrama/CustomNode.jsx";
+// Flechas editables (quiebres, tramos y curvas, como en Lucidchart)
+import { edgeTypes } from "../components/diagrama/edges/index.js";
 import {
     DnDProvider,
     useDnD,
@@ -543,6 +545,7 @@ function Flow({ active = true, onRun }) {
                                 onDrop={onDrop}
 
                                 nodeTypes={nodeTypes}
+                                edgeTypes={edgeTypes}
                                 defaultEdgeOptions={defaultEdgeOptions}
 
                                 deleteKeyCode={active ? "Delete" : null}
@@ -685,4 +688,4 @@ export default function Diagrama() {
 
         </main>
     );
-}
+}

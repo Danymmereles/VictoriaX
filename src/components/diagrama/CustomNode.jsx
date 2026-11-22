@@ -398,6 +398,8 @@ export default function CustomNode({ id, data, selected }) {
                 <Handle
                     type="source"
                     position={Position.Bottom}
+                    // El Resultado lo sube hasta su onda (ver CustomNode.css)
+                    className={data.type === "document" ? "result-handle" : undefined}
                 />
             )}
 

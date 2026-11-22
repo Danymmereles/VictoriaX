@@ -153,6 +153,15 @@
     padding: 8px 16px 24px;
 }
 
+/* Punto de salida del Resultado: sobre la onda, no en el borde de
+   la caja (la onda pasa por el 89,75% del alto en el centro; ver
+   la figura "document" en shapes.jsx) */
+.flow-node--document .react-flow__handle.result-handle {
+    top: calc(89.75% - 1px);
+    bottom: auto;
+    transform: translate(-50%, -50%);
+}
+
 .flow-node--io {
     min-width: 160px;
     min-height: 80px;

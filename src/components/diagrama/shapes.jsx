@@ -45,21 +45,29 @@ const SHAPES = {
         />
     ),
 
-    // Resultado (tipo document): rectángulo con base ondulada
+    // Resultado (tipo document): esquinas de arriba redondeadas, lados
+    // rectos y una base ondulada que arranca más arriba a la izquierda,
+    // baja, sube a una cresta y termina abajo a la derecha, en punta.
+    // Medidas relativas (0..1) del ancho y del alto. En el centro, la
+    // onda pasa por el 89,75% del alto: ahí va el punto de salida
+    // (.result-handle en CustomNode.css).
     document: (w, h, s) => {
-        // Trazo original diseñado en 160x90 (x: 4..156, y: 4..76)
-        const X = (x) => s / 2 + ((x - 4) / 152) * (w - s);
-        const Y = (y) => s / 2 + ((y - 4) / 72) * (h - s);
+        const X = (u) => s / 2 + u * (w - s);
+        const Y = (v) => s / 2 + v * (h - s);
+        const r = Math.min(8, (w - s) / 4, (h - s) / 4);
 
         return (
             <path
                 d={`
-                    M ${X(4)} ${Y(4)}
-                    H ${X(156)}
-                    V ${Y(65)}
-                    C ${X(140)} ${Y(78)}, ${X(125)} ${Y(78)}, ${X(110)} ${Y(68)}
-                    C ${X(95)} ${Y(58)}, ${X(80)} ${Y(58)}, ${X(65)} ${Y(68)}
-                    C ${X(45)} ${Y(82)}, ${X(25)} ${Y(76)}, ${X(4)} ${Y(62)}
+                    M ${X(0)} ${Y(0.83)}
+                    V ${Y(0) + r}
+                    A ${r} ${r} 0 0 1 ${X(0) + r} ${Y(0)}
+                    H ${X(1) - r}
+                    A ${r} ${r} 0 0 1 ${X(1)} ${Y(0) + r}
+                    V ${Y(1)}
+                    C ${X(0.85)} ${Y(0.86)}, ${X(0.74)} ${Y(0.81)}, ${X(0.65)} ${Y(0.81)}
+                    C ${X(0.52)} ${Y(0.81)}, ${X(0.47)} ${Y(1)}, ${X(0.32)} ${Y(1)}
+                    C ${X(0.15)} ${Y(1)}, ${X(0.06)} ${Y(0.93)}, ${X(0)} ${Y(0.83)}
                     Z
                 `}
             />

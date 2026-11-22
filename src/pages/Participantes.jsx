@@ -62,13 +62,9 @@ export default function Participantes() {
       .filter((u) => rolFiltro === "TODOS" || u.rol === rolFiltro)
       .filter((u) => {
         if (!termino) return true;
-        return [
-          u.nombre_completo,
-          u.nombre_usuario,
-          u.email,
-          u.rol,
-          institucionDeUsuario(u),
-        ].some((campo) => normalizar(campo).includes(termino));
+        return [u.nombre_completo, u.email].some((campo) =>
+          normalizar(campo).includes(termino),
+        );
       });
   }, [lista, busqueda, rolFiltro, institucionSesion]);
 
@@ -122,11 +118,6 @@ export default function Participantes() {
           <p className="mt-4 text-muted-foreground">
             Usuarios registrados en <span className="font-medium text-foreground">{institucionSesion}</span>.
           </p>
-          {isLocalAuthEnabled && (
-            <p className="mt-3 rounded-lg border border-[#AF9BEF]/30 bg-[#AF9BEF]/5 p-3 text-sm text-muted-foreground">
-              Modo local: las cuentas y los cambios de rol se guardan en este navegador.
-            </p>
-          )}
         </div>
 
         {error && (
@@ -170,7 +161,7 @@ export default function Participantes() {
                 type="search"
                 value={busqueda}
                 onChange={(e) => setBusqueda(e.target.value)}
-                placeholder="Buscar por nombre, usuario, email, rol o institución"
+                placeholder="Buscar por nombre completo o email"
                 className="w-full rounded-lg border border-input bg-background py-2.5 pl-10 pr-3 text-sm"
                 aria-label="Buscar participantes"
               />

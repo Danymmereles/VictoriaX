@@ -81,8 +81,8 @@ const ANCHOR_TOP = 70;
 // Igual con el Contexto al abrir el diagrama. Ancho mínimo: 180px.
 const CONTEXT_WIDTH = 180;
 
-// Tipo de conector al entrar (también el de los generados)
-const INITIAL_EDGE_TYPE = "default";
+// Tipo de conector al entrar (también el de los generados): Angular
+const INITIAL_EDGE_TYPE = "smoothstep";
 
 /*
  * Viewport que deja el inicio de la página (Contexto o ancla)

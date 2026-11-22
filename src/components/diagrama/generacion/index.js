@@ -70,7 +70,7 @@ const contarPendientes = (paginas) =>
  *     paginas: { [pageId]: { nodes, edges, viewport: null } },
  *     variables: [...], pendientes, avisos: [...] }
  */
-export function generarDiagrama(analisis, { paginas = [], edgeType = "default" } = {}) {
+export function generarDiagrama(analisis, { paginas = [], edgeType = "smoothstep" } = {}) {
     if (!analisis?.metodologia) {
         return sinGenerar();
     }

@@ -3,7 +3,7 @@
 // (2017), comparando T >= TEF en vez de T == TEF (corrige GV6):
 //
 //   Contexto
-//   (1) → T = T + DT
+//   (1) → T = T + 1
 //       → por cada comprometido anterior C:  T >= TPC ?  SÍ: C → TPC = HV
 //       → por cada evento propio P:          P
 //       → por cada comprometido posterior Q: ¿ocurre Q? SÍ: Q → programar C
@@ -21,27 +21,19 @@ import {
     actualizarEstado,
     cierre,
     contexto,
-    nuevaGenerada,
     nuevoTiempoDeEvento,
     programar,
 } from "./comun.js";
 
 export function construirDeltaT({ analisis, lectura }) {
-    const { nombres, ocupado, reservar, tefDe, avisos } = lectura;
-    const variables = [];
+    const { nombres, tefDe, avisos } = lectura;
 
     const { propios, anteriores, posteriores } = eventosDeltaT(analisis);
 
-    // Δt: si el análisis ya tiene una variable DT (p. ej. de control), se usa
-    const DT = "DT";
-    if (!ocupado(DT)) {
-        reservar(DT);
-        variables.push(nuevaGenerada(DT, "1", "Intervalo de tiempo constante (Δt)"));
-    }
-
     const comprometidos = anteriores.map((nombre) => ({ nombre, tef: tefDe(nombre) }));
 
-    const pasos = [asignacion(`T = T + ${DT}`)];
+    // El reloj avanza de a una unidad (Δt = 1)
+    const pasos = [asignacion("T = T + 1")];
 
     comprometidos.forEach((c) => {
         pasos.push(
@@ -103,5 +95,5 @@ export function construirDeltaT({ analisis, lectura }) {
         nuevoTiempoDeEvento(c.tef, VALOR_HV, c.nombre)
     );
 
-    return { bloque, variables: [...tiempos, ...variables] };
+    return { bloque, variables: tiempos };
 }

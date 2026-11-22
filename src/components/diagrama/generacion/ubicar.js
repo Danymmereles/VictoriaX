@@ -376,7 +376,7 @@ function datosDe(spec) {
  *   prefijo:  para los ids (uno por página, así no se repiten)
  *   edgeType: tipo de conector elegido en el editor
  */
-export function ubicar(bloque, { prefijo, edgeType = "default" }) {
+export function ubicar(bloque, { prefijo, edgeType = "smoothstep" }) {
     let contador = 0;
     const ctx = { nuevoId: () => `gen-${prefijo}-${++contador}` };
 

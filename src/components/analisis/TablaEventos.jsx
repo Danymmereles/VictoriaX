@@ -17,7 +17,7 @@ export default function TablaEventos({ analisis, onChange, error = false, filasC
     );
   }
   if (metodologia === METODOLOGIAS.EVENTO_A_EVENTO) {
-    return <TablaEventosEaE filas={eventos.filas} onChange={setFilas} controlVars={variables.control} filasConError={filasConError} />;
+    return <TablaEventosEaE filas={eventos.filas || []} onChange={setFilas} controlVars={variables.control} filasConError={filasConError} />;
   }
-  return <TablaEventosDeltaT filas={eventos.filas} onChange={setFilas} controlVars={variables.control} filasConError={filasConError} />;
+  return <TablaEventosDeltaT eventos={eventos} onChange={onChange} controlVars={variables.control} />;
 }

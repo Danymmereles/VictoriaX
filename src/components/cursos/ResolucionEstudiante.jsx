@@ -7,7 +7,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { METODOLOGIAS } from "@/lib/analisisPrevio";
+import { METODOLOGIAS, deltaTDe } from "@/lib/analisisPrevio";
 
 function metodoLabel(m) {
   if (m === METODOLOGIAS.EVENTO_A_EVENTO) return "Evento a Evento";
@@ -57,11 +57,29 @@ function VariablesResumen({ variables }) {
   );
 }
 
+function ColumnaEventos({ titulo, items }) {
+  return (
+    <div>
+      <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">{titulo}</p>
+      {items.length === 0 ? (
+        <p className="mt-1 text-sm text-muted-foreground/70">Sin eventos</p>
+      ) : (
+        <ul className="mt-2 space-y-1 text-sm">
+          {items.map((n, i) => (
+            <li key={`${n}-${i}`} className="font-mono">{n}</li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 function EventosResumen({ analisis }) {
   const filas = analisis.eventos?.filas || [];
-  if (filas.length === 0)
+  const esEaE = analisis.metodologia === METODOLOGIAS.EVENTO_A_EVENTO;
+  if (esEaE && filas.length === 0)
     return <p className="text-sm text-muted-foreground/70">Sin eventos cargados.</p>;
-  if (analisis.metodologia === METODOLOGIAS.EVENTO_A_EVENTO) {
+  if (esEaE) {
     return (
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
@@ -90,29 +108,25 @@ function EventosResumen({ analisis }) {
       </div>
     );
   }
+  const { propios, anteriores, posteriores } = deltaTDe(analisis.eventos);
+  if (propios.length === 0 && anteriores.length === 0 && posteriores.length === 0)
+    return <p className="text-sm text-muted-foreground/70">Sin eventos cargados.</p>;
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="text-left text-xs uppercase tracking-wider text-muted-foreground">
-            <th className="py-2 pr-4">Propios</th>
-            <th className="py-2 pr-4">Anteriores</th>
-            <th className="py-2">Posteriores</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filas.map((f) => (
-            <tr key={f.id} className="border-t border-border">
-              <td className="py-2 pr-4 font-mono">
-                {f.propios?.nombre || "—"}
-                {f.propios?.esVector ? ` ${dimTexto(f.propios.dimension)}` : ""}
-              </td>
-              <td className="py-2 pr-4">{(f.anteriores || []).join(", ") || "—"}</td>
-              <td className="py-2">{(f.posteriores || []).join(", ") || "—"}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div className="grid gap-4 sm:grid-cols-3">
+      <ColumnaEventos
+        titulo="Eventos propios"
+        items={propios
+          .filter((p) => p.nombre.trim())
+          .map((p) => `${p.nombre}${p.esVector ? ` ${dimTexto(p.dimension)}` : ""}`)}
+      />
+      <ColumnaEventos
+        titulo="Comprometidos anteriores"
+        items={anteriores.map((x) => x.nombre).filter((n) => n && n.trim())}
+      />
+      <ColumnaEventos
+        titulo="Comprometidos posteriores"
+        items={posteriores.map((x) => x.nombre).filter((n) => n && n.trim())}
+      />
     </div>
   );
 }

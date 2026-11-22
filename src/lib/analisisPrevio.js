@@ -23,13 +23,14 @@ export function nuevoEventoEaE() {
     condicion: "",
   };
 }
-export function nuevoEventoDeltaT() {
-  return {
-    id: uid(),
-    propios: { nombre: "", esVector: false, dimension: null },
-    anteriores: [],
-    posteriores: [],
-  };
+export function nuevoEventoPropio() {
+  return { id: uid(), nombre: "", esVector: false, dimension: null };
+}
+export function nuevoComprometido() {
+  return { id: uid(), nombre: "" };
+}
+export function eventosVacio() {
+  return { filas: [], propios: [], anteriores: [], posteriores: [] };
 }
 export function nuevoEventoFuturo() {
   return { id: uid(), sigla: "", eventoRef: "" };
@@ -39,7 +40,7 @@ export function analisisVacio() {
   return {
     metodologia: null,
     variables: { datos: [], control: [], estado: [], resultado: [] },
-    eventos: { filas: [] },
+    eventos: eventosVacio(),
     eventosFuturos: [],
   };
 }
@@ -52,15 +53,42 @@ export function dimensionValida(dim) {
   return false;
 }
 
+// Δt constante: tres listas (eventos propios y comprometidos anteriores /
+// posteriores). Los análisis guardados con una fila por evento propio se leen
+// como listas para no perder lo ya cargado.
+export function deltaTDe(eventos) {
+  const ev = eventos || {};
+  const filas = ev.filas || [];
+  if (filas.length > 0) {
+    return {
+      propios: filas.map((f) => ({
+        id: f.id,
+        nombre: f.propios?.nombre || "",
+        esVector: Boolean(f.propios?.esVector),
+        dimension: f.propios?.dimension ?? null,
+      })),
+      anteriores: filas.flatMap((f) => (f.anteriores || []).map((nombre, i) => ({ id: `${f.id}-a${i}`, nombre }))),
+      posteriores: filas.flatMap((f) => (f.posteriores || []).map((nombre, i) => ({ id: `${f.id}-p${i}`, nombre }))),
+    };
+  }
+  return {
+    propios: ev.propios || [],
+    anteriores: ev.anteriores || [],
+    posteriores: ev.posteriores || [],
+  };
+}
+
 export function eventosDeclarados(a) {
   if (!a.metodologia) return [];
   if (a.metodologia === METODOLOGIAS.EVENTO_A_EVENTO) {
     return a.eventos.filas.map((f) => f.evento?.nombre).filter((n) => n && n.trim());
   }
-  const propios = a.eventos.filas.map((f) => f.propios?.nombre).filter(Boolean);
-  const ant = a.eventos.filas.flatMap((f) => f.anteriores || []);
-  const post = a.eventos.filas.flatMap((f) => f.posteriores || []);
-  return [...propios, ...ant, ...post].filter((n) => n && n.trim());
+  const { propios, anteriores, posteriores } = deltaTDe(a.eventos);
+  return [
+    ...propios.map((p) => p.nombre),
+    ...anteriores.map((x) => x.nombre),
+    ...posteriores.map((x) => x.nombre),
+  ].filter((n) => n && n.trim());
 }
 
 export function validarAnalisis(a) {
@@ -146,14 +174,18 @@ export function validarAnalisis(a) {
       if (!usada) advertencias.push(`La variable de estado "${s}" no aparece en ninguna condición.`);
     });
   } else if (a.metodologia === METODOLOGIAS.DELTA_T_CONSTANTE) {
-    const totalAnt = a.eventos.filas.reduce((n, f) => n + (f.anteriores || []).filter((x) => x.trim()).length, 0);
-    const totalPost = a.eventos.filas.reduce((n, f) => n + (f.posteriores || []).filter((x) => x.trim()).length, 0);
+    const { propios, anteriores, posteriores } = deltaTDe(a.eventos);
+    if (!propios.some((p) => p.nombre?.trim())) {
+      error("eventos", "Debe haber al menos un evento propio en la Tabla de Eventos.");
+    }
+    const totalAnt = anteriores.filter((x) => x.nombre?.trim()).length;
+    const totalPost = posteriores.filter((x) => x.nombre?.trim()).length;
     if (totalAnt !== totalPost) {
       error("eventos", `La cantidad de eventos comprometidos anteriores (${totalAnt}) y posteriores (${totalPost}) debe ser igual.`);
     }
-    a.eventos.filas.forEach((f, i) => {
-      if (f.propios?.esVector && !dimensionValida(f.propios.dimension)) {
-        error(claveFila(f, i), `El evento propio "${f.propios.nombre || "(sin nombre)"}" es vector sin dimensión.`);
+    propios.forEach((p) => {
+      if (p.esVector && !dimensionValida(p.dimension)) {
+        error("eventos", `El evento propio "${p.nombre || "(sin nombre)"}" es vector sin dimensión.`);
       }
     });
   }

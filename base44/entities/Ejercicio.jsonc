@@ -13,6 +13,30 @@
     "consigna_html": {
       "type": "string",
       "description": "Consigna del ejercicio en HTML (puede incluir tablas e im\u00e1genes)"
+    },
+    "apoyo": {
+      "type": "object",
+      "description": "Bloque de apoyo pedag\u00f3gico propio del ejercicio: secuencia del proceso, variables clave y sugerencia metodol\u00f3gica",
+      "properties": {
+        "secuencia": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Pasos ordenados del proceso que describe el enunciado"
+        },
+        "variables": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Variables y datos clave a modelar en este ejercicio"
+        },
+        "sugerencia": {
+          "type": "string",
+          "description": "Recomendaci\u00f3n metodol\u00f3gica breve para encarar el ejercicio"
+        }
+      }
     }
   },
   "required": [

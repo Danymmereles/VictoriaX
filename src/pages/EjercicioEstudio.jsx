@@ -10,6 +10,7 @@ import Footer from "@/components/home/Footer";
 import AnalisisPrevioPanel from "@/components/analisis/AnalisisPrevioPanel";
 import ResolucionEjemplo from "@/components/estudio/ResolucionEjemplo";
 import EstadisticasPlaceholder from "@/components/estudio/EstadisticasPlaceholder";
+import NavegacionEjercicio from "@/components/estudio/NavegacionEjercicio";
 
 export default function EjercicioEstudio() {
   const { id } = useParams();
@@ -21,6 +22,7 @@ export default function EjercicioEstudio() {
   const [validacion, setValidacion] = useState({ errores: [], esValido: false });
   const [mostrarResolucion, setMostrarResolucion] = useState(false);
   const [mostrarEstadisticas, setMostrarEstadisticas] = useState(false);
+  const [guia, setGuia] = useState([]);
 
   useEffect(() => {
     if (!usuario) navigate("/login");
@@ -28,6 +30,17 @@ export default function EjercicioEstudio() {
 
   useEffect(() => {
     if (!usuario) return;
+    base44.entities.Ejercicio.list("-numero", 50).then((res) => {
+      setGuia(Array.isArray(res) ? res : res.items);
+    });
+  }, [usuario]);
+
+  useEffect(() => {
+    if (!usuario) return;
+    setEjercicio(null);
+    setEntrega(null);
+    setMostrarResolucion(false);
+    setMostrarEstadisticas(false);
     (async () => {
       const ej = await base44.entities.Ejercicio.get(id);
       setEjercicio(ej);
@@ -72,6 +85,11 @@ export default function EjercicioEstudio() {
   const bloqueado = entrega.resolucion_vista && usuario.rol === ROLES.ESTUDIANTE;
   const puedeEntregar = validacion.esValido && !bloqueado;
 
+  const ordenados = [...guia].sort((a, b) => a.numero - b.numero);
+  const indice = ordenados.findIndex((e) => e.id === id);
+  const anterior = indice > 0 ? ordenados[indice - 1] : null;
+  const siguiente = indice >= 0 && indice < ordenados.length - 1 ? ordenados[indice + 1] : null;
+
   async function entregar() {
     const actualizada = await base44.entities.Entrega.update(entrega.id, {
       analisis_previo: analisis,
@@ -101,7 +119,7 @@ export default function EjercicioEstudio() {
         <h1 className="mt-3 font-heading text-4xl font-semibold tracking-tight">{ejercicio.titulo}</h1>
 
         <article
-          className="prose prose-sm sm:prose-base dark:prose-invert mt-8 max-w-none rounded-2xl border border-border bg-card/40 p-6"
+          className="mt-8 max-w-none rounded-2xl border border-border bg-card/40 p-6 text-[15px] leading-relaxed text-foreground/90 [&_p]:mt-4 [&_p]:first:mt-0 [&_strong]:font-semibold [&_strong]:text-foreground [&_ul]:mt-4 [&_ul]:list-disc [&_ul]:pl-5 [&_li]:mt-2 [&_li]:pl-1 [&_li]:marker:text-primary [&_ul_ul]:mt-2 [&_ul_ul]:pl-5 [&_ul_ul_li]:mt-1 [&_ul_ul_li]:text-[14px] [&_table]:mt-4 [&_table]:w-full [&_table]:border-collapse [&_table]:text-sm [&_th]:border [&_th]:border-border [&_th]:bg-muted/60 [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-semibold [&_td]:border [&_td]:border-border [&_td]:px-3 [&_td]:py-2 [&_img]:mt-4 [&_img]:w-full [&_img]:rounded-xl [&_img]:border [&_img]:border-border/60"
           dangerouslySetInnerHTML={{ __html: ejercicio.consigna_html }}
         />
 
@@ -155,6 +173,8 @@ export default function EjercicioEstudio() {
 
         {mostrarResolucion && <ResolucionEjemplo />}
         {mostrarEstadisticas && <EstadisticasPlaceholder />}
+
+        {guia.length > 0 && <NavegacionEjercicio anterior={anterior} siguiente={siguiente} />}
       </main>
       <Footer />
     </div>

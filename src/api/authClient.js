@@ -1,4 +1,5 @@
 import { localAuth } from "@/api/localAuth";
+import { institucionDesdeEmail } from "@/lib/instituciones";
 import { getSupabaseClient, isSupabaseConfigured } from "@/utils/supabase";
 import {
   clearSessionExpiry,
@@ -30,6 +31,7 @@ function toAppUser(user) {
     email: user.email ?? "",
     nombre_completo: typeof fullName === "string" ? fullName : "",
     rol: SUPABASE_ROLES.has(role) ? role : "ALUMNO",
+    institucion: institucionDesdeEmail(user.email),
   };
 }
 

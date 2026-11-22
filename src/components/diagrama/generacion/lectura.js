@@ -154,16 +154,28 @@ export function eventosEaE(analisis, avisos) {
  *   posteriores: [nombre] (ocurren ahora y comprometen uno futuro)
  */
 export function eventosDeltaT(analisis) {
-    const filas = analisis.eventos?.filas || [];
+    const eventos = analisis.eventos || {};
+    const filas = eventos.filas || [];
+    const porFilas = filas.length > 0;
 
     return {
-        propios: filas
-            .map((f) => ({
-                nombre: limpiar(f.propios?.nombre),
-                esVector: Boolean(f.propios?.esVector),
-            }))
+        propios: (porFilas
+            ? filas.map((f) => ({ nombre: f.propios?.nombre, esVector: Boolean(f.propios?.esVector) }))
+            : (eventos.propios || []).map((p) => ({ nombre: p.nombre, esVector: Boolean(p.esVector) }))
+        )
+            .map((p) => ({ ...p, nombre: limpiar(p.nombre) }))
             .filter((p) => p.nombre),
-        anteriores: filas.flatMap((f) => f.anteriores || []).map(limpiar).filter(Boolean),
-        posteriores: filas.flatMap((f) => f.posteriores || []).map(limpiar).filter(Boolean),
+        anteriores: (porFilas
+            ? filas.flatMap((f) => f.anteriores || [])
+            : (eventos.anteriores || []).map((x) => x.nombre)
+        )
+            .map(limpiar)
+            .filter(Boolean),
+        posteriores: (porFilas
+            ? filas.flatMap((f) => f.posteriores || [])
+            : (eventos.posteriores || []).map((x) => x.nombre)
+        )
+            .map(limpiar)
+            .filter(Boolean),
     };
 }

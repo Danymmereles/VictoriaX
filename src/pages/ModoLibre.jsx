@@ -1,7 +1,15 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AlertTriangle, ArrowRight, RotateCcw } from "lucide-react";
-import { analisisVacio, validarAnalisis, camposConError, erroresPorCampo, claveEventoFuturo, METODOLOGIAS } from "@/lib/analisisPrevio";
+import {
+  analisisVacio,
+  validarAnalisis,
+  camposConError,
+  erroresPorCampo,
+  claveEventoFuturo,
+  eventosVacio,
+  METODOLOGIAS
+} from "@/lib/analisisPrevio";
 import { cargarAnalisis, guardarAnalisis, limpiarAnalisis } from "@/lib/analisisPrevioStorage";
 import NavBar from "@/components/home/NavBar";
 import Footer from "@/components/home/Footer";
@@ -33,12 +41,13 @@ export default function ModoLibre() {
     Object.fromEntries(lista.map((x, i) => [x.id, porCampo.get(clave(x, i))]).filter(([, e]) => e));
   const erroresVariables = (lista) => erroresDe(lista, (v) => `variable:${v.id}`);
   const erroresFuturos = erroresDe(analisis.eventosFuturos || [], claveEventoFuturo);
-  const filasConError = analisis.eventos.filas.filter((f) => campos.has(`evento:${f.id}`)).map((f) => f.id);
+  const filasConError = (analisis.eventos.filas || []).filter((f) => campos.has(`evento:${f.id}`)).map((f) => f.id);
   const variablesConError = [...campos].some((c) => c.startsWith("variables.") || c.startsWith("variable:"));
 
   function setMetodologia(m) {
-    setAnalisis((a) => ({ ...a, metodologia: m, eventos: { filas: [] } }));
+    setAnalisis((a) => ({...a, metodologia: m, eventos: eventosVacio() }));
   }
+  
   function setVariables(patch) {
     setAnalisis((a) => ({ ...a, variables: { ...a.variables, ...patch } }));
   }
@@ -248,4 +257,4 @@ function Validacion({ validacion }) {
       )}
     </div>
   );
-}
+}

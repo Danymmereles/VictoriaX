@@ -37,6 +37,7 @@ export function SesionUsuarioProvider({ children }) {
             setPerfilActualizado({
               nombre_completo: actualizado.nombre_completo,
               nombre_usuario: actualizado.nombre_usuario,
+              ...(actualizado.institucion ? { institucion: actualizado.institucion } : {}),
             });
           }
         },

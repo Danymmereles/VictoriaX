@@ -19,7 +19,7 @@ export default function Hero() {
           className="lg:col-span-6"
         >
           <span className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-1.5 text-xs tracking-[0.2em] uppercase text-muted-foreground">
-            <Sparkles className="w-3.5 h-3.5 text-[#EA84B4]" /> Simulación evento a evento
+            <Sparkles className="w-3.5 h-3.5 text-[#EA84B4]" /> Simulación evento a evento y ΔT Constante
           </span>
           <h1 className="mt-8 font-heading text-4xl font-semibold leading-[1.08] tracking-tight sm:text-5xl xl:text-6xl">
             Dejá de imaginar
@@ -32,7 +32,7 @@ export default function Hero() {
           </h1>
           <p className="mt-8 max-w-xl text-lg leading-relaxed text-muted-foreground">
             VictoriaX es la plataforma web para aprender, modelar y ejecutar simulaciones de
-            evento a evento y tiempo comprometido. Del análisis previo al diagrama, y del
+            evento a evento y delta t constante. Del análisis previo al diagrama, y del
             diagrama a los gráficos de resultados.
           </p>
           <div className="mt-10 flex flex-wrap gap-4">

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo } from "react";
 import { AlertTriangle } from "lucide-react";
-import { camposConError, validarAnalisis } from "@/lib/analisisPrevio";
+import { camposConError, eventosVacio, validarAnalisis } from "@/lib/analisisPrevio";
 import MetodologiaSelector from "./MetodologiaSelector";
 import VariableList from "./VariableList";
 import VariableControlImplicita from "./VariableControlImplicita";
@@ -12,7 +12,7 @@ import EventosFuturos from "./EventosFuturos";
 // checkbox de "implícita" en vez del popup de confirmación al pasar a diagramar.
 export default function AnalisisPrevioPanel({ analisis, setAnalisis, onValidacionChange }) {
   function setMetodologia(m) {
-    setAnalisis((a) => ({ ...a, metodologia: m, eventos: { filas: [] } }));
+    setAnalisis((a) => ({ ...a, metodologia: m, eventos: eventosVacio() }));
   }
   function setVariables(patch) {
     setAnalisis((a) => ({ ...a, variables: { ...a.variables, ...patch } }));
@@ -32,7 +32,7 @@ export default function AnalisisPrevioPanel({ analisis, setAnalisis, onValidacio
   const controlOk = Boolean(analisis.controlImplicita) || analisis.variables.control.length > 0;
 
   const idsConError = (lista) => lista.filter((v) => campos.has(`variable:${v.id}`)).map((v) => v.id);
-  const filasConError = analisis.eventos.filas.filter((f) => campos.has(`evento:${f.id}`)).map((f) => f.id);
+  const filasConError = (analisis.eventos.filas || []).filter((f) => campos.has(`evento:${f.id}`)).map((f) => f.id);
   const variablesConError = [...campos].some((c) => c.startsWith("variables.") || c.startsWith("variable:"));
 
   useEffect(() => {

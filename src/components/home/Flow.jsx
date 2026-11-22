@@ -5,7 +5,7 @@ import { BarChart3, GitBranch, Play, Table2 } from "lucide-react";
 const steps = [
   { icon: Table2, title: "Análisis previo", desc: "Definís variables, eventos y reglas en la tabla de análisis.", color: "#73C3EE" },
   { icon: GitBranch, title: "Diagrama", desc: "La tabla se traduce en un diagrama de flujo editable.", color: "#AF9BEF" },
-  { icon: Play, title: "Ejecución", desc: "Corrés la simulación evento a evento y tiempo comprometido.", color: "#EA84B4" },
+  { icon: Play, title: "Ejecución", desc: "Corrés la simulación evento a evento y delta t constante.", color: "#EA84B4" },
   { icon: BarChart3, title: "Resultados", desc: "Obtenés gráficos y métricas según lo que necesites analizar.", color: "#73C3EE" },
 ];
 

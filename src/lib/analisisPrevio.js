@@ -183,11 +183,6 @@ export function validarAnalisis(a) {
     if (totalAnt !== totalPost) {
       error("eventos", `La cantidad de eventos comprometidos anteriores (${totalAnt}) y posteriores (${totalPost}) debe ser igual.`);
     }
-    propios.forEach((p) => {
-      if (p.esVector && !dimensionValida(p.dimension)) {
-        error("eventos", `El evento propio "${p.nombre || "(sin nombre)"}" es vector sin dimensión.`);
-      }
-    });
   }
 
   return { errores, detalles, advertencias, esValido: errores.length === 0 };

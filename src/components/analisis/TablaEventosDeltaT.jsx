@@ -1,20 +1,19 @@
-import React, { useState } from "react";
-import { Plus, Trash2, Settings } from "lucide-react";
-import { deltaTDe, dimensionValida, nuevoEventoPropio } from "@/lib/analisisPrevio";
-import VectorConfigDialog from "./VectorConfigDialog";
-import ErrorBadge from "./ErrorBadge";
+import React from "react";
+import { Plus, Trash2 } from "lucide-react";
+import { deltaTDe, nuevoEventoPropio } from "@/lib/analisisPrevio";
 import ListaComprometidos from "./ListaComprometidos";
 
-export default function TablaEventosDeltaT({ eventos, onChange, controlVars }) {
+// Δt constante: tres listas (eventos propios y comprometidos anteriores /
+// posteriores). En esta metodología los eventos no pueden ser vectores.
+export default function TablaEventosDeltaT({ eventos, onChange }) {
   const { propios, anteriores, posteriores } = deltaTDe(eventos);
-  const [vectorPara, setVectorPara] = useState(null);
 
   function emitir(patch) {
     // Δt constante usa las tres listas: filas queda vacío.
     onChange({ ...eventos, filas: [], propios, anteriores, posteriores, ...patch });
   }
-  function actualizarPropio(i, patch) {
-    emitir({ propios: propios.map((p, k) => (k === i ? { ...p, ...patch } : p)) });
+  function actualizarPropio(i, nombre) {
+    emitir({ propios: propios.map((p, k) => (k === i ? { ...p, nombre } : p)) });
   }
 
   return (
@@ -29,43 +28,20 @@ export default function TablaEventosDeltaT({ eventos, onChange, controlVars }) {
           <div className="mt-3 space-y-2">
             {propios.length === 0 && <p className="text-xs text-muted-foreground">Sin eventos.</p>}
             {propios.map((p, i) => (
-              <div key={p.id} className="rounded-lg border border-border/70 p-2">
-                <div className="flex items-center gap-2">
-                  <input
-                    value={p.nombre}
-                    onChange={(e) => actualizarPropio(i, { nombre: e.target.value })}
-                    placeholder="Nombre"
-                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
-                  />
-                  <button
-                    onClick={() => emitir({ propios: propios.filter((_, k) => k !== i) })}
-                    aria-label={`Quitar ${p.nombre || "evento propio"}`}
-                    className="grid place-items-center rounded-lg border border-border px-2 py-2 hover:bg-destructive/10 hover:text-destructive"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-                <div className="mt-2 flex flex-wrap items-center gap-3">
-                  <label className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <input
-                      type="checkbox"
-                      checked={p.esVector}
-                      onChange={() =>
-                        p.esVector ? actualizarPropio(i, { esVector: false, dimension: null }) : setVectorPara(i)
-                      }
-                    />{" "}
-                    Vector
-                  </label>
-                  {p.esVector && (
-                    <button
-                      onClick={() => setVectorPara(i)}
-                      className="inline-flex items-center gap-1 text-xs text-[#AF9BEF] hover:underline"
-                    >
-                      <Settings className="w-3 h-3" /> {p.dimension ? "Editar" : "Configurar"}
-                    </button>
-                  )}
-                  {p.esVector && !dimensionValida(p.dimension) && <ErrorBadge />}
-                </div>
+              <div key={p.id} className="flex items-center gap-2">
+                <input
+                  value={p.nombre}
+                  onChange={(e) => actualizarPropio(i, e.target.value)}
+                  placeholder="Nombre"
+                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
+                />
+                <button
+                  onClick={() => emitir({ propios: propios.filter((_, k) => k !== i) })}
+                  aria-label={`Quitar ${p.nombre || "evento propio"}`}
+                  className="grid place-items-center rounded-lg border border-border px-2 py-2 hover:bg-destructive/10 hover:text-destructive"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
               </div>
             ))}
             <button
@@ -88,17 +64,6 @@ export default function TablaEventosDeltaT({ eventos, onChange, controlVars }) {
           onChange={(lista) => emitir({ posteriores: lista })}
         />
       </div>
-
-      <VectorConfigDialog
-        open={vectorPara !== null}
-        dimension={vectorPara !== null ? propios[vectorPara]?.dimension : null}
-        controlVars={controlVars}
-        onClose={() => setVectorPara(null)}
-        onConfirm={(dim) => {
-          actualizarPropio(vectorPara, { esVector: true, dimension: dim });
-          setVectorPara(null);
-        }}
-      />
     </div>
   );
 }

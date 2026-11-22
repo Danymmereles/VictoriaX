@@ -11,7 +11,7 @@ export default function Footer() {
         <div className="max-w-sm">
           <Wordmark withTagline />
           <p className="mt-6 text-sm leading-relaxed text-muted-foreground">
-            Plataforma de aprendizaje de simulación evento a evento y tiempo comprometido.
+            Plataforma de aprendizaje de simulación evento a evento y delta t constante.
             Heredera de Victoria (2017).
           </p>
         </div>

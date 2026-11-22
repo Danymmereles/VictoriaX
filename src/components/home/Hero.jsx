@@ -32,7 +32,7 @@ export default function Hero() {
           </h1>
           <p className="mt-8 max-w-xl text-lg leading-relaxed text-muted-foreground">
             VictoriaX es la plataforma web para aprender, modelar y ejecutar simulaciones de
-            evento a evento y tiempo comprometido. Del análisis previo al diagrama, y del
+            evento a evento y delta t constante. Del análisis previo al diagrama, y del
             diagrama a los gráficos de resultados.
           </p>
           <div className="mt-10 flex flex-wrap gap-4">

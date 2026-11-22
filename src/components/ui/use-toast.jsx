@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 
 const TOAST_LIMIT = 20;
 const TOAST_REMOVE_DELAY = 0;
-const AUTO_DISMISS_DELAY = 10000;
+const AUTO_DISMISS_DELAY = 5000;
 
 const actionTypes = {
   ADD_TOAST: "ADD_TOAST",

@@ -45,12 +45,17 @@ import {
     tieneContenido,
     validarNombreNodo,
 } from "../components/diagrama/pages.js";
+import { problemasDeSintaxis } from "../components/diagrama/validacion.js";
 import { PageProvider } from "../components/diagrama/PageContext.jsx";
 import {
     funcionesDeDatos,
     sincronizarConAnalisis,
 } from "../components/diagrama/variables.js";
 import CustomNode from "../components/diagrama/CustomNode.jsx";
+// Flechas editables (quiebres, tramos y curvas, como en Lucidchart)
+import { edgeTypes } from "../components/diagrama/edges/index.js";
+// Exportar a PNG, JPG o JSON
+import { useExportar } from "../components/diagrama/exportar/useExportar.js";
 import {
     DnDProvider,
     useDnD,
@@ -79,8 +84,8 @@ const ANCHOR_TOP = 70;
 // Igual con el Contexto al abrir el diagrama. Ancho mínimo: 180px.
 const CONTEXT_WIDTH = 180;
 
-// Tipo de conector al entrar (también el de los generados)
-const INITIAL_EDGE_TYPE = "default";
+// Tipo de conector al entrar (también el de los generados): Angular
+const INITIAL_EDGE_TYPE = "smoothstep";
 
 /*
  * Viewport que deja el inicio de la página (Contexto o ancla)
@@ -261,10 +266,15 @@ function Flow({ active = true, onRun }) {
 
 
     // Contexto para los nodos: errores a marcar y validación
-    // de nombres (una variable no puede llamarse a sí misma)
+    // de nombres (una variable no puede llamarse a sí misma).
+    // Primero la BNF (sintaxis y uso de variables); los pendientes y
+    // las llamadas explican mejor qué hacer, así que tienen prioridad.
     const nodeIssues = useMemo(
-        () => problemasDeNodos({ nodes, pagina: currentPage, paginas: pages }),
-        [nodes, currentPage, pages]
+        () => ({
+            ...problemasDeSintaxis({ nodes, pagina: currentPage, paginas: pages, variables }),
+            ...problemasDeNodos({ nodes, pagina: currentPage, paginas: pages }),
+        }),
+        [nodes, currentPage, pages, variables]
     );
 
     const validateLabel = useCallback(
@@ -281,6 +291,16 @@ function Flow({ active = true, onRun }) {
 
     // Lienzo: para ubicar el nodo ancla al abrir una variable
     const canvasRef = useRef(null);
+
+    // Botón Exportar: imagen de la página actual o JSON de todo
+    const exportar = useExportar({
+        canvasRef,
+        pages,
+        activePage,
+        pagesStoreRef,
+        variables,
+        edgeType,
+    });
 
 
     // Al abrir el diagrama, el Contexto (inicio de Main) queda
@@ -514,6 +534,7 @@ function Flow({ active = true, onRun }) {
                     edgeType={edgeType}
                     onEdgeTypeChange={changeEdgeType}
                     onRun={onRun}
+                    onExport={exportar}
                     hasDiagram={hasDiagram}
                 />
 
@@ -543,6 +564,7 @@ function Flow({ active = true, onRun }) {
                                 onDrop={onDrop}
 
                                 nodeTypes={nodeTypes}
+                                edgeTypes={edgeTypes}
                                 defaultEdgeOptions={defaultEdgeOptions}
 
                                 deleteKeyCode={active ? "Delete" : null}
@@ -685,4 +707,4 @@ export default function Diagrama() {
 
         </main>
     );
-}
+}

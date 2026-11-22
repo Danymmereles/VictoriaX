@@ -4,6 +4,7 @@ import EdgeTypeSelector from "./EdgeTypeSelector";
 import HistoryControls from "./HistoryControls";
 import { SIDEBAR_ITEMS } from "./sidebarItems";
 import BackToAnalysisLink from "./BackToAnalysisLink";
+import ExportMenu from "./exportar/ExportMenu";
 import "./Sidebar.css";
 
 // Tamaño (px) de cada figura en la barra lateral
@@ -55,7 +56,7 @@ function SidebarItem({ item }) {
     );
 }
 
-export default function Sidebar({ edgeType, onEdgeTypeChange, onRun, hasDiagram }) {
+export default function Sidebar({ edgeType, onEdgeTypeChange, onRun, onExport, hasDiagram }) {
     return (
         <aside className="sidebar">
             <BackToAnalysisLink hasDiagram={hasDiagram} />
@@ -73,8 +74,10 @@ export default function Sidebar({ edgeType, onEdgeTypeChange, onRun, hasDiagram 
                 ))}
             </div>
 
-            {/* Ejecutar: abre la vista de ejecución */}
+            {/* Exportar (PNG, JPG, JSON) y Ejecutar (abre la vista de ejecución) */}
             <div className="sidebar-footer">
+                {onExport && <ExportMenu onExport={onExport} />}
+
                 <button
                     type="button"
                     className="run-button"
@@ -89,4 +92,4 @@ export default function Sidebar({ edgeType, onEdgeTypeChange, onRun, hasDiagram 
             </div>
         </aside>
     );
-}
+}

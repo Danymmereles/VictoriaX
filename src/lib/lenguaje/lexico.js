@@ -1,5 +1,5 @@
 // ===========================================================================
-// Léxico del lenguaje del diagrama (BNF v0.14, sección 1). Lógica pura.
+// Léxico del lenguaje del diagrama (BNF v0.15, sección 1). Lógica pura.
 //
 // Convierte el texto de un nodo en tokens:
 //   { tipo, valor, linea }

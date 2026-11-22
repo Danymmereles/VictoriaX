@@ -16,11 +16,16 @@
     --dg-blue-fill: #dcecff;
     --dg-orange-fill: #ffe6bd;
     --dg-green-fill: #dcf5df;
+    /* Función Generada: Subrutina y Random (22/11) */
+    --dg-teal-fill: #cdf1ec;
+    --dg-pink-fill: #ffdcea;
 
     --dg-purple-stroke: #444;
     --dg-blue-stroke: #444;
     --dg-orange-stroke: #444;
     --dg-green-stroke: #444;
+    --dg-teal-stroke: #444;
+    --dg-pink-stroke: #444;
 
     --dg-node-text: #1f1f1f;
     --dg-decision-label: #8a8a8a;
@@ -83,11 +88,15 @@
     --dg-blue-fill: #172a40;
     --dg-orange-fill: #3a2c17;
     --dg-green-fill: #173325;
+    --dg-teal-fill: #11322f;
+    --dg-pink-fill: #3a1b2b;
 
     --dg-purple-stroke: #c4b5fd;
     --dg-blue-stroke: #8ccdf2;
     --dg-orange-stroke: #f6cd8b;
     --dg-green-stroke: #97e0a5;
+    --dg-teal-stroke: #7fdccf;
+    --dg-pink-stroke: #f5a9c9;
 
     --dg-node-text: hsl(var(--foreground));
     --dg-decision-label: #8b93a7;
@@ -232,4 +241,14 @@
 .diagram-flow-area .react-flow__minimap-node.minimap-node--connector {
     fill: var(--dg-green-fill) !important;
     stroke: var(--dg-green-stroke) !important;
+}
+
+.diagram-flow-area .react-flow__minimap-node.minimap-node--subroutine {
+    fill: var(--dg-teal-fill) !important;
+    stroke: var(--dg-teal-stroke) !important;
+}
+
+.diagram-flow-area .react-flow__minimap-node.minimap-node--random {
+    fill: var(--dg-pink-fill) !important;
+    stroke: var(--dg-pink-stroke) !important;
 }

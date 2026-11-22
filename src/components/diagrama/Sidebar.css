@@ -213,6 +213,9 @@
 }
 
 .sidebar-items {
+    /* Referencia del menú de Función Generada (se abre encima) */
+    position: relative;
+
     margin-top: 4px;
 
     display: grid;

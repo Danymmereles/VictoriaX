@@ -51,6 +51,42 @@ function useNodeSize(ref) {
     return size;
 }
 
+// Ayuda de los tres tipos de Función Generada (22/11)
+const TOOLTIPS_FUNCION_GENERADA = {
+    preparation:
+        "fdp: llama a una variable de datos del Análisis Previo (p. ej. IA). Doble clic para cambiarla.",
+    subroutine:
+        "Subrutina: doble clic para escribir su nombre y parámetros, p. ej. calcular() o calcular(A, B). La primera vez crea su pestaña; con el mismo nombre, la llama.",
+    random:
+        "Random: toma un valor nuevo, entre 0 y 1, cada vez que pasa por acá. Doble clic para cambiar su nombre (R1, R2…).",
+};
+
+// Texto de ayuda (tooltip) de un nodo sin problemas
+function ayudaDelNodo({ anchorEditable, isAnchor, type, isContext, isConnector, isEnd, multiline }) {
+    if (anchorEditable) {
+        return "Inicio de la subrutina. Doble clic para cambiar sus parámetros (el nombre no cambia).";
+    }
+    if (isAnchor) {
+        return "Inicio de la variable de datos. Su nombre se cambia en el Análisis Previo.";
+    }
+    if (TOOLTIPS_FUNCION_GENERADA[type]) {
+        return TOOLTIPS_FUNCION_GENERADA[type];
+    }
+    if (isContext) {
+        return "Inicio del algoritmo. Doble clic para cambiar valores iniciales de la tabla (una asignación por línea, p. ej. T = 0; Ctrl+Enter guarda).";
+    }
+    if (isConnector) {
+        return "Doble clic para editar la etiqueta (un nombre, p. ej. C1). Los conectores con la misma etiqueta están vinculados.";
+    }
+    if (isEnd) {
+        return "Fin: el algoritmo de esta página termina acá.";
+    }
+    if (multiline) {
+        return "Doble clic para editar: una sentencia por línea (Ctrl+Enter guarda).";
+    }
+    return undefined;
+}
+
 // Tiempo que se muestra el aviso de un nombre rechazado
 const NOTICE_MS = 2800;
 
@@ -131,6 +167,10 @@ export default function CustomNode({ id, data, selected }) {
     // Es el inicio (solo salida) y su nombre viene del Análisis Previo.
     const isAnchor = Boolean(data.anchorOf);
 
+    // El ancla de una subrutina sí se edita: ahí se cambian sus
+    // parámetros (el nombre queda fijo, ver pages.js)
+    const anchorEditable = isAnchor && data.type === "subroutine";
+
     // Inicio del algoritmo de la página: no recibe conexiones
     const isStart = isAnchor || isContext;
 
@@ -159,7 +199,7 @@ export default function CustomNode({ id, data, selected }) {
     const startEditing = () => {
         // Ya editando (p. ej. doble clic dentro del campo para
         // seleccionar una palabra): no reiniciar el texto
-        if (isAnchor || isEnd || editingRef.current) {
+        if ((isAnchor && !anchorEditable) || isEnd || editingRef.current) {
             return;
         }
 
@@ -249,19 +289,15 @@ export default function CustomNode({ id, data, selected }) {
         return () => wrapper.removeEventListener("keydown", onKeyDown);
     });
 
-    const tooltip =
-        issue ||
-        (isAnchor
-            ? "Inicio de la variable de datos. Su nombre se cambia en el Análisis Previo."
-            : isContext
-                ? "Inicio del algoritmo. Doble clic para cambiar valores iniciales de la tabla (una asignación por línea, p. ej. T = 0; Ctrl+Enter guarda)."
-                : isConnector
-                    ? "Doble clic para editar la etiqueta (un nombre, p. ej. C1). Los conectores con la misma etiqueta están vinculados."
-                    : isEnd
-                        ? "Fin: el algoritmo de esta página termina acá."
-                        : multiline
-                            ? "Doble clic para editar: una sentencia por línea (Ctrl+Enter guarda)."
-                            : undefined);
+    const tooltip = issue || ayudaDelNodo({
+        anchorEditable,
+        isAnchor,
+        type: data.type,
+        isContext,
+        isConnector,
+        isEnd,
+        multiline,
+    });
 
     // Nodo sin texto: muestra su nombre atenuado como ayuda
     // (p. ej. "Asignación"), que desaparece al editar. Los nodos

@@ -8,16 +8,35 @@ import "./PageBar.css";
  * -----------------------------------------------------
  * Main + una página por cada variable de datos del
  * Análisis Previo (funciones de probabilidad), donde se
- * define su algoritmo. Ver pages.js.
+ * define su algoritmo, y una por cada subrutina (22/11).
+ * Ver pages.js.
+ *
+ * Una subrutina que ya ningún nodo llama queda "sin uso"
+ * (atenuada) con una × para borrar su pestaña: onDelete.
  * =====================================================
  */
 
-function FunctionIcon() {
+// Hexágono con el color de su tipo (fdp naranja, Subrutina celeste)
+function FunctionIcon({ tipo }) {
     return (
-        <svg viewBox="0 0 24 24" aria-hidden="true">
+        <svg viewBox="0 0 24 24" aria-hidden="true" className={`page-tab-icon--${tipo}`}>
             <polygon points="6,5 18,5 22,12 18,19 6,19 2,12" />
         </svg>
     );
+}
+
+function tituloDe(pagina) {
+    if (pagina.tipo === "main") {
+        return "Algoritmo principal";
+    }
+
+    if (pagina.tipo === "subrutina") {
+        return pagina.sinUso
+            ? `Subrutina ${pagina.firma}: ningún nodo la llama. Podés borrar la pestaña con la ×.`
+            : `Subrutina ${pagina.firma}`;
+    }
+
+    return `Variable de datos (función de probabilidad)${pagina.descripcion ? `: ${pagina.descripcion}` : ""}`;
 }
 
 function MainIcon() {
@@ -30,7 +49,7 @@ function MainIcon() {
     );
 }
 
-export default function PageBar({ pages, activePage, onSelect }) {
+export default function PageBar({ pages, activePage, onSelect, onDelete }) {
     return (
         <nav className="page-bar" aria-label="Páginas del algoritmo">
             <div className="page-bar-tabs" role="tablist">
@@ -38,49 +57,73 @@ export default function PageBar({ pages, activePage, onSelect }) {
                     const active = pagina.id === activePage;
                     const esMain = pagina.id === MAIN_PAGE_ID;
 
+                    const borrable = pagina.sinUso && Boolean(onDelete);
+
                     const title = [
-                        esMain
-                            ? "Algoritmo principal"
-                            : `Variable de datos (función de probabilidad)${pagina.descripcion ? `: ${pagina.descripcion}` : ""}`,
+                        tituloDe(pagina),
                         pagina.duplicada && mensajeDuplicada(pagina),
                     ]
                         .filter(Boolean)
                         .join("\n");
 
                     return (
-                        <button
+                        <div
                             key={pagina.id}
-                            type="button"
-                            role="tab"
-                            aria-selected={active}
-                            aria-invalid={pagina.duplicada || undefined}
-                            title={title}
                             className={[
-                                "page-tab",
-                                active && "is-active",
-                                pagina.duplicada && "is-duplicated",
+                                "page-tab-group",
+                                pagina.sinUso && "is-unused",
                             ]
                                 .filter(Boolean)
                                 .join(" ")}
-                            onClick={() => onSelect(pagina.id)}
                         >
-                            {esMain ? <MainIcon /> : <FunctionIcon />}
+                            <button
+                                type="button"
+                                role="tab"
+                                aria-selected={active}
+                                aria-invalid={pagina.duplicada || undefined}
+                                title={title}
+                                className={[
+                                    "page-tab",
+                                    active && "is-active",
+                                    pagina.duplicada && "is-duplicated",
+                                ]
+                                    .filter(Boolean)
+                                    .join(" ")}
+                                onClick={() => onSelect(pagina.id)}
+                            >
+                                {esMain ? <MainIcon /> : <FunctionIcon tipo={pagina.tipo} />}
 
-                            <span className="page-tab-name">{pagina.nombre}</span>
+                                <span className="page-tab-name">{pagina.firma ?? pagina.nombre}</span>
 
-                            {pagina.duplicada && (
-                                <span className="page-tab-warning" aria-hidden="true">
-                                    !
-                                </span>
+                                {pagina.duplicada && (
+                                    <span className="page-tab-warning" aria-hidden="true">
+                                        !
+                                    </span>
+                                )}
+                            </button>
+
+                            {borrable && (
+                                <button
+                                    type="button"
+                                    className="page-tab-delete"
+                                    onClick={() => onDelete(pagina.id)}
+                                    aria-label={`Borrar la pestaña ${pagina.firma}`}
+                                    title={`Borrar la pestaña ${pagina.firma} (sin uso)`}
+                                >
+                                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                                        <path d="M7 7 L17 17" />
+                                        <path d="M17 7 L7 17" />
+                                    </svg>
+                                </button>
                             )}
-                        </button>
+                        </div>
                     );
                 })}
             </div>
 
             {pages.length === 1 && (
                 <span className="page-bar-hint">
-                    Las variables de datos del Análisis Previo aparecen acá, cada una con su página
+                    Las variables de datos del Análisis Previo y las subrutinas aparecen acá, cada una con su página
                 </span>
             )}
         </nav>

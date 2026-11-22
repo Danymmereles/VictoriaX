@@ -9,7 +9,8 @@
 // {
 //   formato: "victoriax-diagrama", version: 1, exportado: "<fecha ISO>",
 //   edgeType: "smoothstep",
-//   paginas: [{ id, nombre, nodes: [...], edges: [...] }],
+//   paginas: [{ id, nombre, tipo, firma?, nodes: [...], edges: [...] }],
+//            tipo: "main" | "fdp" | "subrutina"; firma: calcular(A, B)
 //   variables: [{ nombre, valorInicial, ... }]
 // }
 // ===========================================================================
@@ -19,6 +20,8 @@ export const VERSION_JSON = 1;
 
 const CAMPOS_NODO = ["id", "type", "position", "origin", "deletable", "data"];
 const CAMPOS_FLECHA = ["id", "source", "sourceHandle", "target", "targetHandle", "type", "data"];
+// Los Random (origen "random") salen de sus nodos: se exportan para que la
+// tabla quede completa, pero al importar no hace falta crearlos
 const CAMPOS_VARIABLE = ["nombre", "valorInicial", "origen", "descripcion", "esVector", "dimension"];
 
 function elegir(objeto, campos) {
@@ -46,8 +49,7 @@ export function diagramaComoJson({ paginas, variables, edgeType, fecha = new Dat
         exportado: fecha.toISOString(),
         edgeType,
         paginas: paginas.map((pagina) => ({
-            id: pagina.id,
-            nombre: pagina.nombre,
+            ...elegir(pagina, ["id", "nombre", "tipo", "firma"]),
             nodes: pagina.nodes.map((nodo) => elegir(nodo, CAMPOS_NODO)),
             edges: pagina.edges.map((flecha) => elegir(flecha, CAMPOS_FLECHA)),
         })),

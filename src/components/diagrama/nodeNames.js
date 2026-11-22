@@ -10,7 +10,10 @@ export const NODE_NAMES = {
     output: "Salida",
     document: "Resultado",
     io: "Entrada / Salida",
-    preparation: "Función Generada",
+    // Función Generada: el hexágono tiene tres tipos (22/11)
+    preparation: "fdp",
+    subroutine: "Subrutina",
+    random: "Random",
     connector: "Conector",
     context: "Contexto",
     end: "Fin",
@@ -18,6 +21,9 @@ export const NODE_NAMES = {
 
 // Nodo Fin: su texto es fijo ("Fin") y no se edita
 export const END_NODE_TYPE = "end";
+
+// Nombre del grupo en la barra lateral (fdp, Subrutina y Random)
+export const FUNCION_GENERADA = "Función Generada";
 
 /*
  * Texto de ayuda de un nodo sin texto: se ve atenuado y desaparece al
@@ -27,6 +33,15 @@ export const END_NODE_TYPE = "end";
 export function placeholderDe(type) {
     if (type === "connector") {
         return "A";
+    }
+
+    // Ejemplos de cómo se escriben (ver BNF v0.15)
+    if (type === "subroutine") {
+        return "subrutina()";
+    }
+
+    if (type === "random") {
+        return "R1";
     }
 
     return NODE_NAMES[type] ?? "Nodo";

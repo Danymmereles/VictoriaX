@@ -217,3 +217,17 @@
     outline: 2px solid var(--dg-accent);
     outline-offset: 1px;
 }
+
+/* Random (R1, R2...): sin valor inicial, toma uno nuevo en cada paso */
+.variables-random {
+    display: flex;
+    align-items: center;
+    height: 32px;
+    padding: 0 9px;
+
+    font-size: 12px;
+    font-style: italic;
+    color: var(--dg-icon);
+    opacity: 0.85;
+    white-space: nowrap;
+}

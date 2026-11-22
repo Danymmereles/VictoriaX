@@ -9,10 +9,19 @@
 // - Cada página de variable arranca con su "nodo ancla": un nodo Función Generada
 //   fijo con el nombre de la variable, como inicio del algoritmo (no se borra
 //   ni se renombra).
-// - En cualquier página, un nodo Función Generada es una LLAMADA a una variable de
-//   datos ("dame un valor de IC"): su nombre debe ser una variable de datos y,
-//   dentro de la página de una variable, no puede ser ella misma.
+// - En cualquier página, un nodo Función Generada fdp es una LLAMADA a una
+//   variable de datos ("dame un valor de IC"): su nombre debe ser una variable
+//   de datos y, dentro de la página de una variable, no puede ser ella misma.
+// - Subrutinas (22/11): además, una página por cada subrutina que crea el
+//   usuario con una Función Generada tipo Subrutina (ver funcionGenerada.js).
+//   Su ancla muestra la firma, calcular(A, B), y ahí se cambian los parámetros.
+//
+// Cada página: { id, nombre, descripcion, tipo, duplicada }
+//   tipo: "main" | "fdp" | "subrutina". Las de subrutina suman firma,
+//   parametros y sinUso (ningún nodo la llama: se puede borrar).
 // ===========================================================================
+
+import { TIPO_SUBRUTINA, firmaDe, textoFirma } from "./funcionGenerada.js";
 
 export const MAIN_PAGE_ID = "main";
 export const MAIN_PAGE_NAME = "Main";
@@ -76,17 +85,28 @@ export const mismoNombre = (a, b) => clave(a) === clave(b);
 
 
 /*
- * Lista de páginas a partir de las variables de datos.
- *   funciones: [{ id, nombre, descripcion }] (ver variables.js)
- * Devuelve: [{ id, nombre, descripcion, duplicada }]
+ * Lista de páginas: Main, las variables de datos y las subrutinas.
+ *   funciones:  [{ id, nombre, descripcion }] (ver variables.js)
+ *   subrutinas: [{ id, nombre, parametros }] creadas por el usuario
+ *   enUso:      Set de nombres de subrutinas que algún nodo llama
  */
-export function derivarPaginas(funciones) {
+export function derivarPaginas(funciones, subrutinas = [], enUso = null) {
     const paginas = [
-        { id: MAIN_PAGE_ID, nombre: MAIN_PAGE_NAME, descripcion: "" },
+        { id: MAIN_PAGE_ID, nombre: MAIN_PAGE_NAME, descripcion: "", tipo: "main" },
         ...(funciones || []).map((f) => ({
             id: f.id,
             nombre: String(f.nombre ?? "").trim(),
             descripcion: f.descripcion || "",
+            tipo: "fdp",
+        })),
+        ...subrutinas.map((s) => ({
+            id: s.id,
+            nombre: s.nombre,
+            descripcion: "",
+            tipo: "subrutina",
+            firma: textoFirma(s),
+            parametros: s.parametros,
+            sinUso: Boolean(enUso) && !enUso.has(s.nombre),
         })),
     ];
 
@@ -123,23 +143,26 @@ export function crearNodoAncla(pagina, posicion = { x: 0, y: 0 }) {
         // React Flow no lo borra con Supr
         deletable: false,
         data: {
-            type: CALL_NODE_TYPE,
-            label: pagina.nombre,
+            type: pagina.tipo === "subrutina" ? TIPO_SUBRUTINA : CALL_NODE_TYPE,
+            label: pagina.firma ?? pagina.nombre,
             anchorOf: pagina.id,
         },
     };
 }
 
 
-// El ancla siempre muestra el nombre de su variable
+// El ancla siempre muestra el nombre de su variable (o la firma de su
+// subrutina)
 export function sincronizarAncla(nodes, pagina) {
     if (!pagina || pagina.id === MAIN_PAGE_ID) {
         return nodes;
     }
 
+    const label = pagina.firma ?? pagina.nombre;
+
     return nodes.map((node) =>
-        esAncla(node) && node.data.label !== pagina.nombre
-            ? { ...node, data: { ...node.data, label: pagina.nombre } }
+        esAncla(node) && node.data.label !== label
+            ? { ...node, data: { ...node.data, label } }
             : node
     );
 }
@@ -153,7 +176,7 @@ export function sincronizarAncla(nodes, pagina) {
 export function nombreLlamadaPorDefecto({ pagina, paginas, generico }) {
     const disponible = paginas.find(
         (p) =>
-            p.id !== MAIN_PAGE_ID &&
+            p.tipo === "fdp" &&
             p.id !== pagina?.id &&
             !p.duplicada &&
             p.nombre
@@ -169,12 +192,24 @@ export function nombreLlamadaPorDefecto({ pagina, paginas, generico }) {
  */
 export function validarNombreNodo({ data, nombre, pagina }) {
     if (
-        pagina &&
-        pagina.id !== MAIN_PAGE_ID &&
+        pagina?.tipo === "fdp" &&
         data?.type === CALL_NODE_TYPE &&
         mismoNombre(nombre, pagina.nombre)
     ) {
         return `La variable de datos "${pagina.nombre}" no puede llamarse a sí misma.`;
+    }
+
+    if (pagina?.tipo === "subrutina" && data?.type === TIPO_SUBRUTINA) {
+        const firma = firmaDe(nombre);
+
+        // Ancla: solo se cambian los parámetros
+        if (data.anchorOf) {
+            if (!firma || firma.nombre !== pagina.nombre) {
+                return `En el inicio solo se cambian los parámetros: ${pagina.nombre}(A, B).`;
+            }
+        } else if (firma?.nombre === pagina.nombre) {
+            return `La subrutina ${pagina.nombre} no puede llamarse a sí misma.`;
+        }
     }
 
     return null;
@@ -196,7 +231,7 @@ export function problemasDeNodos({ nodes, pagina, paginas }) {
         return problemas;
     }
 
-    const funciones = paginas.filter((p) => p.id !== MAIN_PAGE_ID);
+    const funciones = paginas.filter((p) => p.tipo === "fdp");
 
     nodes
         .filter((node) => esLlamada(node) && !esAncla(node))

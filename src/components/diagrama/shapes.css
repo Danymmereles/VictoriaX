@@ -38,6 +38,17 @@
     stroke: var(--dg-green-stroke);
 }
 
+/* Función Generada: fdp naranja (arriba), Subrutina celeste, Random rosa */
+.flow-shape--subroutine {
+    fill: var(--dg-teal-fill);
+    stroke: var(--dg-teal-stroke);
+}
+
+.flow-shape--random {
+    fill: var(--dg-pink-fill);
+    stroke: var(--dg-pink-stroke);
+}
+
 /* Líneas internas (barras del Contexto, anillo del Fin): solo trazo */
 .flow-shape__line {
     fill: none;

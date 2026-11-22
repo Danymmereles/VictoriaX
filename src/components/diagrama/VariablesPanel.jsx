@@ -28,19 +28,34 @@ import "./VariablesPanel.css";
  * fijo (no se renombran ni se borran acá): solo se
  * completa su valor inicial.
  *
+ * Los Random del diagrama (R1, R2..., `randoms`) se
+ * muestran al final: nombre fijo y sin valor inicial,
+ * porque toman un valor nuevo cada vez que pasa por su
+ * nodo. Aparecen y se van con sus nodos.
+ *
  * Es un componente controlado: recibe `variables` y
  * avisa cada cambio con `onChange(nuevasVariables)`.
  * =====================================================
  */
 
-export default function VariablesPanel({ variables, onChange, reservedNames = [] }) {
+export default function VariablesPanel({
+    variables,
+    onChange,
+    reservedNames = [],
+    subroutineNames = [],
+    randoms = [],
+}) {
     // Id reservado para la fila vacía. Al convertirse en
     // variable conserva el id, así React mantiene el foco.
     const [draftId, setDraftId] = useState(nuevoIdVariable);
 
     const errores = useMemo(
-        () => validarVariables(variables, { nombresReservados: reservedNames }),
-        [variables, reservedNames]
+        () =>
+            validarVariables(variables, {
+                nombresReservados: reservedNames,
+                subrutinas: subroutineNames,
+            }),
+        [variables, reservedNames, subroutineNames]
     );
 
     const updateVariable = (id, campo, valor) => {
@@ -66,10 +81,8 @@ export default function VariablesPanel({ variables, onChange, reservedNames = []
         onChange(variables.filter((v) => v.id !== id));
     };
 
-    const filas = [
-        ...variables,
-        { id: draftId, nombre: "", valorInicial: "", isDraft: true },
-    ];
+    const filas = variables;
+    const draft = { id: draftId, nombre: "", valorInicial: "", isDraft: true };
 
     return (
         <aside className="variables-panel" aria-label="Variables">
@@ -84,7 +97,11 @@ export default function VariablesPanel({ variables, onChange, reservedNames = []
                     </thead>
 
                     <tbody>
-                        {filas.map((variable) => {
+                        {[...filas, ...randoms, draft].map((variable) => {
+                            if (variable.esRandom) {
+                                return <RandomRow key={variable.id} variable={variable} />;
+                            }
+
                             const error = variable.isDraft
                                 ? undefined
                                 : errores[variable.id];
@@ -177,5 +194,29 @@ export default function VariablesPanel({ variables, onChange, reservedNames = []
                 </table>
             </div>
         </aside>
+    );
+}
+
+
+// Fila de un Random: nombre y "valor" fijos (no se editan ni se borran acá)
+function RandomRow({ variable }) {
+    const detalle = detalleVariable(variable);
+
+    return (
+        <tr className="is-random">
+            <td>
+                <div className="variables-name" title={detalle}>
+                    <span className="variables-name-text">{variable.nombre}</span>
+                </div>
+            </td>
+
+            <td>
+                <span className="variables-random" title={detalle}>
+                    Random [0, 1)
+                </span>
+            </td>
+
+            <td className="variables-actions" />
+        </tr>
     );
 }

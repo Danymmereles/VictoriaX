@@ -1,5 +1,5 @@
 // ===========================================================================
-// Lenguaje del diagrama de flujo (BNF v0.14, ver bnf-diagrama.md).
+// Lenguaje del diagrama de flujo (BNF v0.15, ver bnf-diagrama.md).
 //
 //   nombres.js   qué nombres son válidos (siglas, variables, etiquetas)
 //   lexico.js    texto → tokens
@@ -10,6 +10,14 @@
 // intérprete de la ejecución.
 // ===========================================================================
 
-export { PALABRAS_RESERVADAS, esNombreValido, esPalabraReservada, motivoNombreInvalido } from "./nombres.js";
+export {
+    PALABRAS_RESERVADAS,
+    esNombreDeRandom,
+    esNombreValido,
+    esPalabraReservada,
+    motivoNombreDeVariable,
+    motivoNombreInvalido,
+    motivoNombreRandomInvalido,
+} from "./nombres.js";
 export { ErrorDeSintaxis, tokenizar } from "./lexico.js";
 export { TIPOS_DE_TEXTO, analizar } from "./sintaxis.js";

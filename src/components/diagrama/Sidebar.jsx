@@ -4,6 +4,7 @@ import EdgeTypeSelector from "./EdgeTypeSelector";
 import HistoryControls from "./HistoryControls";
 import { SIDEBAR_ITEMS } from "./sidebarItems";
 import BackToAnalysisLink from "./BackToAnalysisLink";
+import FuncionGeneradaMenu from "./FuncionGeneradaMenu";
 import ExportMenu from "./exportar/ExportMenu";
 import "./Sidebar.css";
 
@@ -15,6 +16,8 @@ const PREVIEW_SIZES = {
     document: [46, 34],
     io: [46, 34],
     preparation: [46, 34],
+    subroutine: [46, 34],
+    random: [46, 34],
     connector: [34, 34],
     end: [44, 30],
 };
@@ -23,6 +26,11 @@ function SidebarItem({ item }) {
     const { id, type, label, data } = item;
     const [, setType] = useDnD();
     const [width, height] = PREVIEW_SIZES[type];
+
+    // Función Generada: abre un menú con sus tipos (no se arrastra)
+    if (item.opciones) {
+        return <FuncionGeneradaMenu item={item} previewSize={[width, height]} />;
+    }
 
     const onDragStart = (event) => {
         // Se arrastra el elemento (p. ej. "connector-left"), no solo el tipo
@@ -92,4 +100,4 @@ export default function Sidebar({ edgeType, onEdgeTypeChange, onRun, onExport, h
             </div>
         </aside>
     );
-}
+}

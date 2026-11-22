@@ -145,3 +145,78 @@
     font-size: 12px;
     color: var(--dg-table-placeholder);
 }
+
+/* =====================================================
+   SUBRUTINAS (22/11)
+   Pestaña + botón para borrarla cuando no se usa
+   ===================================================== */
+
+.page-tab-group {
+    position: relative;
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: stretch;
+}
+
+/* Hexágono con el color de su tipo */
+.page-tab svg.page-tab-icon--fdp {
+    fill: var(--dg-orange-fill);
+}
+
+.page-tab svg.page-tab-icon--subrutina {
+    fill: var(--dg-teal-fill);
+}
+
+/* Sin uso: ningún nodo la llama */
+.page-tab-group.is-unused .page-tab-name {
+    font-style: italic;
+    opacity: 0.6;
+}
+
+.page-tab-group.is-unused .page-tab {
+    padding-right: 4px;
+}
+
+.page-tab-delete {
+    align-self: center;
+
+    width: 20px;
+    height: 20px;
+    margin-right: 6px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 0;
+
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+
+    color: var(--dg-tab-text);
+    cursor: pointer;
+
+    transition: color 0.2s, background-color 0.2s;
+}
+
+.page-tab-delete svg {
+    width: 12px;
+    height: 12px;
+
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.2;
+    stroke-linecap: round;
+}
+
+.page-tab-delete:hover {
+    color: var(--dg-error);
+    background: var(--dg-icon-hover-bg);
+}
+
+.page-tab-delete:focus-visible {
+    outline: 2px solid var(--dg-accent);
+    outline-offset: 1px;
+}

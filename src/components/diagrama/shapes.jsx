@@ -134,6 +134,10 @@ const SHAPES = {
     },
 };
 
+// Los tres tipos de Función Generada comparten el hexágono (cambia el color)
+SHAPES.subroutine = SHAPES.preparation;
+SHAPES.random = SHAPES.preparation;
+
 export function FlowShape({
     type,
     width,

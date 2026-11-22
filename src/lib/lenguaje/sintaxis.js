@@ -1,5 +1,5 @@
 // ===========================================================================
-// Sintaxis del lenguaje del diagrama (BNF v0.14). Lógica pura.
+// Sintaxis del lenguaje del diagrama (BNF v0.15). Lógica pura.
 //
 // analizar(texto, tipo) revisa el texto de un nodo:
 //   tipo: "decision"   expresión lógica (sección 4)
@@ -7,11 +7,14 @@
 //         "contexto"   igual que la Asignación (sección 8)
 //         "resultado"  nombres separados por coma (sección 9)
 //         "etiqueta"   un nombre (Conector, sección 7)
+//         "subrutina"  nombre(parametros) (Función Generada tipo Subrutina)
+//         "random"     R1, R2... (Función Generada tipo Random)
 //
 // Devuelve:
 //   { ok: true, usos }  o  { ok: false, error: { mensaje, linea } }
 //   usos: { lecturas: [{ nombre, indexada }],
-//           asignaciones: [{ nombre, indexada }], usaRnd }
+//           asignaciones: [{ nombre, indexada }],
+//           subrutina: { nombre, parametros } (solo en "subrutina") }
 // Los usos sirven para los controles que dependen de la tabla de
 // variables (ver components/diagrama/validacion.js).
 //
@@ -19,6 +22,7 @@
 // ===========================================================================
 
 import { ErrorDeSintaxis, tokenizar } from "./lexico.js";
+import { motivoNombreRandomInvalido } from "./nombres.js";
 
 const OP_ORDEN = ["<", "<=", ">", ">="];
 const OP_IGUALDAD = ["==", "!="];
@@ -36,7 +40,7 @@ class Parser {
     constructor(tokens, { saltosComoEspacio }) {
         this.tokens = saltosComoEspacio ? tokens.filter((t) => t.tipo !== "salto") : tokens;
         this.pos = 0;
-        this.usos = { lecturas: [], asignaciones: [], usaRnd: false };
+        this.usos = { lecturas: [], asignaciones: [], subrutina: null };
     }
 
     get actual() {
@@ -75,7 +79,6 @@ class Parser {
             pos: this.pos,
             lecturas: this.usos.lecturas.length,
             asignaciones: this.usos.asignaciones.length,
-            usaRnd: this.usos.usaRnd,
         };
     }
 
@@ -83,7 +86,6 @@ class Parser {
         this.pos = m.pos;
         this.usos.lecturas.length = m.lecturas;
         this.usos.asignaciones.length = m.asignaciones;
-        this.usos.usaRnd = m.usaRnd;
     }
 
 
@@ -138,16 +140,17 @@ class Parser {
         }
 
         if (t.tipo === "nombre") {
+            // Una llamada dentro de una cuenta: RND() ya no existe (v0.15)
+            // y las subrutinas se llaman con su propio nodo
+            if (this.tokens[this.pos + 1]?.tipo === "op" && this.tokens[this.pos + 1].valor === "(") {
+                this.error(
+                    t.valor.toUpperCase() === "RND"
+                        ? "RND() ya no se usa: agregá un nodo Random (R1) y usá su nombre."
+                        : `${t.valor}(...) no va dentro de una cuenta: las subrutinas se llaman con un nodo Función Generada.`
+                );
+            }
             this.variable("lecturas");
             return true;
-        }
-
-        if (this.es("reservada", "RND")) {
-            this.avanzar();
-            this.esperarOp("(", "RND va con paréntesis: RND().");
-            this.esperarOp(")", "RND() no lleva nada entre los paréntesis.");
-            this.usos.usaRnd = true;
-            return false;
         }
 
         if (this.esOp("(")) {
@@ -423,9 +426,70 @@ class Parser {
             this.error("La etiqueta es un solo nombre, sin espacios.");
         }
     }
+
+    // ---------------- Función Generada: Subrutina y Random (v0.15) ----------------
+
+    // <firma> ::= <identificador> "(" [ <identificador> { "," <identificador> } ] ")"
+    firmaDeSubrutina() {
+        if (!this.es("nombre")) {
+            if (this.es("reservada")) {
+                this.error(`${this.actual.valor} es una palabra reservada.`);
+            }
+            this.error("La subrutina empieza con su nombre: calcular() o calcular(A, B).");
+        }
+
+        const nombre = this.avanzar().valor;
+        this.esperarOp("(", `Faltan los paréntesis: ${nombre}() (son obligatorios, aunque no tenga parámetros).`);
+
+        const parametros = [];
+
+        if (this.es("fin")) {
+            this.error(`Falta cerrar el paréntesis: ${nombre}().`);
+        }
+
+        if (!this.esOp(")")) {
+            do {
+                if (!this.es("nombre")) {
+                    if (this.es("reservada")) {
+                        this.error(`${this.actual.valor} es una palabra reservada.`);
+                    }
+                    this.error("Los parámetros son nombres separados por coma: calcular(A, B).");
+                }
+
+                const parametro = this.avanzar().valor;
+
+                if (parametros.includes(parametro)) {
+                    this.error(`El parámetro ${parametro} está repetido.`);
+                }
+                parametros.push(parametro);
+            } while (this.esOp(",") && this.avanzar());
+        }
+
+        this.esperarOp(")", "Falta cerrar el paréntesis (los parámetros van separados por coma).");
+
+        if (!this.es("fin")) {
+            this.error("Después del paréntesis no va nada: calcular(A, B).");
+        }
+
+        this.usos.subrutina = { nombre, parametros };
+    }
+
+    random() {
+        if (!this.es("nombre") || this.tokens[this.pos + 1]?.tipo !== "fin") {
+            this.error("Un Random se llama R seguido de un número: R1, R2, R3…");
+        }
+
+        const motivo = motivoNombreRandomInvalido(this.actual.valor);
+
+        if (motivo) {
+            this.error(motivo);
+        }
+
+        this.avanzar();
+    }
 }
 
-export const TIPOS_DE_TEXTO = ["decision", "asignacion", "contexto", "resultado", "etiqueta"];
+export const TIPOS_DE_TEXTO = ["decision", "asignacion", "contexto", "resultado", "etiqueta", "subrutina", "random"];
 
 export function analizar(texto, tipo) {
     try {
@@ -439,15 +503,16 @@ export function analizar(texto, tipo) {
                 if (p.esOp("=")) p.error("Para comparar se usa ==, no =.");
                 p.error(`Sobra ${describir(p.actual)} al final de la condición.`);
             }
-            if (p.usos.usaRnd) {
-                p.error("RND() no se puede usar en una Decisión: guardalo antes en una variable.");
-            }
         } else if (multilinea) {
             p.sentencias();
         } else if (tipo === "resultado") {
             p.listaDeNombres();
         } else if (tipo === "etiqueta") {
             p.etiqueta();
+        } else if (tipo === "subrutina") {
+            p.firmaDeSubrutina();
+        } else if (tipo === "random") {
+            p.random();
         } else {
             throw new Error(`Tipo de texto desconocido: ${tipo}`);
         }

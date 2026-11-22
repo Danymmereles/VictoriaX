@@ -1,5 +1,5 @@
 // ===========================================================================
-// Validación del texto de los nodos con la BNF (v0.14, ver lib/lenguaje).
+// Validación del texto de los nodos con la BNF (v0.15, ver lib/lenguaje).
 // Lógica pura, sin React.
 //
 // problemasDeSintaxis({ nodes, pagina, paginas, variables }) → { [nodeId]: mensaje }
@@ -12,9 +12,12 @@
 //      - el Contexto solo cambia variables de la tabla (valores iniciales);
 //      - una variable de datos solo se asigna en su propia pestaña;
 //      - un vector se usa con índice (TPS[I]) y una variable común sin él.
-//        En el Resultado el vector va entero (TPS).
-//   En las pestañas de las variables de datos no se exige que los nombres
-//   estén en la tabla (pueden usar variables propias del algoritmo).
+//        En el Resultado el vector va entero (TPS);
+//      - a un Random (R1) no se le asigna un valor;
+//      - una Subrutina no choca con otro nombre, usa los mismos parámetros
+//        que su pestaña y no se llama a sí misma (funcionGenerada.js).
+//   En las pestañas de las variables de datos y de las subrutinas no se
+//   exige que los nombres estén en la tabla (pueden usar variables propias).
 //
 // Los nodos vacíos no se marcan (todavía no se escribieron). Entrada,
 // Salida y Entrada / Salida no tienen sintaxis por ahora. Los nodos
@@ -22,8 +25,9 @@
 // tienen prioridad: ver Diagrama.jsx.
 // ===========================================================================
 
-import { analizar } from "@/lib/lenguaje";
+import { analizar, esNombreDeRandom } from "@/lib/lenguaje";
 import { MAIN_PAGE_ID } from "./pages.js";
+import { problemaDeSubrutina } from "./funcionGenerada.js";
 
 // Tipo de nodo → regla de la BNF
 const REGLA_POR_TIPO = {
@@ -32,6 +36,9 @@ const REGLA_POR_TIPO = {
     context: "contexto",
     document: "resultado",
     connector: "etiqueta",
+    // Función Generada (v0.15). La fdp se revisa en pages.js
+    subroutine: "subrutina",
+    random: "random",
 };
 
 export const reglaDeNodo = (node) => REGLA_POR_TIPO[node?.data?.type] ?? null;
@@ -63,14 +70,26 @@ const conLinea = (mensaje, linea, regla) =>
 
 /*
  * Problema de uso de variables de un nodo ya analizado, o null.
- *   tabla:   Map nombre → variable de la tabla ({ esVector })
+ *   tabla:   Map nombre → variable de la tabla ({ esVector, esRandom })
  *   datos:   Set de nombres de variables de datos
+ *   contexto: { subrutinas, ocupados } para los nodos Subrutina
  */
-function problemaDeUso({ usos, regla, pagina, tabla, datos }) {
+function problemaDeUso({ node, usos, regla, pagina, tabla, datos, contexto }) {
     const enMain = pagina.id === MAIN_PAGE_ID;
     const existe = (nombre) => tabla.has(nombre) || datos.has(nombre);
 
+    if (regla === "subrutina") {
+        // El ancla es la definición: no se compara consigo misma
+        return node.data.anchorOf
+            ? null
+            : problemaDeSubrutina({ firma: usos.subrutina, pagina, ...contexto });
+    }
+
     for (const { nombre } of usos.asignaciones) {
+        if (tabla.get(nombre)?.esRandom) {
+            return `${nombre} es un Random: toma un valor nuevo cada vez que pasa por su nodo, no se le asigna.`;
+        }
+
         if (regla === "contexto" && !tabla.has(nombre)) {
             return datos.has(nombre)
                 ? `"${nombre}" es una variable de datos: el Contexto solo cambia variables de la tabla.`
@@ -88,7 +107,9 @@ function problemaDeUso({ usos, regla, pagina, tabla, datos }) {
         );
 
         if (desconocido) {
-            return `"${desconocido.nombre}" no está en la tabla de variables.`;
+            return esNombreDeRandom(desconocido.nombre)
+                ? `${desconocido.nombre} es un Random que no está en el diagrama: agregá un nodo Random ${desconocido.nombre}.`
+                : `"${desconocido.nombre}" no está en la tabla de variables.`;
         }
     }
 
@@ -125,8 +146,20 @@ export function problemasDeSintaxis({ nodes, pagina, paginas = [], variables = [
             .filter(([nombre]) => nombre)
     );
     const datos = new Set(
-        paginas.filter((p) => p.id !== MAIN_PAGE_ID).map((p) => p.nombre)
+        paginas.filter((p) => p.tipo === "fdp").map((p) => p.nombre)
     );
+
+    // Para los nodos Subrutina: las que ya existen y los nombres ocupados
+    const contexto = {
+        subrutinas: paginas
+            .filter((p) => p.tipo === "subrutina")
+            .map((p) => ({ nombre: p.nombre, parametros: p.parametros })),
+        ocupados: {
+            variables: new Set(variables.filter((v) => !v.esRandom).map((v) => String(v.nombre ?? "").trim())),
+            datos,
+            randoms: new Set(variables.filter((v) => v.esRandom).map((v) => v.nombre)),
+        },
+    };
 
     nodes.forEach((node) => {
         const regla = reglaDeNodo(node);
@@ -143,7 +176,15 @@ export function problemasDeSintaxis({ nodes, pagina, paginas = [], variables = [
             return;
         }
 
-        const problema = problemaDeUso({ usos: resultado.usos, regla, pagina, tabla, datos });
+        const problema = problemaDeUso({
+            node,
+            usos: resultado.usos,
+            regla,
+            pagina,
+            tabla,
+            datos,
+            contexto,
+        });
 
         if (problema) {
             problemas[node.id] = problema;

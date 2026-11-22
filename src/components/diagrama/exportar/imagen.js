@@ -11,7 +11,8 @@
 //   - Sin los elementos de edición: puntos de conexión, manijas de las
 //     flechas, rectángulo de selección. La selección se saca antes de
 //     llamar a esta función (ver Diagrama.jsx).
-//   - Fondo: el del tema actual (claro u oscuro), sin la grilla de puntos.
+//   - Fondo: el que se ve en pantalla (tema claro u oscuro), sin la grilla
+//     de puntos (ver colorDeFondo).
 // ===========================================================================
 
 import { cssDeFuentes } from "./fuentes.js";
@@ -106,6 +107,49 @@ function limitesDelDiagrama(flujo, viewport) {
     return { x: minX - MARGEN, y: minY - MARGEN, ancho: maxX - minX + 2 * MARGEN, alto: maxY - minY + 2 * MARGEN };
 }
 
+// ¿El color tapa lo que está detrás? (alfa 1)
+function esOpaco(color) {
+    if (!color || color === "transparent") return false;
+    const partes = color.match(/[\d.]+/g);
+    if (/^rgba/.test(color) || color.includes("/")) {
+        return Boolean(partes) && Number(partes[partes.length - 1]) >= 1;
+    }
+    return true;
+}
+
+// Color CSS cualquiera (p. ej. "hsl(0 0% 100%)") → "rgb(...)" calculado
+function normalizarColor(color) {
+    const prueba = document.createElement("div");
+    prueba.style.backgroundColor = color;
+    document.body.appendChild(prueba);
+    const calculado = getComputedStyle(prueba).backgroundColor;
+    prueba.remove();
+    return calculado;
+}
+
+/*
+ * El fondo que se ve en pantalla. React Flow lo pinta en la capa de la
+ * grilla (.react-flow__background) con --xy-background-color, y el
+ * contenedor queda transparente: se toma el primero que sea opaco. Sin
+ * esto el fondo sale transparente, que en JPG se ve negro.
+ */
+function colorDeFondo(flujo) {
+    const candidatos = [flujo.querySelector(".react-flow__background"), flujo]
+        .filter(Boolean)
+        .map((el) => getComputedStyle(el).backgroundColor);
+
+    const variable = getComputedStyle(flujo).getPropertyValue("--xy-background-color").trim();
+    if (variable) {
+        candidatos.push(normalizarColor(variable));
+    }
+
+    for (let el = flujo.parentElement; el; el = el.parentElement) {
+        candidatos.push(getComputedStyle(el).backgroundColor);
+    }
+
+    return candidatos.find(esOpaco) ?? "#ffffff";
+}
+
 const cargarImagen = (url) =>
     new Promise((resolver, rechazar) => {
         const imagen = new Image();
@@ -128,7 +172,7 @@ export async function imagenDelDiagrama(flujo, formato) {
     }
 
     const { x, y, ancho, alto } = limites;
-    const fondo = getComputedStyle(flujo).backgroundColor || "#ffffff";
+    const fondo = colorDeFondo(flujo);
 
     // Copia del contenido, sin zoom ni desplazamiento: el diagrama queda
     // con su esquina en (0, 0)

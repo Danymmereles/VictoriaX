@@ -3,11 +3,11 @@
 // (2017), comparando T >= TEF en vez de T == TEF (corrige GV6):
 //
 //   Contexto
-//   (1) → T = T + 1
+//   (C1) → T = T + 1
 //       → por cada comprometido anterior C:  T >= TPC ?  SÍ: C → TPC = HV
 //       → por cada evento propio P:          P
 //       → por cada comprometido posterior Q: ¿ocurre Q? SÍ: Q → programar C
-//   → T > TF ?  SÍ: calcular resultados → Resultado → Fin   NO: (1)
+//   → T > TF ?  SÍ: calcular resultados → Resultado → Fin   NO: (C1)
 //
 // El análisis no tiene las condiciones de los posteriores ni qué hace cada
 // evento: esos nodos quedan para completar. Cada posterior compromete al

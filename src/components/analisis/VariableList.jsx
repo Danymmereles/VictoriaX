@@ -3,9 +3,12 @@ import { Plus, Trash2, Settings } from "lucide-react";
 import { nuevaVariable } from "@/lib/analisisPrevio";
 import VectorConfigDialog from "./VectorConfigDialog";
 import ErrorBadge from "./ErrorBadge";
+import ErrorDeSigla from "./ErrorDeSigla";
 
 // Lista reutilizable de variables. `permitirVector` habilita configuración vectorial.
 // `error` resalta el grupo completo e `idsConError` las variables con problemas.
+// `errores` (opcional): { [id]: { mensajes, sigla } } para mostrar el motivo
+// cuando la sigla no respeta la regla de nombres (ver lib/analisisPrevio.js).
 export default function VariableList({
   titulo,
   variables,
@@ -14,6 +17,7 @@ export default function VariableList({
   controlVars = [],
   error = false,
   idsConError = [],
+  errores = {},
 }) {
   const [vectorPara, setVectorPara] = useState(null);
 
@@ -42,10 +46,11 @@ export default function VariableList({
         {variables.length === 0 && <p className="text-sm text-muted-foreground">Sin variables.</p>}
         {variables.map((v, i) => {
           const conError = idsConError.includes(v.id);
+          const siglaConError = Boolean(errores[v.id]?.sigla);
           return (
             <div key={v.id} className="rounded-xl border border-border bg-card p-4">
               <div className="grid gap-3 sm:grid-cols-[120px_1fr_auto]">
-                <input value={v.sigla} onChange={(e) => actualizar(i, { sigla: e.target.value })} placeholder="Siglas" className="rounded-lg border border-input bg-background px-3 py-2 text-sm" />
+                <input value={v.sigla} onChange={(e) => actualizar(i, { sigla: e.target.value })} placeholder="Siglas" aria-invalid={siglaConError} className={`rounded-lg border bg-background px-3 py-2 text-sm ${siglaConError ? "border-destructive" : "border-input"}`} />
                 <input value={v.descripcion} onChange={(e) => actualizar(i, { descripcion: e.target.value })} placeholder="Descripción / Nombre de variable" className="rounded-lg border border-input bg-background px-3 py-2 text-sm" />
                 <button onClick={() => quitar(i)} className="grid place-items-center rounded-lg border border-border px-3 hover:bg-destructive/10 hover:text-destructive">
                   <Trash2 className="w-4 h-4" />
@@ -73,7 +78,8 @@ export default function VariableList({
                   )}
                 </div>
               )}
-              {conError && <ErrorBadge className="mt-3" />}
+              {conError && !siglaConError && <ErrorBadge className="mt-3" />}
+              {siglaConError && <ErrorDeSigla mensajes={errores[v.id].mensajes} />}
             </div>
           );
         })}
@@ -91,4 +97,4 @@ export default function VariableList({
       />
     </div>
   );
-}
+}

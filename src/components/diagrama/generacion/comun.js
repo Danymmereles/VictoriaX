@@ -7,8 +7,11 @@ import { CONTEXT_NODE_ID } from "../pages.js";
 import { nuevaVariable, ORIGEN_FUTURO, ORIGEN_GENERADA } from "../variables.js";
 import { completar, fin, nodo, asignacion, salto, secuencia, si } from "./bloques.js";
 
-// Etiqueta del Conector que vuelve al principio del ciclo de Main
-export const ETIQUETA_CICLO = "1";
+// Etiquetas de los Conectores generados. Son identificadores (BNF v0.14):
+// C1 vuelve al principio del ciclo de Main; C2, C3... son los ciclos de
+// búsqueda del menor de cada evento vector.
+export const etiquetaConector = (n) => `C${n}`;
+export const ETIQUETA_CICLO = etiquetaConector(1);
 
 export const contexto = () =>
     nodo("context", "", { id: CONTEXT_NODE_ID, deletable: false });
@@ -59,7 +62,8 @@ export const cierre = (resultado) =>
                 "Calcular resultados",
                 `Calculá las variables de resultado${lista(resultado)} antes de terminar. El Análisis Previo no dice cómo se calculan.`
             ),
-            nodo("document", ""),
+            // Resultado: muestra las variables de resultado (A, B, C)
+            nodo("document", resultado.join(", ")),
             fin()
         ),
         salto(ETIQUETA_CICLO)

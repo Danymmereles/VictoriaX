@@ -29,6 +29,7 @@ const siglas = (lista) => (lista || []).map((v) => limpiar(v.sigla)).filter(Bool
  * Devuelve:
  *   nombres:  { datos, control, estado, resultado } (siglas del análisis)
  *   ocupado(nombre) / reservar(nombre) / libre(candidatos)
+ *   (ocupado distingue mayúsculas; libre además evita parecidos: i / I)
  *   tefDe(evento):  sigla del tiempo del próximo evento (TPLL)
  *   avisos:   lo que el análisis no tiene y se resolvió de otra forma
  */
@@ -42,22 +43,25 @@ export function leerAnalisis(analisis) {
         resultado: siglas(analisis.variables?.resultado),
     };
 
-    const ocupados = new Set(
-        Object.values(nombres)
-            .flat()
-            .map(clave)
-    );
+    // Nombres de variables ya usados. Como en JavaScript, distinguen
+    // mayúsculas (BNF v0.14): "t" no es T, así que T se agrega igual.
+    const ocupados = new Set(Object.values(nombres).flat());
 
-    const ocupado = (nombre) => ocupados.has(clave(nombre));
-    const reservar = (nombre) => ocupados.add(clave(nombre));
+    const ocupado = (nombre) => ocupados.has(limpiar(nombre));
+    const reservar = (nombre) => ocupados.add(limpiar(nombre));
+
+    // Para un nombre NUEVO se evita también la misma palabra con otras
+    // mayúsculas (si existe "i", el índice no se llama I): así no se confunden.
+    const parecido = (nombre) =>
+        [...ocupados].some((o) => o.toUpperCase() === clave(nombre));
 
     // Primer nombre libre de la lista; si ninguno, el primero con un número
     const libre = (candidatos) => {
         const elegido =
-            candidatos.find((c) => !ocupado(c)) ??
+            candidatos.find((c) => !parecido(c)) ??
             (() => {
                 let n = 2;
-                while (ocupado(`${candidatos[0]}${n}`)) n++;
+                while (parecido(`${candidatos[0]}${n}`)) n++;
                 return `${candidatos[0]}${n}`;
             })();
 

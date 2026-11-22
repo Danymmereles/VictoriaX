@@ -68,7 +68,9 @@ export function tieneContenido({ nodes = [], edges = [] }) {
     );
 }
 
-const clave = (nombre) => String(nombre ?? "").trim().toUpperCase();
+// Como en JavaScript, los nombres distinguen mayúsculas (BNF v0.14):
+// IA e ia son variables distintas.
+const clave = (nombre) => String(nombre ?? "").trim();
 
 export const mismoNombre = (a, b) => clave(a) === clave(b);
 
@@ -88,7 +90,7 @@ export function derivarPaginas(funciones) {
         })),
     ];
 
-    // Nombres repetidos (sin distinguir mayúsculas). "Main" está reservado.
+    // Nombres repetidos (distinguen mayúsculas). "Main" está reservado.
     const conteo = {};
     paginas.forEach((p) => {
         conteo[clave(p.nombre)] = (conteo[clave(p.nombre)] || 0) + 1;

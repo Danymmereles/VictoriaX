@@ -254,9 +254,9 @@ export default function CustomNode({ id, data, selected }) {
         (isAnchor
             ? "Inicio de la variable de datos. Su nombre se cambia en el Análisis Previo."
             : isContext
-                ? "Inicio del algoritmo. Doble clic para declarar variables (una por línea; Ctrl+Enter guarda)."
+                ? "Inicio del algoritmo. Doble clic para cambiar valores iniciales de la tabla (una asignación por línea, p. ej. T = 0; Ctrl+Enter guarda)."
                 : isConnector
-                    ? "Doble clic para editar la etiqueta. Los conectores con la misma etiqueta están vinculados."
+                    ? "Doble clic para editar la etiqueta (un nombre, p. ej. C1). Los conectores con la misma etiqueta están vinculados."
                     : isEnd
                         ? "Fin: el algoritmo de esta página termina acá."
                         : multiline

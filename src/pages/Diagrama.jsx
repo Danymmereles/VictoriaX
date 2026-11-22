@@ -45,6 +45,7 @@ import {
     tieneContenido,
     validarNombreNodo,
 } from "../components/diagrama/pages.js";
+import { problemasDeSintaxis } from "../components/diagrama/validacion.js";
 import { PageProvider } from "../components/diagrama/PageContext.jsx";
 import {
     funcionesDeDatos,
@@ -265,10 +266,15 @@ function Flow({ active = true, onRun }) {
 
 
     // Contexto para los nodos: errores a marcar y validación
-    // de nombres (una variable no puede llamarse a sí misma)
+    // de nombres (una variable no puede llamarse a sí misma).
+    // Primero la BNF (sintaxis y uso de variables); los pendientes y
+    // las llamadas explican mejor qué hacer, así que tienen prioridad.
     const nodeIssues = useMemo(
-        () => problemasDeNodos({ nodes, pagina: currentPage, paginas: pages }),
-        [nodes, currentPage, pages]
+        () => ({
+            ...problemasDeSintaxis({ nodes, pagina: currentPage, paginas: pages, variables }),
+            ...problemasDeNodos({ nodes, pagina: currentPage, paginas: pages }),
+        }),
+        [nodes, currentPage, pages, variables]
     );
 
     const validateLabel = useCallback(

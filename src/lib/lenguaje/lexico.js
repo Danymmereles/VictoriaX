@@ -2,7 +2,9 @@
 // Léxico del lenguaje del diagrama (BNF v0.15, sección 1). Lógica pura.
 //
 // Convierte el texto de un nodo en tokens:
-//   { tipo, valor, linea }
+//   { tipo, valor, linea, columna, inicio, fin }
+//   linea y columna empiezan en 1; inicio / fin son posiciones en el texto
+//   (fin no incluido), para señalar exactamente dónde está un error.
 //   tipo: "nombre" | "numero" | "reservada" | "op" | "salto" | "fin"
 // Los espacios y tabulaciones se ignoran. El salto de línea es un token:
 // separa sentencias en Asignación y Contexto (los demás nodos lo tratan
@@ -12,9 +14,12 @@
 import { esPalabraReservada } from "./nombres.js";
 
 export class ErrorDeSintaxis extends Error {
-    constructor(mensaje, linea) {
+    // rango: [inicio, fin] en el texto, si se conoce
+    constructor(mensaje, linea, columna = null, rango = null) {
         super(mensaje);
         this.linea = linea;
+        this.columna = columna;
+        this.rango = rango;
     }
 }
 
@@ -41,14 +46,24 @@ export function tokenizar(texto) {
     const s = String(texto ?? "");
     let i = 0;
     let linea = 1;
+    let inicioDeLinea = 0;
+
+    const token = (tipo, valor, inicio, fin) =>
+        tokens.push({ tipo, valor, linea, columna: inicio - inicioDeLinea + 1, inicio, fin });
+
+    // Error en la posición actual (o en un rango)
+    const error = (mensaje, inicio = i, fin = i + 1) => {
+        throw new ErrorDeSintaxis(mensaje, linea, inicio - inicioDeLinea + 1, [inicio, fin]);
+    };
 
     while (i < s.length) {
         const c = s[i];
 
         if (c === "\n") {
-            tokens.push({ tipo: "salto", valor: "\n", linea });
+            token("salto", "\n", i, i + 1);
             linea++;
             i++;
+            inicioDeLinea = i;
             continue;
         }
 
@@ -64,21 +79,15 @@ export function tokenizar(texto) {
 
             if (siguiente === "." && /[0-9]/.test(s[i + m[0].length + 1] ?? "")) {
                 const punto = /^[0-9]+\.[0-9]+/.exec(s.slice(i))[0];
-                throw new ErrorDeSintaxis(
-                    `Usá coma decimal: ${punto.replace(".", ",")} en lugar de ${punto}.`,
-                    linea
-                );
+                error(`Usá coma decimal: ${punto.replace(".", ",")} en lugar de ${punto}.`, i, i + punto.length);
             }
 
             if (siguiente && /[A-Za-z_]/.test(siguiente)) {
                 const palabra = /^[0-9A-Za-z_]+/.exec(s.slice(i))[0];
-                throw new ErrorDeSintaxis(
-                    `"${palabra}": un nombre no puede empezar con un número.`,
-                    linea
-                );
+                error(`"${palabra}": un nombre no puede empezar con un número.`, i, i + palabra.length);
             }
 
-            tokens.push({ tipo: "numero", valor: m[0], linea });
+            token("numero", m[0], i, i + m[0].length);
             i += m[0].length;
             continue;
         }
@@ -88,14 +97,14 @@ export function tokenizar(texto) {
             const palabra = /^[A-Za-z0-9_]+/.exec(s.slice(i))[0];
 
             if (/[^\x00-\x7F]/.test(s[i + palabra.length] ?? "")) {
-                throw new ErrorDeSintaxis("Los nombres no pueden tener tildes ni ñ.", linea);
+                error("Los nombres no pueden tener tildes ni ñ.", i, i + palabra.length + 1);
             }
 
-            tokens.push(
-                esPalabraReservada(palabra)
-                    ? { tipo: "reservada", valor: palabra.toUpperCase(), linea }
-                    : { tipo: "nombre", valor: palabra, linea }
-            );
+            if (esPalabraReservada(palabra)) {
+                token("reservada", palabra.toUpperCase(), i, i + palabra.length);
+            } else {
+                token("nombre", palabra, i, i + palabra.length);
+            }
             i += palabra.length;
             continue;
         }
@@ -103,7 +112,7 @@ export function tokenizar(texto) {
         const operador = OPERADORES.find((op) => s.startsWith(op, i));
 
         if (operador) {
-            tokens.push({ tipo: "op", valor: operador, linea });
+            token("op", operador, i, i + operador.length);
             i += operador.length;
             continue;
         }
@@ -112,16 +121,16 @@ export function tokenizar(texto) {
             SUGERENCIAS[s.slice(i, i + 2)] ?? SUGERENCIAS[c];
 
         if (sugerencia) {
-            throw new ErrorDeSintaxis(sugerencia, linea);
+            error(sugerencia);
         }
 
         if (/[^\x00-\x7F]/.test(c) && /\p{L}/u.test(c)) {
-            throw new ErrorDeSintaxis("Los nombres no pueden tener tildes ni ñ.", linea);
+            error("Los nombres no pueden tener tildes ni ñ.");
         }
 
-        throw new ErrorDeSintaxis(`Carácter no válido: ${c}`, linea);
+        error(`Carácter no válido: ${c}`);
     }
 
-    tokens.push({ tipo: "fin", valor: "", linea });
+    token("fin", "", s.length, s.length);
     return tokens;
 }

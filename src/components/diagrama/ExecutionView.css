@@ -120,3 +120,218 @@
     outline: 2px solid var(--dg-accent);
     outline-offset: 2px;
 }
+
+/* =====================================================
+   ERRORES DE LA REVISIÓN (antes de interpretar)
+   ===================================================== */
+
+.execution-errors {
+    width: 100%;
+    max-width: 560px;
+    max-height: 100%;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    padding: 28px;
+
+    background: var(--dg-item-bg);
+    border: 1px solid var(--dg-item-border);
+    border-radius: 16px;
+
+    text-align: center;
+    box-sizing: border-box;
+}
+
+.execution-errors-icon {
+    background: var(--dg-error-bg, var(--dg-icon-active-bg));
+    color: var(--dg-error);
+}
+
+.execution-errors-list {
+    width: 100%;
+    margin: 0 0 20px;
+    padding: 0;
+    overflow-y: auto;
+
+    display: grid;
+    gap: 8px;
+
+    list-style: none;
+    text-align: left;
+}
+
+.execution-errors-list li {
+    display: grid;
+    gap: 2px;
+
+    padding: 10px 12px;
+
+    border: 1px solid var(--dg-item-border);
+    border-left: 3px solid var(--dg-error);
+    border-radius: 8px;
+
+    font-size: 13.5px;
+    line-height: 1.45;
+    color: var(--dg-tab-text-active);
+}
+
+.execution-errors-page {
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--dg-tab-text);
+}
+
+/* =====================================================
+   LISTO PARA EJECUTAR (provisorio, ver PanelDeEjecucion)
+   ===================================================== */
+
+.execution-panel {
+    width: 100%;
+    max-width: 640px;
+    max-height: 100%;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    padding: 28px;
+    overflow-y: auto;
+
+    background: var(--dg-item-bg);
+    border: 1px solid var(--dg-item-border);
+    border-radius: 16px;
+
+    text-align: center;
+    box-sizing: border-box;
+}
+
+.execution-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.execution-run {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+
+    padding: 8px 18px;
+
+    background: var(--dg-accent);
+    border: 1px solid var(--dg-accent);
+    border-radius: 9999px;
+
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+
+    cursor: pointer;
+    transition: filter 0.2s;
+}
+
+.execution-run svg {
+    width: 14px;
+    height: 14px;
+    fill: currentColor;
+}
+
+.execution-run:hover {
+    filter: brightness(1.08);
+}
+
+.execution-run:focus-visible {
+    outline: 2px solid var(--dg-accent);
+    outline-offset: 2px;
+}
+
+.execution-note {
+    margin: 0 0 16px;
+    font-size: 13px;
+    color: var(--dg-tab-text);
+}
+
+.execution-result {
+    width: 100%;
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.execution-result-title {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+
+    margin: 0 0 10px;
+
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--dg-tab-text-active);
+}
+
+.execution-result-title.is-error,
+.execution-result-title.is-limite {
+    color: var(--dg-error);
+}
+
+.execution-seed {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--dg-tab-text);
+}
+
+.execution-error {
+    display: grid;
+    gap: 2px;
+
+    margin-bottom: 12px;
+    padding: 10px 12px;
+
+    background: var(--dg-error-bg);
+    border-left: 3px solid var(--dg-error);
+    border-radius: 8px;
+
+    font-size: 13.5px;
+    line-height: 1.45;
+    color: var(--dg-tab-text-active);
+}
+
+.execution-result-subtitle {
+    margin: 0 0 6px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--dg-tab-text);
+}
+
+.execution-outputs {
+    margin: 0;
+    padding: 0;
+
+    display: grid;
+    gap: 4px;
+
+    list-style: none;
+
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 13px;
+    color: var(--dg-tab-text-active);
+}
+
+.execution-outputs li {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 16px;
+
+    padding: 6px 10px;
+
+    border: 1px solid var(--dg-item-border);
+    border-radius: 6px;
+}

@@ -10,7 +10,8 @@
 //   formato: "victoriax-diagrama", version: 1, exportado: "<fecha ISO>",
 //   edgeType: "smoothstep",
 //   paginas: [{ id, nombre, tipo, firma?, nodes: [...], edges: [...] }],
-//            tipo: "main" | "fdp" | "subrutina"; firma: calcular(A, B)
+//            tipo: "main" | "fdp" | "subrutina"; firma: calcular(A, B);
+//            parametros: ["A", "B"]
 //   variables: [{ nombre, valorInicial, ... }]
 // }
 // ===========================================================================
@@ -49,7 +50,7 @@ export function diagramaComoJson({ paginas, variables, edgeType, fecha = new Dat
         exportado: fecha.toISOString(),
         edgeType,
         paginas: paginas.map((pagina) => ({
-            ...elegir(pagina, ["id", "nombre", "tipo", "firma"]),
+            ...elegir(pagina, ["id", "nombre", "tipo", "firma", "parametros"]),
             nodes: pagina.nodes.map((nodo) => elegir(nodo, CAMPOS_NODO)),
             edges: pagina.edges.map((flecha) => elegir(flecha, CAMPOS_FLECHA)),
         })),

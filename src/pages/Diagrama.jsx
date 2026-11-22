@@ -46,6 +46,9 @@ import {
     validarNombreNodo,
 } from "../components/diagrama/pages.js";
 import { problemasDeSintaxis } from "../components/diagrama/validacion.js";
+import { fotoDelDiagrama } from "../components/diagrama/fotoDelDiagrama.js";
+import { problemasDeSalidas } from "../components/diagrama/ejecucion/caminos.js";
+import { revisarDiagrama } from "../components/diagrama/ejecucion/revision.js";
 import {
     TIPO_RANDOM,
     parametrosDelAncla,
@@ -140,8 +143,11 @@ const preventContextMenu = (event) => {
  *   active: false cuando hay otra vista abierta (Ejecución):
  *           se desactivan Supr y los atajos de Deshacer/Rehacer.
  *   onRun:  botón Ejecutar de la barra lateral.
+ *   revisionRef: Flow deja acá revisar() → { errores, programa }
+ *           (ver ejecucion/revision.js). Lo usa Diagrama al abrir
+ *           la pestaña Ejecución, venga de donde venga.
  */
-function Flow({ active = true, onRun }) {
+function Flow({ active = true, onRun, revisionRef }) {
 
     // Análisis Previo (se guarda en cada cambio, por eso está
     // al día al "Pasar a Diagramar")
@@ -367,10 +373,30 @@ function Flow({ active = true, onRun }) {
                 paginas: pages,
                 variables: todasLasVariables,
             }),
+            // Un punto de salida con varias flechas (dos caminos)
+            ...problemasDeSalidas({ nodes, edges }),
             ...problemasDeNodos({ nodes, pagina: currentPage, paginas: pages }),
         }),
-        [nodes, currentPage, pages, todasLasVariables]
+        [nodes, edges, currentPage, pages, todasLasVariables]
     );
+
+    // Revisión de todo el diagrama antes de interpretarlo: si pasa,
+    // devuelve el programa (JSON) para el motor
+    useEffect(() => {
+        if (!revisionRef) return;
+
+        revisionRef.current = () =>
+            revisarDiagrama({
+                foto: fotoDelDiagrama({
+                    pages,
+                    activePage,
+                    store: pagesStoreRef.current,
+                    activa: { nodes: getNodes(), edges: getEdges() },
+                }),
+                paginas: pages,
+                variables: todasLasVariables,
+            });
+    }, [revisionRef, pages, activePage, getNodes, getEdges, todasLasVariables]);
 
     const validateLabel = useCallback(
         ({ data, nombre }) =>
@@ -773,6 +799,19 @@ export default function Diagrama() {
     // Vista activa: editor del diagrama o ejecución
     const [vista, setVista] = useState(VISTAS.editor);
 
+    // Al abrir Ejecución (botón o pestaña) se revisa el diagrama:
+    // si hay errores, se muestran ahí y no se interpreta; si no,
+    // queda el programa listo para el motor
+    const revisionRef = useRef(null);
+    const [revision, setRevision] = useState({ errores: [], programa: null });
+
+    const cambiarVista = useCallback((nueva) => {
+        if (nueva === VISTAS.ejecucion) {
+            setRevision(revisionRef.current?.() ?? { errores: [], programa: null });
+        }
+        setVista(nueva);
+    }, []);
+
     const enEditor = vista === VISTAS.editor;
 
     // El editor oculto no recibe foco ni clicks (inert).
@@ -794,7 +833,7 @@ export default function Diagrama() {
             <header className="diagram-topbar">
                 <DiagramaTabs
                     value={vista}
-                    onChange={setVista}
+                    onChange={cambiarVista}
                 />
 
                 <ThemeToggle className="diagram-theme-toggle" />
@@ -820,7 +859,8 @@ export default function Diagrama() {
 
                             <Flow
                                 active={enEditor}
-                                onRun={() => setVista(VISTAS.ejecucion)}
+                                onRun={() => cambiarVista(VISTAS.ejecucion)}
+                                revisionRef={revisionRef}
                             />
 
                         </DnDProvider>
@@ -837,6 +877,8 @@ export default function Diagrama() {
                         className="diagram-view diagram-view--overlay"
                     >
                         <ExecutionView
+                            errores={revision.errores}
+                            programa={revision.programa}
                             onBack={() => setVista(VISTAS.editor)}
                         />
                     </div>

@@ -1,51 +1,35 @@
 import { isAcademicEmail } from "./service.js";
 
-function respondUnauthorized(response) {
-  response.writeHead(401, {
+function respond(response, statusCode, error) {
+  response.writeHead(statusCode, {
     "content-type": "application/json; charset=utf-8",
     "cache-control": "no-store",
   });
-  response.end(JSON.stringify({ error: "Se requiere un Bearer Token válido." }));
+  response.end(JSON.stringify({ error }));
 }
 
-function respondDomainRestricted(response) {
-  response.writeHead(403, {
-    "content-type": "application/json; charset=utf-8",
-    "cache-control": "no-store",
-  });
-  response.end(
-    JSON.stringify({
-      error:
-        "El Modo Estudio es exclusivo para la comunidad académica de UTN (dominio @frba.utn.edu.ar).",
-    }),
-  );
-}
-
-export function createAuthMiddleware(authClient) {
+export function createAuthMiddleware(authService) {
   return async function authenticateRequest(request, response, next) {
     const authorization = request.headers.authorization;
     const match =
       typeof authorization === "string" &&
       authorization.match(/^Bearer\s+([^\s]+)$/i);
-    if (!match) {
-      respondUnauthorized(response);
+    const session = match ? await authService.authenticate(match[1]) : null;
+    if (!session) {
+      respond(response, 401, "Se requiere un Bearer Token válido.");
+      return;
+    }
+    if (!isAcademicEmail(session.user.email.trim().toLowerCase())) {
+      respond(
+        response,
+        403,
+        "El Modo Estudio es exclusivo para la comunidad académica de UTN (dominio @frba.utn.edu.ar).",
+      );
       return;
     }
 
-    const { data, error } = await authClient.auth.getUser(match[1]);
-    if (error || !data.user?.id) {
-      respondUnauthorized(response);
-      return;
-    }
-    if (!isAcademicEmail(data.user.email?.trim().toLowerCase() ?? "")) {
-      respondDomainRestricted(response);
-      return;
-    }
-
-    request.user = {
-      id: data.user.id,
-      email: data.user.email ?? null,
-    };
+    request.user = session.user;
+    request.sessionId = session.sessionId;
     await next();
   };
 }

@@ -1,4 +1,3 @@
-import { createClient } from "@supabase/supabase-js";
 import { createBusinessDatabase } from "./db/client.js";
 import { createUserRepository } from "./db/userRepository.js";
 import { createAuthService } from "./auth/service.js";
@@ -6,53 +5,38 @@ import { createAuthMiddleware } from "./auth/middleware.js";
 import { createApiServer } from "./http/server.js";
 
 const {
-  SUPABASE_URL,
-  SUPABASE_ANON_KEY,
-  SUPABASE_SERVICE_ROLE_KEY,
   DATABASE_URL,
   FRONTEND_ORIGIN = "http://localhost:5173",
   PORT = "3001",
 } = process.env;
 
-for (const [name, value] of Object.entries({
-  SUPABASE_URL,
-  SUPABASE_ANON_KEY,
-  SUPABASE_SERVICE_ROLE_KEY,
-  DATABASE_URL,
-})) {
-  if (!value) {
-    throw new Error(`${name} es obligatorio.`);
-  }
+if (!DATABASE_URL) {
+  throw new Error("DATABASE_URL es obligatorio.");
 }
 
-const supabaseOptions = {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false,
-    detectSessionInUrl: false,
-  },
-};
-const authClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, supabaseOptions);
-const adminClient = createClient(
-  SUPABASE_URL,
-  SUPABASE_SERVICE_ROLE_KEY,
-  supabaseOptions,
-);
 const { db, close } = createBusinessDatabase(DATABASE_URL);
 const userRepository = createUserRepository(db);
-const authService = createAuthService({ authClient, adminClient, userRepository });
+const authService = createAuthService({ userRepository });
 const server = createApiServer({
   authService,
-  authMiddleware: createAuthMiddleware(authClient),
-  userRepository,
+  authMiddleware: createAuthMiddleware(authService),
   frontendOrigin: FRONTEND_ORIGIN,
 });
+
+// Limpieza periódica de sesiones vencidas.
+const cleanup = setInterval(() => {
+  userRepository.deleteExpiredSessions().catch((error) => {
+    console.error("No se pudieron borrar las sesiones vencidas:", error);
+  });
+}, 60 * 60 * 1000);
+cleanup.unref();
 
 server.listen(Number(PORT), () => {
   console.log(`VictoriaX API disponible en http://localhost:${PORT}`);
 });
 
 async function shutdown() {
+  clearInterval(cleanup);
   server.close(async (error) => {
     await close();
     if (error) {

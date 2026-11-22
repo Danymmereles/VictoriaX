@@ -1,87 +1,30 @@
 import {
-  integer,
-  json,
-  pgEnum,
-  pgTable,
-  primaryKey,
-  serial,
-  text,
-  timestamp,
-  uuid,
+  char,
+  datetime,
+  mysqlEnum,
+  mysqlTable,
   varchar,
-} from "drizzle-orm/pg-core";
+} from "drizzle-orm/mysql-core";
 
-export const rolUsuario = pgEnum("rol_usuario", ["ADMIN", "DOCENTE", "ALUMNO"]);
-export const estadoResolucion = pgEnum("estado_resolucion", [
-  "PENDIENTE",
-  "ENTREGADO",
-  "REVISADO",
-]);
-export const estadoFeedback = pgEnum("estado_feedback", ["PENDIENTE", "LEIDO"]);
+export const ROLES = ["ADMIN", "DOCENTE", "ALUMNO"];
 
-// These key-only definitions let the requested foreign keys be represented
-// without inventing columns for the existing course and exercise tables.
-export const curso = pgTable("CURSO", {
-  id_curso: serial("id_curso").primaryKey(),
-});
-
-export const ejercicio = pgTable("EJERCICIO", {
-  id_ejercicio: serial("id_ejercicio").primaryKey(),
-});
-
-export const usuario = pgTable("USUARIO", {
-  id_usuario: uuid("id_usuario").primaryKey(),
+export const usuario = mysqlTable("USUARIO", {
+  id_usuario: char("id_usuario", { length: 36 }).primaryKey(),
+  nombre_usuario: varchar("nombre_usuario", { length: 50 }).unique(),
   email: varchar("email", { length: 320 }).notNull().unique(),
   nombre_completo: varchar("nombre_completo", { length: 255 }).notNull(),
-  rol: rolUsuario("rol").notNull().default("ALUMNO"),
+  institucion: varchar("institucion", { length: 100 }).notNull(),
+  rol: mysqlEnum("rol", ROLES).notNull().default("ALUMNO"),
+  password_hash: varchar("password_hash", { length: 255 }).notNull(),
+  fecha_creacion: datetime("fecha_creacion", { fsp: 3 }),
+  fecha_actualizacion: datetime("fecha_actualizacion", { fsp: 3 }),
 });
 
-export const resolucion = pgTable("RESOLUCION", {
-  id_resolucion: serial("id_resolucion").primaryKey(),
-  estado: estadoResolucion("estado").notNull().default("PENDIENTE"),
-  fecha_inicio: timestamp("fecha_inicio", { withTimezone: true }).notNull(),
-  fecha_ultima_modificacion: timestamp("fecha_ultima_modificacion", {
-    withTimezone: true,
-  }).notNull(),
-  id_ejercicio: integer("id_ejercicio")
+export const sesion = mysqlTable("SESION", {
+  id_sesion: char("id_sesion", { length: 64 }).primaryKey(),
+  id_usuario: char("id_usuario", { length: 36 })
     .notNull()
-    .references(() => ejercicio.id_ejercicio),
-  id_usuario_alumno: uuid("id_usuario_alumno")
-    .notNull()
-    .references(() => usuario.id_usuario),
-});
-
-export const feedback = pgTable("FEEDBACK", {
-  id_feedback: serial("id_feedback").primaryKey(),
-  estado: estadoFeedback("estado").notNull().default("PENDIENTE"),
-  comentario: text("comentario").notNull(),
-  fecha_creacion: timestamp("fecha_creacion", { withTimezone: true }).notNull(),
-  id_resolucion: integer("id_resolucion")
-    .notNull()
-    .references(() => resolucion.id_resolucion),
-  id_usuario_docente: uuid("id_usuario_docente")
-    .notNull()
-    .references(() => usuario.id_usuario),
-});
-
-export const cursoUsuario = pgTable("CURSO_USUARIO", {
-  id_curso: integer("id_curso")
-    .notNull()
-    .references(() => curso.id_curso),
-  id_usuario: uuid("id_usuario")
-    .notNull()
-    .references(() => usuario.id_usuario),
-}, (table) => [primaryKey({ columns: [table.id_curso, table.id_usuario] })]);
-
-export const versionModelo = pgTable("VERSION_MODELO", {
-  id_version: serial("id_version").primaryKey(),
-  nombre_version: varchar("nombre_version", { length: 255 }).notNull(),
-  nro_version: integer("nro_version").notNull(),
-  nodos_diagrama: json("nodos_diagrama").notNull(),
-  condiciones_iniciales: json("condiciones_iniciales").notNull(),
-  codigo_transpilado: text("codigo_transpilado").notNull(),
-  fecha_creacion: timestamp("fecha_creacion", { withTimezone: true }).notNull(),
-  id_resolucion: integer("id_resolucion")
-    .notNull()
-    .references(() => resolucion.id_resolucion),
+    .references(() => usuario.id_usuario, { onDelete: "cascade" }),
+  fecha_creacion: datetime("fecha_creacion", { fsp: 3 }),
+  fecha_expiracion: datetime("fecha_expiracion", { fsp: 3 }).notNull(),
 });

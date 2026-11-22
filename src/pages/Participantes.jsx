@@ -1,8 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Search, Users } from "lucide-react";
-import { base44 } from "@/api/base44Client";
-import { authClient, isLocalAuthEnabled } from "@/api/authClient";
+import { authClient } from "@/api/authClient";
 import { useSesionUsuario } from "@/lib/sesionUsuario";
 import { institucionDeUsuario } from "@/lib/instituciones";
 import NavBar from "@/components/home/NavBar";
@@ -39,11 +38,7 @@ export default function Participantes() {
     setCargando(true);
     try {
       setError("");
-      setLista(
-        isLocalAuthEnabled
-          ? await authClient.listUsers()
-          : await base44.entities.Usuario.list(),
-      );
+      setLista(await authClient.listUsers());
     } catch (loadError) {
       setError(loadError.message || "No se pudieron cargar los participantes.");
     } finally {
@@ -90,11 +85,7 @@ export default function Participantes() {
     setSaving(true);
     setError("");
     try {
-      if (isLocalAuthEnabled) {
-        await authClient.updateUser(seleccionado.id, form);
-      } else {
-        await base44.entities.Usuario.update(seleccionado.id, form);
-      }
+      await authClient.updateUser(seleccionado.id, form);
       await cargar();
       setSeleccionado(null);
     } catch (saveError) {

@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "start": "node --env-file=.env src/index.js",
+    "migrate": "node --env-file=.env scripts/migrate.js",
     "seed:local": "node --env-file=.env scripts/seed-local-user.js",
     "test": "node --test"
   },
@@ -11,8 +12,7 @@
     "node": ">=20"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.57.4",
     "drizzle-orm": "^0.44.5",
-    "pg": "^8.16.3"
+    "mysql2": "^3.15.3"
   }
 }

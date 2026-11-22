@@ -26,7 +26,7 @@ export default function Modes() {
       icon: RouteIcon,
       title: "Modo Estudio",
       desc: "Un camino de aprendizaje con ejercicios analizados por la cátedra: resolvelos, envialos y compará tu solución con la resolución propuesta.",
-      bullets: ["Ejercicios curados por la cátedra", "Envío y seguimiento del progreso", "Resolución propuesta al finalizar"],
+      bullets: ["Ejercicios oficiales de la cátedra", "Envío y seguimiento del progreso", "Resolución propuesta al finalizar"],
       img: "https://media.base44.com/images/public/6a71341ab9dae936a9cf65a7/08266ca5c_generated_22613875.png",
       to: usuario ? "/modo-estudio" : "/login",
       cta: usuario ? "Ir a Modo Estudio" : "Iniciar sesión para acceder",

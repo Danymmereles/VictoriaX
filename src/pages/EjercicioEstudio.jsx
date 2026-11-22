@@ -101,7 +101,7 @@ export default function EjercicioEstudio() {
         <h1 className="mt-3 font-heading text-4xl font-semibold tracking-tight">{ejercicio.titulo}</h1>
 
         <article
-          className="prose prose-sm sm:prose-base dark:prose-invert mt-8 max-w-none rounded-2xl border border-border bg-card/40 p-6"
+          className="mt-8 max-w-none rounded-2xl border border-border bg-card/40 p-6 text-[15px] leading-relaxed text-foreground/90 [&_p]:mt-4 [&_p]:first:mt-0 [&_strong]:font-semibold [&_strong]:text-foreground [&_ul]:mt-4 [&_ul]:list-disc [&_ul]:pl-5 [&_li]:mt-2 [&_li]:pl-1 [&_li]:marker:text-primary [&_ul_ul]:mt-2 [&_ul_ul]:pl-5 [&_ul_ul_li]:mt-1 [&_ul_ul_li]:text-[14px] [&_table]:mt-4 [&_table]:w-full [&_table]:border-collapse [&_table]:text-sm [&_th]:border [&_th]:border-border [&_th]:bg-muted/60 [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-semibold [&_td]:border [&_td]:border-border [&_td]:px-3 [&_td]:py-2 [&_img]:mt-4 [&_img]:w-full [&_img]:rounded-xl [&_img]:border [&_img]:border-border/60"
           dangerouslySetInnerHTML={{ __html: ejercicio.consigna_html }}
         />
 

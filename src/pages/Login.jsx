@@ -29,7 +29,7 @@ export default function Login() {
     setLoading(true);
     try {
       await login({ email, password });
-      navigate("/modo-estudio");
+      navigate("/");
     } catch (authError) {
       setError(authError.message || "No se pudo iniciar sesión.");
     } finally {

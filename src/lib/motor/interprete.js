@@ -138,12 +138,13 @@ export class Ejecucion {
                 linea: error.linea,
                 pagina: cima.pagina.titulo,
                 paginaId: cima.pagina.id,
-                nodoId: instruccion.id,
+                // El nodo del diagrama (la vuelta de un Para es el Para)
+                nodoId: instruccion.nodo ?? instruccion.id,
                 texto: instruccion.texto,
             };
         }
 
-        return { paginaId: cima.pagina.id, nodoId: instruccion.id, tipo: instruccion.tipo };
+        return { paginaId: cima.pagina.id, nodoId: instruccion.nodo ?? instruccion.id, tipo: instruccion.tipo };
     }
 
     correr() {

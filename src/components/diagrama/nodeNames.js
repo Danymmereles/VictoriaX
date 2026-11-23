@@ -7,6 +7,7 @@ export const NODE_NAMES = {
     input: "Entrada",
     process: "Asignación",
     decision: "Decisión",
+    for: "Para",
     output: "Salida",
     document: "Resultado",
     io: "Entrada / Salida",

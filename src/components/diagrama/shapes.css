@@ -49,7 +49,14 @@
     stroke: var(--dg-pink-stroke);
 }
 
-/* Líneas internas (barras del Contexto, anillo del Fin): solo trazo */
+/* Para (for): amarillo pastel */
+.flow-shape--for {
+    fill: var(--dg-yellow-fill);
+    stroke: var(--dg-yellow-stroke);
+}
+
+/* Líneas internas (barras del Contexto, anillo del Fin, divisiones
+   del Para): solo trazo */
 .flow-shape__line {
     fill: none;
 }

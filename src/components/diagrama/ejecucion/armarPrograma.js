@@ -11,6 +11,8 @@
 //   - Conectores: cada etiqueta con exactamente una llegada; un Conector
 //     no puede tener flechas que entran y salen;
 //   - nodos vacíos, Entrada y Entrada / Salida (todavía no se ejecutan);
+//   - el Para (for): su ciclo y su salida conectados, y al menos una
+//     flecha que vuelve por la izquierda;
 //   - cada página con al menos un Fin.
 // Los Conectores no llegan al programa: cada salto apunta directo al nodo
 // que sigue a su llegada.
@@ -22,10 +24,11 @@
 //              programa es null.
 // ===========================================================================
 
-import { analizar } from "@/lib/lenguaje";
+import { PARTES_DEL_PARA, analizar } from "@/lib/lenguaje";
 import { FORMATO_PROGRAMA, VERSION_PROGRAMA } from "@/lib/motor/programa.js";
 
 import { describirNodo } from "./caminos.js";
+import { HANDLES_DEL_PARA, analizarNodoPara, esPara, paraVacio, textoDePara } from "../para/para.js";
 
 // Tipo de nodo del editor → tipo y subtipo en el programa, y regla de la
 // BNF de su texto
@@ -38,6 +41,7 @@ const TIPOS = {
     preparation: { tipo: "funcionGenerada", subtipo: "fdp", regla: "fdp" },
     subroutine: { tipo: "funcionGenerada", subtipo: "subrutina", regla: "subrutina" },
     random: { tipo: "funcionGenerada", subtipo: "random", regla: "random" },
+    for: { tipo: "para" },
 };
 
 // Todavía sin comportamiento al ejecutar (BNF: Entrada y Entrada / Salida)
@@ -48,6 +52,9 @@ const SIN_EJECUCION = {
 };
 
 const texto = (node) => String(node.data?.label ?? "");
+
+// Id de la vuelta de un Para en el programa (su entrada de la izquierda)
+export const idDeVuelta = (paraId) => `${paraId}#vuelta`;
 const esConector = (node) => node?.data?.type === "connector";
 const esAncla = (node) => Boolean(node?.data?.anchorOf);
 
@@ -86,10 +93,23 @@ function armarPagina(pagina, errores) {
     const salidas = new Map();   // nodoId → { salida → destino }
     const entradas = new Map();  // nodoId → cantidad de flechas que llegan
 
+    // Nombre de cada punto de salida en el programa
+    const SALIDA = {
+        yes: "si",
+        no: "no",
+        [HANDLES_DEL_PARA.ciclo]: "cuerpo",
+        [HANDLES_DEL_PARA.salida]: "salida",
+    };
+
     pagina.edges.forEach((edge) => {
-        const salida = edge.sourceHandle === "yes" ? "si" : edge.sourceHandle === "no" ? "no" : "siguiente";
-        salidas.set(edge.source, { ...(salidas.get(edge.source) ?? {}), [salida]: edge.target });
-        entradas.set(edge.target, (entradas.get(edge.target) ?? 0) + 1);
+        const salida = SALIDA[edge.sourceHandle] ?? "siguiente";
+        // Lo que vuelve por la izquierda de un Para va a su vuelta
+        const llegada = edge.targetHandle === HANDLES_DEL_PARA.vuelta && esPara(nodos.get(edge.target))
+            ? idDeVuelta(edge.target)
+            : edge.target;
+
+        salidas.set(edge.source, { ...(salidas.get(edge.source) ?? {}), [salida]: llegada });
+        entradas.set(llegada, (entradas.get(llegada) ?? 0) + 1);
     });
 
     // ---- Conectores: llegadas por etiqueta ----
@@ -176,6 +196,11 @@ function armarPagina(pagina, errores) {
 
         const sale = salidas.get(node.id) ?? {};
 
+        if (forma.tipo === "para") {
+            programa.push(...armarPara(node, sale));
+            return;
+        }
+
         // El inicio de la página: el Contexto (Main) o el ancla
         if (esAncla(node) || forma.tipo === "contexto") {
             if (esAncla(node)) {
@@ -234,6 +259,45 @@ function armarPagina(pagina, errores) {
 
         programa.push(nodo);
     });
+
+    // Para (for): dos nodos en el programa, la entrada (arriba) y la
+    // vuelta (izquierda)
+    function armarPara(node, sale) {
+        const contenido = textoDePara(node.data);
+        let arbol = null;
+
+        if (paraVacio(node.data)) {
+            error(node.id, "Un Para está vacío: escribí su variable, el valor inicial y el final.", "sintaxis");
+        } else {
+            const resultado = analizarNodoPara(node.data);
+            if (resultado.ok) {
+                arbol = resultado.arbol;
+            } else {
+                const { campo, mensaje } = resultado.error;
+                error(node.id, `${describirNodo(node)}: ${PARTES_DEL_PARA[campo]}: ${mensaje}`, "sintaxis");
+            }
+        }
+
+        if (!sale.cuerpo || !sale.salida) {
+            error(node.id, `${describirNodo(node)} necesita sus dos salidas conectadas: el ciclo (abajo) y la salida (derecha).`);
+        }
+
+        if (!entradas.get(idDeVuelta(node.id))) {
+            error(node.id, `${describirNodo(node)}: falta la vuelta del ciclo (una flecha que llega por la izquierda).`);
+        }
+
+        return [
+            {
+                id: node.id,
+                tipo: "para",
+                texto: contenido,
+                arbol,
+                cuerpo: sale.cuerpo ? destino(sale.cuerpo, node.id) : null,
+                salida: sale.salida ? destino(sale.salida, node.id) : null,
+            },
+            { id: idDeVuelta(node.id), tipo: "paraVuelta", para: node.id, texto: contenido },
+        ];
+    }
 
     if (!tieneFin) {
         error(null, `La página ${pagina.firma ?? pagina.nombre} no tiene un Fin.`);

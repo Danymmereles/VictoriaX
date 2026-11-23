@@ -68,3 +68,6 @@ export const fdp = (nombre) => ({ tipo: "fdp", nombre });
 export const firma = (nombre, parametros) => ({ tipo: "firma", nombre, parametros });
 
 export const random = (nombre) => ({ tipo: "random", nombre });
+
+// Para (v0.16): variable desde hasta; la variable va de desde a hasta, de a 1
+export const para = (variable, desde, hasta) => ({ tipo: "para", variable, desde, hasta });

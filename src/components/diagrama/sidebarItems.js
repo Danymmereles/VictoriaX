@@ -39,6 +39,8 @@ export const SIDEBAR_ITEMS = [
     { id: "input", type: "input" },
     { id: "process", type: "process" },
     { id: "decision", type: "decision" },
+    // Para (for): variable, valor inicial y valor final (ver para/)
+    { id: "for", type: "for", data: { desde: "", hasta: "" }, label: "Para (for)" },
     { id: "document", type: "document" },
     { id: "io", type: "io" },
     { id: "funcion-generada", type: "preparation", label: FUNCION_GENERADA, opciones: OPCIONES_FUNCION_GENERADA },

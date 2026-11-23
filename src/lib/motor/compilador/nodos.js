@@ -18,7 +18,7 @@
 // ===========================================================================
 
 import { fallar } from "../runtime/errores.js";
-import { copiar, formatear } from "../runtime/valores.js";
+import { copiar, exigirNumero, formatear } from "../runtime/valores.js";
 
 import { compilarExpresion } from "./expresiones.js";
 import { compilarSentencias } from "./sentencias.js";
@@ -26,6 +26,8 @@ import { textoDe } from "./texto.js";
 
 const base = (nodo) => ({
     id: nodo.id,
+    // El nodo del diagrama (la vuelta de un Para es el mismo Para)
+    nodo: nodo.para ?? nodo.id,
     tipo: nodo.tipo,
     subtipo: nodo.subtipo,
     texto: nodo.texto,
@@ -94,6 +96,10 @@ export function compilarNodo(nodo, paginaCompilada) {
             };
         }
 
+        case "para":
+        case "paraVuelta":
+            return compilarPara(nodo);
+
         case "fin":
             return { ...base(nodo), ejecutar: () => ({ fin: true }) };
 
@@ -103,6 +109,59 @@ export function compilarNodo(nodo, paginaCompilada) {
         default:
             throw new Error(`Nodo desconocido: ${nodo.tipo}`);
     }
+}
+
+
+/*
+ * Para (for), como en C: for (V = desde; V <= hasta; V++)
+ *   entrada (arriba):   V = desde
+ *   vuelta (izquierda): V = V + 1
+ * y en los dos casos: si V <= hasta sigue por el cuerpo; si no, por la
+ * salida. El valor final se vuelve a calcular en cada vuelta (puede
+ * depender de variables que cambian en el cuerpo). Al terminar, V queda
+ * en el primer valor que pasa el final.
+ */
+function compilarPara(nodo) {
+    const para = nodo.tipo === "para" ? nodo : nodo.pagina.nodos.get(nodo.para);
+    const { variable, desde, hasta } = para.arbol;
+
+    const valorInicial = compilarExpresion(desde);
+    const valorFinal = compilarExpresion(hasta);
+    const textoInicial = textoDe(desde);
+    const textoFinal = textoDe(hasta);
+
+    const cuerpo = { siguiente: para.cuerpo };
+    const salida = { siguiente: para.salida };
+
+    const seguir = (ctx, valor) => {
+        const final = valorFinal(ctx);
+        exigirNumero(final, `El valor final (${textoFinal})`, "usar en el Para");
+        return valor <= final ? cuerpo : salida;
+    };
+
+    if (nodo.tipo === "para") {
+        return {
+            ...base(nodo),
+            ejecutar(ctx) {
+                const valor = valorInicial(ctx);
+                exigirNumero(valor, `El valor inicial (${textoInicial})`, "usar en el Para");
+                ctx.memoria.escribirContador(variable, valor);
+                return seguir(ctx, valor);
+            },
+        };
+    }
+
+    return {
+        ...base(nodo),
+        texto: para.texto,
+        ejecutar(ctx) {
+            const actual = ctx.memoria.leer(variable);
+            exigirNumero(actual, variable, "sumar 1 en el Para");
+            const valor = actual + 1;
+            ctx.memoria.escribirContador(variable, valor);
+            return seguir(ctx, valor);
+        },
+    };
 }
 
 

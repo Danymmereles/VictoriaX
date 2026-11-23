@@ -13,17 +13,24 @@
 // ===========================================================================
 
 import { NODE_NAMES } from "../nodeNames.js";
+import { esPara, textoDePara } from "../para/para.js";
 
 // Nombre de cada salida, según el punto de conexión (sourceHandle)
 const SALIDAS = {
     yes: "SI",
     no: "NO",
+    // Para (for)
+    ciclo: "ciclo",
 };
 
 const salidaDe = (edge) => SALIDAS[edge.sourceHandle] ?? "salida";
 
 // Asignación "T = TPLL", o "Asignación sin texto"
 export function describirNodo(node) {
+    if (esPara(node)) {
+        return `Para "${textoDePara(node.data)}"`;
+    }
+
     const nombre = NODE_NAMES[node?.data?.type] ?? "nodo";
     const texto = String(node?.data?.label ?? "").trim().replace(/\s*\n\s*/g, " · ");
 

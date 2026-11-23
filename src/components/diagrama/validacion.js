@@ -15,7 +15,10 @@
 //        En el Resultado el vector va entero (TPS);
 //      - a un Random (R1) no se le asigna un valor;
 //      - una Subrutina no choca con otro nombre, usa los mismos parámetros
-//        que su pestaña y no se llama a sí misma (funcionGenerada.js).
+//        que su pestaña y no se llama a sí misma (funcionGenerada.js);
+//      - el Para (v0.16) crea su variable: en su página se puede usar
+//        aunque no esté en la tabla. No puede ser una variable de datos,
+//        un Random, una subrutina ni un vector.
 //   En las pestañas de las variables de datos y de las subrutinas no se
 //   exige que los nombres estén en la tabla (pueden usar variables propias).
 //
@@ -28,6 +31,8 @@
 import { analizar, esNombreDeRandom } from "@/lib/lenguaje";
 import { MAIN_PAGE_ID } from "./pages.js";
 import { problemaDeSubrutina } from "./funcionGenerada.js";
+import { PARTES_DEL_PARA } from "@/lib/lenguaje";
+import { analizarNodoPara, esPara, paraVacio, variablesDeLosPara } from "./para/para.js";
 
 // Tipo de nodo → regla de la BNF
 const REGLA_POR_TIPO = {
@@ -74,9 +79,10 @@ const conLinea = (mensaje, linea, regla) =>
  *   datos:   Set de nombres de variables de datos
  *   contexto: { subrutinas, ocupados } para los nodos Subrutina
  */
-function problemaDeUso({ node, usos, regla, pagina, tabla, datos, contexto }) {
+function problemaDeUso({ node, usos, regla, pagina, tabla, datos, contexto, contadores = new Set() }) {
     const enMain = pagina.id === MAIN_PAGE_ID;
-    const existe = (nombre) => tabla.has(nombre) || datos.has(nombre);
+    // Los Para de la página crean su variable (no hace falta en la tabla)
+    const existe = (nombre) => tabla.has(nombre) || datos.has(nombre) || contadores.has(nombre);
 
     if (regla === "subrutina") {
         // El ancla es la definición: no se compara consigo misma
@@ -99,6 +105,11 @@ function problemaDeUso({ node, usos, regla, pagina, tabla, datos, contexto }) {
         if (datos.has(nombre) && nombre !== pagina.nombre) {
             return `"${nombre}" es una variable de datos: se calcula en su propia pestaña.`;
         }
+    }
+
+    if (regla === "para") {
+        const problema = problemaDeVariableDelPara(usos.asignaciones[0].nombre, { tabla, datos, contexto });
+        if (problema) return problema;
     }
 
     if (enMain) {
@@ -133,6 +144,40 @@ function problemaDeUso({ node, usos, regla, pagina, tabla, datos, contexto }) {
 }
 
 
+// La variable de un Para: no puede ser otra cosa que una variable común
+function problemaDeVariableDelPara(nombre, { tabla, datos, contexto }) {
+    if (datos.has(nombre)) {
+        return `"${nombre}" es una variable de datos: el Para necesita una variable común (por ejemplo, I).`;
+    }
+
+    if (contexto.subrutinas.some((s) => s.nombre === nombre)) {
+        return `"${nombre}" es una subrutina: el Para necesita otro nombre.`;
+    }
+
+    if (tabla.get(nombre)?.esVector) {
+        return `"${nombre}" es un vector: el Para necesita una variable común.`;
+    }
+
+    return null;
+}
+
+// Nodo Para: sus tres partes y el uso de las variables
+function problemaDelPara(node, entorno) {
+    if (paraVacio(node.data)) {
+        return null;
+    }
+
+    const resultado = analizarNodoPara(node.data);
+
+    if (!resultado.ok) {
+        const { campo, mensaje } = resultado.error;
+        return `${PARTES_DEL_PARA[campo]}: ${mensaje}`;
+    }
+
+    return problemaDeUso({ node, usos: resultado.usos, regla: "para", ...entorno });
+}
+
+
 export function problemasDeSintaxis({ nodes, pagina, paginas = [], variables = [] }) {
     const problemas = {};
 
@@ -161,7 +206,16 @@ export function problemasDeSintaxis({ nodes, pagina, paginas = [], variables = [
         },
     };
 
+    // Variables que crean los Para de esta página
+    const contadores = variablesDeLosPara(nodes);
+
     nodes.forEach((node) => {
+        if (esPara(node)) {
+            const problema = problemaDelPara(node, { pagina, tabla, datos, contexto, contadores });
+            if (problema) problemas[node.id] = problema;
+            return;
+        }
+
         const regla = reglaDeNodo(node);
         const texto = String(node.data?.label ?? "");
 
@@ -184,6 +238,7 @@ export function problemasDeSintaxis({ nodes, pagina, paginas = [], variables = [
             tabla,
             datos,
             contexto,
+            contadores,
         });
 
         if (problema) {

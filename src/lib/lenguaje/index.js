@@ -8,6 +8,7 @@
 //   expresiones.js  parser de expresiones por precedencia (Pratt) → árbol
 //   chequeo.js      qué expresión va en cada lugar + reglas de la cátedra
 //   sintaxis.js     cada tipo de nodo: sentencias, listas, firmas
+//   para.js         el nodo Para (variable, desde, hasta)
 //   usos.js         variables que lee y asigna un árbol
 //   ast.js          formas del árbol (AST) que usa el motor
 //   funciones.js    catálogo de funciones (vacío en esta versión: LN, EXP...)
@@ -29,6 +30,7 @@ export {
 } from "./nombres.js";
 export { ErrorDeSintaxis, tokenizar } from "./lexico.js";
 export { TIPOS_DE_TEXTO, analizar } from "./sintaxis.js";
+export { PARTES_DEL_PARA, analizarPara, textoDelPara } from "./para.js";
 export { REGLAS_DE_LA_CATEDRA } from "./chequeo.js";
 export { NIVEL } from "./operadores.js";
 export { FUNCIONES, buscarFuncion } from "./funciones.js";

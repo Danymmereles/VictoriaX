@@ -19,6 +19,10 @@ export class Nodo {
         this.siguiente = datos.siguiente ?? null;
         this.si = datos.si ?? null;
         this.no = datos.no ?? null;
+        // Para (for): cuerpo y salida; su vuelta apunta al Para
+        this.cuerpo = datos.cuerpo ?? null;
+        this.salida = datos.salida ?? null;
+        this.para = datos.para ?? null;
     }
 }
 

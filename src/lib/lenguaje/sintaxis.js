@@ -10,6 +10,9 @@
 //         "fdp"        un nombre (Función Generada tipo fdp)
 //         "subrutina"  nombre(parametros) (Función Generada tipo Subrutina)
 //         "random"     R1, R2... (Función Generada tipo Random)
+//         "contador"   un nombre: la variable del Para (sección 5d)
+//         "expresion"  una cuenta: los valores inicial y final del Para
+// El Para tiene tres partes y se analiza con analizarPara() (para.js).
 //
 // Devuelve:
 //   { ok: true, arbol, usos }
@@ -31,7 +34,7 @@ import { chequear, REGLAS_DE_LA_CATEDRA } from "./chequeo.js";
 import { Cursor, describir } from "./cursor.js";
 import { parsearExpresion, variable } from "./expresiones.js";
 import { ErrorDeSintaxis, tokenizar } from "./lexico.js";
-import { motivoNombreRandomInvalido } from "./nombres.js";
+import { esNombreDeRandom, motivoNombreRandomInvalido } from "./nombres.js";
 import { NIVEL } from "./operadores.js";
 import { usosDe } from "./usos.js";
 
@@ -222,6 +225,54 @@ function random(c) {
 }
 
 
+// ---------------- Para (v0.16, sección 5d) ----------------
+
+// La variable que va iterando: un nombre común (I, J, V…)
+function contador(c) {
+    if (!c.es("nombre")) {
+        if (c.es("reservada")) c.error(`${c.actual.valor} es una palabra reservada.`);
+        if (c.es("fin")) c.error("Falta la variable (por ejemplo, I).");
+        c.error("La variable es un nombre: letras, números y _, sin empezar con número (por ejemplo, I).");
+    }
+
+    const motivo = esNombreDeRandom(c.actual.valor)
+        ? `${c.actual.valor} está reservado para los nodos Random: usá otro nombre (por ejemplo, I).`
+        : null;
+
+    if (motivo) {
+        c.error(motivo);
+    }
+
+    const nombre = c.avanzar().valor;
+
+    if (c.esOp("[")) {
+        c.error("La variable es común, sin [ ] (no puede ser la posición de un vector).");
+    }
+
+    if (!c.es("fin")) {
+        c.error("La variable es un solo nombre, sin espacios.");
+    }
+
+    return ast.etiqueta(nombre);
+}
+
+// Un valor numérico: número, variable o cuenta (9, N, N - 1)
+function expresion(c, chequearEn) {
+    if (c.es("fin")) {
+        c.error("Falta el valor (un número, una variable o una cuenta).");
+    }
+
+    const arbol = parsearExpresion(c);
+
+    if (!c.es("fin")) {
+        c.error(`Sobra ${describir(c.actual)} al final.`);
+    }
+
+    chequearEn(arbol, "cuenta");
+    return arbol;
+}
+
+
 // ---------------- Entrada ----------------
 
 const PARSERS = {
@@ -233,6 +284,8 @@ const PARSERS = {
     fdp: llamadaFdp,
     subrutina: firmaDeSubrutina,
     random,
+    contador,
+    expresion,
 };
 
 export const TIPOS_DE_TEXTO = Object.keys(PARSERS);

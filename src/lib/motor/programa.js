@@ -30,7 +30,15 @@
 //   funcionGenerada  subtipo "fdp" (llama a la página de datos con ese
 //                    nombre), "subrutina" (firma; llama a la página de la
 //                    subrutina) o "random" (R1); siguiente
+//   para             Para (for, v0.16): árbol { tipo: "para", variable,
+//                    desde, hasta }; cuerpo, salida. Es la entrada de
+//                    arriba: la variable toma el valor inicial
+//   paraVuelta       la vuelta del cuerpo (entrada de la izquierda del
+//                    mismo Para): para = id del Para; suma 1 a la variable.
+//                    Su id es "<id del Para>#vuelta"
 //   fin              sin salidas
+// Los dos del Para siguen por cuerpo mientras variable <= hasta, y por
+// salida cuando la pasa.
 // Los Conectores ya vienen resueltos: no aparecen.
 //
 // Las expresiones pueden tener llamadas a funciones ({ tipo: "llamada" });
@@ -44,7 +52,22 @@
 export const FORMATO_PROGRAMA = "victoriax-programa";
 export const VERSION_PROGRAMA = 1;
 
-const TIPOS_DE_NODO = ["contexto", "asignacion", "decision", "resultado", "funcionGenerada", "fin"];
+const TIPOS_DE_NODO = ["contexto", "asignacion", "decision", "resultado", "funcionGenerada", "para", "paraVuelta", "fin"];
+
+// Hacia dónde puede seguir cada nodo
+function destinosDe(nodo) {
+    switch (nodo.tipo) {
+        case "fin":
+        case "paraVuelta": // sigue como su Para
+            return [];
+        case "decision":
+            return [nodo.si, nodo.no];
+        case "para":
+            return [nodo.cuerpo, nodo.salida];
+        default:
+            return [nodo.siguiente];
+    }
+}
 const SUBTIPOS = ["fdp", "subrutina", "random"];
 
 export class ErrorDePrograma extends Error {
@@ -95,12 +118,19 @@ export function validarPrograma(json) {
                 return;
             }
 
-            const destinos =
-                nodo.tipo === "fin" ? [] : nodo.tipo === "decision" ? [nodo.si, nodo.no] : [nodo.siguiente];
-
-            destinos.forEach((destino) => {
+            destinosDe(nodo).forEach((destino) => {
                 if (!ids.has(destino)) p(`El nodo ${nodo.id} sigue hacia ${destino}, que no existe ${en}.`);
             });
+
+            if (nodo.tipo === "paraVuelta") {
+                const para = pagina.nodos.find((n) => n.id === nodo.para);
+                if (para?.tipo !== "para") p(`La vuelta ${nodo.id} no corresponde a un Para ${en}.`);
+                return;
+            }
+
+            if (nodo.tipo === "para" && nodo.arbol?.tipo !== "para") {
+                p(`El Para ${nodo.id} no tiene su variable y sus valores ${en}.`);
+            }
 
             if (nodo.tipo !== "fin" && !nodo.arbol) {
                 p(`El nodo ${nodo.id} no tiene árbol ${en}.`);

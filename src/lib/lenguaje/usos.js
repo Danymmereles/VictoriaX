@@ -53,6 +53,12 @@ export function usosDe(arbol) {
                 usos.lecturas.push({ nombre, indexada: false, entera: true })
             );
             break;
+        case "para":
+            // Asigna la variable (al empezar y en cada vuelta) y la lee (+ 1)
+            usos.asignaciones.push({ nombre: arbol.variable, indexada: false });
+            leer(arbol.desde);
+            leer(arbol.hasta);
+            break;
         case "firma":
             usos.subrutina = { nombre: arbol.nombre, parametros: arbol.parametros };
             break;

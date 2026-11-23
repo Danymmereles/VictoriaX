@@ -9,6 +9,8 @@ import { FlowShape } from "./shapes";
 import { useHistory } from "./HistoryContext";
 import { usePageContext } from "./PageContext";
 import { END_NODE_TYPE, NODE_NAMES, placeholderDe } from "./nodeNames";
+import NodoPara from "./para/NodoPara";
+import { TIPO_PARA } from "./para/para.js";
 import "./CustomNode.css";
 
 /*
@@ -126,7 +128,15 @@ function ConnectorHandle({ side }) {
     );
 }
 
-export default function CustomNode({ id, data, selected }) {
+/*
+ * Todos los nodos son de tipo "custom" en React Flow; el Para (for) tiene
+ * su propio componente porque se edita en tres partes (ver para/).
+ */
+export default function CustomNode(props) {
+    return props.data?.type === TIPO_PARA ? <NodoPara {...props} /> : <NodoComun {...props} />;
+}
+
+function NodoComun({ id, data, selected }) {
     const { setNodes } = useReactFlow();
     const { takeSnapshot } = useHistory();
     const { nodeIssues, validateLabel } = usePageContext();

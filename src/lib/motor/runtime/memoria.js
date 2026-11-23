@@ -11,7 +11,9 @@
 //     se crea al asignarla y arranca de cero en cada llamada; leerla antes
 //     de asignarla es un error;
 //   - los parámetros de una subrutina son variables propias de su marco;
-//   - en Main todo tiene que estar en la tabla.
+//   - en Main todo tiene que estar en la tabla, salvo la variable de un
+//     Para, que el Para crea si no existe (global en Main, propia en las
+//     pestañas).
 // Al leer o escribir se busca primero en el marco y después en las globales.
 //
 // Vectores: todas las posiciones arrancan con el valor de la tabla. Si la
@@ -165,6 +167,31 @@ export class Memoria {
     // Solo el nodo Random escribe un Random
     escribirRandom(nombre, valor) {
         this.globales.set(nombre, valor);
+    }
+
+    // Variable de un Para (for): usa la que existe (propia o global) o la
+    // crea: en Main como global, en una pestaña como propia
+    escribirContador(nombre, valor) {
+        const { locales, asignadas, pagina } = this.marco;
+
+        if (this.randoms.has(nombre)) {
+            fallar(`${nombre} es un Random: el Para necesita otra variable.`);
+        }
+
+        if (locales.has(nombre)) {
+            locales.set(nombre, valor);
+        } else if (this.globales.has(nombre)) {
+            if (esVector(this.globales.get(nombre))) {
+                fallar(`${nombre} es un vector: el Para necesita una variable común.`);
+            }
+            this.globales.set(nombre, valor);
+        } else if (pagina.tipo === "main") {
+            this.globales.set(nombre, valor);
+        } else {
+            locales.set(nombre, valor);
+        }
+
+        asignadas.add(nombre);
     }
 
     // Parámetros de una subrutina, al entrar a su página

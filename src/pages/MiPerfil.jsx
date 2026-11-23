@@ -94,7 +94,7 @@ export default function MiPerfil() {
 
         <div className="mt-10 rounded-2xl border border-border bg-card p-8">
           {error && (
-            <p className="mb-6 rounded-lg bg-destructive/10 px-4 py-3 text-sm text-destructive">{error}</p>
+            <p className="mb-6 rounded-lg bg-destructive/10 dark:bg-destructive/20 px-4 py-3 text-sm text-destructive">{error}</p>
           )}
           <PerfilForm
             usuario={usuario}

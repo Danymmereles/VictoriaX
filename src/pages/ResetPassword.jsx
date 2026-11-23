@@ -62,7 +62,7 @@ export default function ResetPassword() {
       footer={<Link to="/login" className="font-medium text-primary hover:underline">Volver a iniciar sesión</Link>}
     >
       {error && (
-        <div className="mb-4 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
+        <div className="mb-4 p-3 rounded-lg bg-destructive/10 dark:bg-destructive/20 text-destructive text-sm">
           {error}
         </div>
       )}

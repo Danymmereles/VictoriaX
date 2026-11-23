@@ -234,7 +234,7 @@ export default function OAuthConsent() {
   if (reconnect) {
     return (
       <AuthLayout icon={ShieldCheck} title="Reconnect required">
-        <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
+        <div className="p-3 rounded-lg bg-destructive/10 dark:bg-destructive/20 text-destructive text-sm">
           {reconnect}
         </div>
       </AuthLayout>
@@ -247,7 +247,7 @@ export default function OAuthConsent() {
   if (error && !info) {
     return (
       <AuthLayout icon={ShieldCheck} title="Authorize access">
-        <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
+        <div className="p-3 rounded-lg bg-destructive/10 dark:bg-destructive/20 text-destructive text-sm">
           {error}
         </div>
       </AuthLayout>
@@ -264,7 +264,7 @@ export default function OAuthConsent() {
       subtitle={`${client} wants to access ${appName} on your behalf`}
     >
       {error && (
-        <div className="mb-4 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
+        <div className="mb-4 p-3 rounded-lg bg-destructive/10 dark:bg-destructive/20 text-destructive text-sm">
           {error}
         </div>
       )}

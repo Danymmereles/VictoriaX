@@ -25,6 +25,7 @@ export function textoDe(a, padre = 0) {
         }
         case "logica": return entre(a.operandos.map((o) => textoDe(o, 2)).join(` ${a.op} `), 1);
         case "negacion": return `NOT (${textoDe(a.operando)})`;
+        case "llamada": return `${a.nombre}(${a.argumentos.map((x) => textoDe(x)).join("; ")})`;
         default: return "?";
     }
 }

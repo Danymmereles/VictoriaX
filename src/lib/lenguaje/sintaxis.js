@@ -93,6 +93,7 @@ function sentencia(c, chequearEn) {
 
     if (!c.finDeLinea()) {
         if (c.esOp("=")) c.error("Va una sola asignación por línea.");
+        if (c.esOp(";")) c.error("Va una sentencia por línea: no se usa ;.");
         c.error(`Sobra ${describir(c.actual)}: va una sentencia por línea.`);
     }
 

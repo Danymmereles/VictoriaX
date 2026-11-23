@@ -18,6 +18,7 @@
 
 import * as ast from "./ast.js";
 import { describir } from "./cursor.js";
+import { SEPARADOR_DE_ARGUMENTOS, buscarFuncion, rangoDeArgumentos } from "./funciones.js";
 import { NIVEL, esComparacion, operadorBinario, operadorPrefijo } from "./operadores.js";
 
 const ubicar = (nodo, inicio, fin) => ({ ...nodo, rango: [inicio, fin] });
@@ -111,9 +112,16 @@ export function variable(c) {
     const t = c.avanzar();
     const nombre = t.valor;
 
-    // Una llamada dentro de una cuenta: RND() ya no existe (v0.15) y las
+    // Una llamada dentro de una cuenta: solo a las funciones del catálogo
+    // (vacío en esta versión). RND() ya no existe (v0.15) y las
     // subrutinas se llaman con su propio nodo
     if (c.esOp("(")) {
+        const funcion = buscarFuncion(nombre);
+
+        if (funcion) {
+            return llamada(c, t, funcion);
+        }
+
         c.error(
             nombre.toUpperCase() === "RND"
                 ? "RND() ya no se usa: agregá un nodo Random (R1) y usá su nombre."
@@ -137,4 +145,33 @@ export function variable(c) {
     }
 
     return ubicar(ast.variable(nombre, indice), t.inicio, c.anterior.fin);
+}
+
+// NOMBRE(arg1; arg2): una función del catálogo (ver funciones.js)
+function llamada(c, t, funcion) {
+    const nombre = t.valor.toUpperCase();
+    const argumentos = [];
+
+    c.avanzar(); // (
+
+    if (!c.esOp(")")) {
+        do {
+            argumentos.push(parsearExpresion(c));
+
+            if (c.esOp(",")) {
+                c.error(`Los argumentos de ${nombre} van separados por ${SEPARADOR_DE_ARGUMENTOS} (la coma es el decimal).`);
+            }
+        } while (c.esOp(SEPARADOR_DE_ARGUMENTOS) && c.avanzar());
+    }
+
+    c.esperarOp(")", `Falta cerrar el paréntesis de ${nombre}(...).`);
+
+    const [minimo, maximo] = rangoDeArgumentos(funcion);
+
+    if (argumentos.length < minimo || argumentos.length > maximo) {
+        const cuantos = minimo === maximo ? `${minimo}` : `entre ${minimo} y ${maximo}`;
+        c.error(`${nombre} lleva ${cuantos} ${maximo === 1 ? "argumento" : "argumentos"}.`, t);
+    }
+
+    return ubicar(ast.llamada(nombre, argumentos), t.inicio, c.anterior.fin);
 }

@@ -34,6 +34,7 @@ function clase(nodo) {
         case "numero":
         case "unario":
         case "binario":
+        case "llamada": // por ahora solo funciones numéricas (funciones.js)
             return "cuenta";
         case "comparacion":
         case "logica":
@@ -137,6 +138,9 @@ export function chequear(arbol, lugar, { texto, reglas = REGLAS_DE_LA_CATEDRA })
                 break;
             case "negacion":
                 revisar(nodo.operando, "condicion", nodo);
+                break;
+            case "llamada":
+                nodo.argumentos.forEach((a) => revisar(a, "cuenta", nodo));
                 break;
             default:
                 break;

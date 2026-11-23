@@ -34,7 +34,7 @@ const VERBOS = {
     "^": "calcular la potencia",
 };
 
-function exigirNumero(v, texto, verbo) {
+export function exigirNumero(v, texto, verbo) {
     if (esNumero(v)) return;
 
     if (v === null) {
@@ -48,7 +48,7 @@ function exigirNumero(v, texto, verbo) {
     fallar(`${texto} vale ${formatear(v)}: para ${verbo} hace falta un número.`);
 }
 
-function resultadoReal(r, descripcion) {
+export function resultadoReal(r, descripcion) {
     if (!Number.isFinite(r)) {
         fallar(`${descripcion} no da un número real.`);
     }

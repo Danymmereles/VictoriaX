@@ -8,7 +8,9 @@
 // ctx: { memoria } (ver interprete.js)
 // ===========================================================================
 
-import { aritmetica, comparar, exigirLogico, negativo } from "../runtime/valores.js";
+import { fallar } from "../runtime/errores.js";
+import { implementacionDe } from "../runtime/funciones.js";
+import { aritmetica, comparar, exigirLogico, exigirNumero, negativo, resultadoReal } from "../runtime/valores.js";
 
 import { textoDe } from "./texto.js";
 
@@ -76,6 +78,27 @@ export function compilarExpresion(a) {
             const operando = compilarExpresion(a.operando);
             const texto = textoDe(a.operando);
             return (ctx) => !exigirLogico(operando(ctx), texto, "NOT");
+        }
+
+        // Función del catálogo (vacío en esta versión, ver runtime/funciones.js)
+        case "llamada": {
+            const funcion = implementacionDe(a.nombre);
+            if (!funcion) {
+                fallar(`La función ${a.nombre} no existe en esta versión.`);
+            }
+
+            const argumentos = a.argumentos.map(compilarExpresion);
+            const textos = a.argumentos.map((x) => textoDe(x));
+            const texto = textoDe(a);
+
+            return (ctx) => {
+                const valores = argumentos.map((argumento, i) => {
+                    const v = argumento(ctx);
+                    exigirNumero(v, textos[i], `calcular ${a.nombre}`);
+                    return v;
+                });
+                return resultadoReal(funcion(...valores), texto);
+            };
         }
 
         default:

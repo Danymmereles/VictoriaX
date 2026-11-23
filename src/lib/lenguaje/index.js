@@ -10,6 +10,7 @@
 //   sintaxis.js     cada tipo de nodo: sentencias, listas, firmas
 //   usos.js         variables que lee y asigna un árbol
 //   ast.js          formas del árbol (AST) que usa el motor
+//   funciones.js    catálogo de funciones (vacío en esta versión: LN, EXP...)
 //   nombres.js      qué nombres son válidos (siglas, variables, etiquetas)
 //
 // Lógica pura, sin React. La usan el Análisis Previo (lib/analisisPrevio.js),
@@ -30,4 +31,5 @@ export { ErrorDeSintaxis, tokenizar } from "./lexico.js";
 export { TIPOS_DE_TEXTO, analizar } from "./sintaxis.js";
 export { REGLAS_DE_LA_CATEDRA } from "./chequeo.js";
 export { NIVEL } from "./operadores.js";
+export { FUNCIONES, buscarFuncion } from "./funciones.js";
 export * as ast from "./ast.js";

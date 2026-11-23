@@ -11,6 +11,7 @@
 // como un espacio). Los operadores más largos se leen primero.
 // ===========================================================================
 
+import { SEPARADOR_DE_ARGUMENTOS, hayFunciones } from "./funciones.js";
 import { esPalabraReservada } from "./nombres.js";
 
 export class ErrorDeSintaxis extends Error {
@@ -106,6 +107,14 @@ export function tokenizar(texto) {
                 token("nombre", palabra, i, i + palabra.length);
             }
             i += palabra.length;
+            continue;
+        }
+
+        // ";" separa los argumentos de una función. Mientras no haya
+        // funciones (ver funciones.js) sigue siendo un error con su consejo
+        if (c === SEPARADOR_DE_ARGUMENTOS && hayFunciones()) {
+            token("op", c, i, i + 1);
+            i++;
             continue;
         }
 

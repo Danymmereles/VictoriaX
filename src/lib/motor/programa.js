@@ -33,6 +33,10 @@
 //   fin              sin salidas
 // Los Conectores ya vienen resueltos: no aparecen.
 //
+// Las expresiones pueden tener llamadas a funciones ({ tipo: "llamada" });
+// en esta versión no hay ninguna (ver lib/motor/runtime/funciones.js) y el
+// compilador rechaza una que no conozca.
+//
 // validarPrograma(json) → lista de problemas (vacía si se puede cargar).
 // Es la verificación del cargador: no confía en quien armó el JSON.
 // ===========================================================================

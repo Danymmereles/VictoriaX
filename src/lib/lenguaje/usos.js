@@ -32,6 +32,9 @@ export function usosDe(arbol) {
             case "logica":
                 a.operandos.forEach(leer);
                 break;
+            case "llamada":
+                a.argumentos.forEach(leer);
+                break;
             default:
                 break;
         }

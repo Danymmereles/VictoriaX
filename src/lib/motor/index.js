@@ -18,7 +18,8 @@
 //   RESULTADO               (estado, salidas de los Resultado, variables, error)
 //
 //   runtime/  valores y operaciones, memoria (globales y marcos), Random
-//             con semilla y errores de ejecución.
+//             con semilla, errores de ejecución y funciones (vacío en
+//             esta versión: LN, EXP... van en runtime/funciones.js).
 //
 // El texto de cada nodo ya viene analizado (su árbol, lib/lenguaje/ast.js),
 // así que el motor no depende del parser.

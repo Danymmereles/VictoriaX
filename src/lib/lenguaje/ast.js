@@ -14,6 +14,7 @@
 //   { tipo: "comparacion", op, izq, der }         op: < <= > >= == !=
 //   { tipo: "logica", op, operandos }             op: AND | OR (dos o más operandos)
 //   { tipo: "negacion", operando }                NOT (...)
+//   { tipo: "llamada", nombre, argumentos }       LN(X) (sin uso todavía, ver funciones.js)
 //
 // Sentencias (Asignación y Contexto), con la línea donde están
 //   { tipo: "asignacion", destino, valor, linea }       T = TPLL
@@ -47,6 +48,8 @@ export const comparacion = (op, izq, der) => ({ tipo: "comparacion", op, izq, de
 export const logica = (op, operandos) => ({ tipo: "logica", op, operandos });
 
 export const negacion = (operando) => ({ tipo: "negacion", operando });
+
+export const llamada = (nombre, argumentos) => ({ tipo: "llamada", nombre, argumentos });
 
 export const asignacion = (destino, valor, linea) => ({ tipo: "asignacion", destino, valor, linea });
 

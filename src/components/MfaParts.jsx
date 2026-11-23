@@ -212,7 +212,7 @@ export function MfaNotice({ error, signInPath = "/login" }) {
   if (!error) return null;
   const returnTo = safeReturnTo();
   return (
-    <div role="alert" className="mb-4 p-3 rounded-lg bg-destructive/10 text-destructive text-sm text-center">
+    <div role="alert" className="mb-4 p-3 rounded-lg bg-destructive/10 dark:bg-destructive/20 text-destructive text-sm text-center">
       {error.mustSignInAgain ? (
         <>
           Your sign-in expired.{" "}

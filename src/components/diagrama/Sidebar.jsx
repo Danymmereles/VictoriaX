@@ -4,6 +4,7 @@ import EdgeTypeSelector from "./EdgeTypeSelector";
 import HistoryControls from "./HistoryControls";
 import { SIDEBAR_ITEMS } from "./sidebarItems";
 import BackToAnalysisLink from "./BackToAnalysisLink";
+import ImportarBoton from "./importar/ImportarBoton";
 import FuncionGeneradaMenu from "./FuncionGeneradaMenu";
 import ExportMenu from "./exportar/ExportMenu";
 import "./Sidebar.css";
@@ -64,7 +65,7 @@ function SidebarItem({ item }) {
     );
 }
 
-export default function Sidebar({ edgeType, onEdgeTypeChange, onRun, onExport, hasDiagram }) {
+export default function Sidebar({ edgeType, onEdgeTypeChange, onRun, onExport, onImport, hasDiagram }) {
     return (
         <aside className="sidebar">
             <BackToAnalysisLink hasDiagram={hasDiagram} />
@@ -82,9 +83,14 @@ export default function Sidebar({ edgeType, onEdgeTypeChange, onRun, onExport, h
                 ))}
             </div>
 
-            {/* Exportar (PNG, JPG, JSON) y Ejecutar (abre la vista de ejecución) */}
+            {/* Importar / Exportar (en la misma fila) y Ejecutar */}
             <div className="sidebar-footer">
-                {onExport && <ExportMenu onExport={onExport} />}
+                {(onImport || onExport) && (
+                    <div className="sidebar-archivos">
+                        {onImport && <ImportarBoton onImport={onImport} />}
+                        {onExport && <ExportMenu onExport={onExport} />}
+                    </div>
+                )}
 
                 <button
                     type="button"

@@ -97,6 +97,7 @@ export default function ExportMenu({ onExport }) {
                 aria-haspopup="menu"
                 aria-expanded={abierto}
                 disabled={trabajando}
+                aria-busy={trabajando}
                 title={
                     puedeElegirCarpeta()
                         ? "Exportar: elegís el formato y dónde guardarlo"
@@ -108,7 +109,8 @@ export default function ExportMenu({ onExport }) {
                     <path d="M7 10 L12 15 L17 10" />
                     <path d="M5 19 H19" />
                 </svg>
-                <span>{trabajando ? "Exportando…" : "Exportar"}</span>
+                {/* Mientras exporta, el botón queda desactivado */}
+                <span>Exportar</span>
             </button>
 
             {mensaje && (

@@ -63,6 +63,9 @@ import {
     sincronizarConAnalisis,
     variablesRandom,
 } from "../components/diagrama/variables.js";
+// Importar un diagrama guardado (JSON de Exportar)
+import { leerDiagrama, tablaDelArchivo } from "../components/diagrama/importar/leerDiagrama.js";
+import { EDGE_TYPES } from "../components/diagrama/EdgeTypeSelector.jsx";
 import CustomNode from "../components/diagrama/CustomNode.jsx";
 // Flechas editables (quiebres, tramos y curvas, como en Lucidchart)
 import { edgeTypes } from "../components/diagrama/edges/index.js";
@@ -533,6 +536,77 @@ function Flow({ active = true, onRun, revisionRef }) {
         );
 
 
+    // Botón Importar: reemplaza todo el diagrama por el de un JSON
+    // exportado. Las pestañas de datos salen del Análisis Previo actual
+    // (las del archivo se ubican por nombre) y la tabla también se
+    // sincroniza con él. Ver importar/leerDiagrama.js.
+    const importar = useCallback(
+        async (texto) => {
+            const leido = leerDiagrama(texto, {
+                funciones,
+                tiposDeFlecha: EDGE_TYPES.map((t) => t.type),
+            });
+
+            if (!leido.ok) {
+                return { error: leido.error };
+            }
+
+            if (
+                hasDiagram &&
+                !window.confirm(
+                    "¿Reemplazar el diagrama actual por el del archivo? Se pierde lo que no hayas exportado."
+                )
+            ) {
+                return { importado: false };
+            }
+
+            const { main, datos, subrutinas: importadas, variables: tabla, edgeType: tipo } =
+                leido.diagrama;
+            const avisos = [...leido.avisos];
+
+            // Variables del Análisis Previo: mandan las del análisis actual
+            // (con el valor inicial del archivo)
+            const { variables: nuevasVariables, fuera } = tablaDelArchivo(tabla, analisis);
+
+            if (fuera.length > 0) {
+                avisos.push(
+                    `No están en el Análisis Previo actual (no se importaron): ${fuera.join(", ")}.`
+                );
+            }
+
+            pagesStoreRef.current = {
+                ...Object.fromEntries(
+                    Object.entries(datos).map(([id, pagina]) => [id, { ...pagina, viewport: null }])
+                ),
+                ...Object.fromEntries(
+                    importadas.map((s) => [s.id, { nodes: s.nodes, edges: s.edges, viewport: null }])
+                ),
+            };
+
+            setSubrutinas(
+                importadas.map(({ id, nombre, parametros }) => ({ id, nombre, parametros }))
+            );
+            setVariables(nuevasVariables);
+            setEdgeType(tipo);
+
+            setNodes(main.nodes);
+            setEdges(main.edges);
+            setActivePage(MAIN_PAGE_ID);
+            setViewport(initialViewport(main.nodes, canvasRef.current?.clientWidth ?? 0));
+
+            // Deshacer no vuelve al diagrama anterior
+            history.reset();
+            setShowNotice(false);
+            setStoreVersion((v) => v + 1);
+
+            return { importado: true, avisos };
+        },
+        // hasDiagram cambia en cada render: se lee el de este render
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [funciones, analisis, hasDiagram, history, setNodes, setEdges, setViewport]
+    );
+
+
     // Cambiar el tipo de todos los conectores existentes
     // (en todas las páginas)
     const changeEdgeType = useCallback(
@@ -697,6 +771,7 @@ function Flow({ active = true, onRun, revisionRef }) {
                     onEdgeTypeChange={changeEdgeType}
                     onRun={onRun}
                     onExport={exportar}
+                    onImport={importar}
                     hasDiagram={hasDiagram}
                 />
 

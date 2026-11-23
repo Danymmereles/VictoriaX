@@ -41,7 +41,17 @@ async function readJson(request) {
   return body;
 }
 
+// Acepta un origen o varios separados por coma (ej. local + sitio publicado).
+export function parseOrigins(value) {
+  return new Set(
+    (Array.isArray(value) ? value : String(value ?? "").split(","))
+      .map((origin) => origin.trim().replace(/\/$/, ""))
+      .filter(Boolean),
+  );
+}
+
 export function createApiServer({ authService, authMiddleware, frontendOrigin }) {
+  const allowedOrigins = parseOrigins(frontendOrigin);
   // Rutas protegidas: [método, patrón, handler(request, response, params)].
   const protectedRoutes = [
     ["GET", /^\/api\/auth\/me$/, async (request, response) => {
@@ -68,12 +78,12 @@ export function createApiServer({ authService, authMiddleware, frontendOrigin })
 
   return createServer(async (request, response) => {
     const origin = request.headers.origin;
-    if (origin && origin !== frontendOrigin) {
+    if (origin && !allowedOrigins.has(origin)) {
       sendJson(response, 403, { error: "Origen no permitido." });
       return;
     }
     if (origin) {
-      response.setHeader("access-control-allow-origin", frontendOrigin);
+      response.setHeader("access-control-allow-origin", origin);
       response.setHeader("vary", "Origin");
       response.setHeader("access-control-allow-headers", "authorization, content-type");
       response.setHeader("access-control-allow-methods", "GET, POST, PATCH, OPTIONS");

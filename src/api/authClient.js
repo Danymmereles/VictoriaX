@@ -6,7 +6,13 @@ import {
   startSessionExpiry,
 } from "@/api/sessionExpiry";
 
-const API_URL = (import.meta.env.VITE_API_URL || "http://localhost:3001").replace(/\/$/, "");
+// En desarrollo local se usa la API de la PC; publicado, la del dominio (vía Cloudflare Tunnel).
+// VITE_API_URL permite forzar otra URL.
+const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]"]);
+const DEFAULT_API_URL = LOCAL_HOSTS.has(globalThis.location?.hostname)
+  ? "http://localhost:3001"
+  : "https://api.victoriax-simulate.com";
+const API_URL = (import.meta.env.VITE_API_URL || DEFAULT_API_URL).replace(/\/$/, "");
 const TOKEN_KEY = "victoriax-access-token";
 
 const ROL_APP = { ADMIN: "ADMINISTRADOR", DOCENTE: "DOCENTE", ALUMNO: "ESTUDIANTE" };

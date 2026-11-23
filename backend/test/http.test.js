@@ -115,3 +115,21 @@ test("foreign origins are rejected", async (t) => {
   });
   assert.equal(response.status, 403);
 });
+
+test("several comma-separated origins are allowed", async (t) => {
+  const server = createApiServer({
+    authService: {},
+    authMiddleware: async () => {},
+    frontendOrigin: "http://localhost:5173, https://victoria-x.base44.app/",
+  });
+  server.listen(0, "127.0.0.1");
+  await once(server, "listening");
+  t.after(() => new Promise((resolve) => server.close(resolve)));
+  const baseUrl = `http://127.0.0.1:${server.address().port}`;
+  const preflight = await fetch(`${baseUrl}/api/auth/login`, {
+    method: "OPTIONS",
+    headers: { origin: "https://victoria-x.base44.app" },
+  });
+  assert.equal(preflight.status, 204);
+  assert.equal(preflight.headers.get("access-control-allow-origin"), "https://victoria-x.base44.app");
+});

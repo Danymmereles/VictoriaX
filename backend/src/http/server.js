@@ -1,7 +1,9 @@
 import { createServer } from "node:http";
 import { AuthenticationError } from "../auth/errors.js";
+import { toPublicUser } from "../auth/service.js";
 
 const BODY_LIMIT_BYTES = 1_048_576;
+const USUARIO_PATH = /^\/api\/usuarios\/([0-9a-f-]{36})$/i;
 
 function sendJson(response, statusCode, body) {
   response.writeHead(statusCode, {
@@ -39,23 +41,52 @@ async function readJson(request) {
   return body;
 }
 
-export function createApiServer({
-  authService,
-  authMiddleware,
-  userRepository,
-  frontendOrigin,
-}) {
+// Acepta un origen o varios separados por coma (ej. local + sitio publicado).
+export function parseOrigins(value) {
+  return new Set(
+    (Array.isArray(value) ? value : String(value ?? "").split(","))
+      .map((origin) => origin.trim().replace(/\/$/, ""))
+      .filter(Boolean),
+  );
+}
+
+export function createApiServer({ authService, authMiddleware, frontendOrigin }) {
+  const allowedOrigins = parseOrigins(frontendOrigin);
+  // Rutas protegidas: [método, patrón, handler(request, response, params)].
+  const protectedRoutes = [
+    ["GET", /^\/api\/auth\/me$/, async (request, response) => {
+      sendJson(response, 200, { user: toPublicUser(request.user) });
+    }],
+    ["POST", /^\/api\/auth\/logout$/, async (request, response) => {
+      await authService.logout(request.sessionId);
+      response.writeHead(204);
+      response.end();
+    }],
+    ["POST", /^\/api\/auth\/password$/, async (request, response) => {
+      await authService.changePassword(request.user, request.sessionId, await readJson(request));
+      response.writeHead(204);
+      response.end();
+    }],
+    ["GET", /^\/api\/usuarios$/, async (request, response) => {
+      sendJson(response, 200, { users: await authService.listUsers(request.user) });
+    }],
+    ["PATCH", USUARIO_PATH, async (request, response, [id]) => {
+      const user = await authService.updateUser(request.user, id.toLowerCase(), await readJson(request));
+      sendJson(response, 200, { user });
+    }],
+  ];
+
   return createServer(async (request, response) => {
     const origin = request.headers.origin;
-    if (origin && origin !== frontendOrigin) {
+    if (origin && !allowedOrigins.has(origin)) {
       sendJson(response, 403, { error: "Origen no permitido." });
       return;
     }
     if (origin) {
-      response.setHeader("access-control-allow-origin", frontendOrigin);
+      response.setHeader("access-control-allow-origin", origin);
       response.setHeader("vary", "Origin");
       response.setHeader("access-control-allow-headers", "authorization, content-type");
-      response.setHeader("access-control-allow-methods", "GET, POST, OPTIONS");
+      response.setHeader("access-control-allow-methods", "GET, POST, PATCH, OPTIONS");
     }
     if (request.method === "OPTIONS") {
       response.writeHead(204);
@@ -75,23 +106,14 @@ export function createApiServer({
         sendJson(response, 200, result);
         return;
       }
-      if (request.method === "GET" && url.pathname === "/api/auth/me") {
-        await authMiddleware(request, response, async () => {
-          const user = await userRepository.findById(request.user.id);
-          if (!user) {
-            sendJson(response, 404, { error: "No existe el usuario en la base de negocio." });
-            return;
-          }
-          sendJson(response, 200, {
-            user: {
-              id_usuario: user.id_usuario,
-              email: user.email,
-              nombre_completo: user.nombre_completo,
-              rol: user.rol,
-            },
-          });
-        });
-        return;
+      for (const [method, pattern, handler] of protectedRoutes) {
+        const match = request.method === method && url.pathname.match(pattern);
+        if (match) {
+          await authMiddleware(request, response, () =>
+            handler(request, response, match.slice(1)),
+          );
+          return;
+        }
       }
       sendJson(response, 404, { error: "Ruta no encontrada." });
     } catch (error) {

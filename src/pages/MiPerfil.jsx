@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, KeyRound, UserCircle } from "lucide-react";
-import { base44 } from "@/api/base44Client";
-import { authClient, isLocalAuthEnabled } from "@/api/authClient";
+import { authClient } from "@/api/authClient";
 import { useSesionUsuario } from "@/lib/sesionUsuario";
 import NavBar from "@/components/home/NavBar";
 import Footer from "@/components/home/Footer";
@@ -32,9 +31,7 @@ export default function MiPerfil() {
     setSaving(true);
     setError("");
     try {
-      const actualizado = isLocalAuthEnabled
-        ? await authClient.updateUser(usuario.id, form)
-        : await base44.entities.Usuario.update(usuario.id, form);
+      const actualizado = await authClient.updateUser(usuario.id, form);
       iniciarSesion({ ...usuario, ...actualizado });
     } catch (e) {
       setError(e?.message || "No se pudo guardar el perfil.");
@@ -66,7 +63,7 @@ export default function MiPerfil() {
           <PerfilForm
             usuario={usuario}
             editable={permisos?.puedoEditarPerfil}
-            rolEditable={permisos?.puedoCambiarRol && !isLocalAuthEnabled}
+            rolEditable={false}
             onSave={guardar}
             saving={saving}
           />

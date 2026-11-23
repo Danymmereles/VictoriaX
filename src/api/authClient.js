@@ -1,6 +1,4 @@
-import { localAuth } from "@/api/localAuth";
-import { institucionDesdeEmail } from "@/lib/instituciones";
-import { getSupabaseClient, isSupabaseConfigured } from "@/utils/supabase";
+// Cliente de autenticación contra la API propia (backend/ + MySQL).
 import {
   clearSessionExpiry,
   ensureSessionExpiry,
@@ -8,193 +6,120 @@ import {
   startSessionExpiry,
 } from "@/api/sessionExpiry";
 
-const SUPABASE_ROLES = new Set(["ADMIN", "DOCENTE", "ALUMNO"]);
-const AUTH_SOURCE_KEY = "victoriax-auth-source";
-export let isLocalAuthEnabled = false;
+// En desarrollo local se usa la API de la PC; publicado, la del dominio (vía Cloudflare Tunnel).
+// VITE_API_URL permite forzar otra URL.
+const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]"]);
+const DEFAULT_API_URL = LOCAL_HOSTS.has(globalThis.location?.hostname)
+  ? "http://localhost:3001"
+  : "https://api.victoriax-simulate.com";
+const API_URL = (import.meta.env.VITE_API_URL || DEFAULT_API_URL).replace(/\/$/, "");
+const TOKEN_KEY = "victoriax-access-token";
 
-function setAuthSource(source) {
-  localStorage.setItem(AUTH_SOURCE_KEY, source);
-  isLocalAuthEnabled = source === "local";
+const ROL_APP = { ADMIN: "ADMINISTRADOR", DOCENTE: "DOCENTE", ALUMNO: "ESTUDIANTE" };
+
+function getToken() {
+  return localStorage.getItem(TOKEN_KEY);
 }
 
-function isLocalDemoEmail(email) {
-  return localAuth.isDemoEmail(email);
+function setToken(token) {
+  if (token) {
+    localStorage.setItem(TOKEN_KEY, token);
+    startSessionExpiry();
+  } else {
+    localStorage.removeItem(TOKEN_KEY);
+    clearSessionExpiry();
+  }
 }
 
-function toAppUser(user) {
-  const role = user.app_metadata?.rol;
-  const fullName =
-    user.user_metadata?.full_name ?? user.user_metadata?.nombre_completo ?? "";
+async function request(path, { method = "GET", body, auth = true } = {}) {
+  const headers = {};
+  if (body !== undefined) headers["content-type"] = "application/json";
+  const token = auth ? getToken() : null;
+  if (token) headers.authorization = `Bearer ${token}`;
 
-  return {
-    id_usuario: user.id,
-    email: user.email ?? "",
-    nombre_completo: typeof fullName === "string" ? fullName : "",
-    rol: SUPABASE_ROLES.has(role) ? role : "ALUMNO",
-    institucion: institucionDesdeEmail(user.email),
-  };
+  let response;
+  try {
+    response = await fetch(`${API_URL}${path}`, {
+      method,
+      headers,
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
+  } catch {
+    throw new Error("No se pudo conectar con el servidor de VictoriaX.");
+  }
+  if (response.status === 204) return null;
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const error = new Error(data.error || "Ocurrió un error inesperado.");
+    error.status = response.status;
+    throw error;
+  }
+  return data;
+}
+
+// Formato que usan las pantallas de perfil y participantes.
+function toParticipante(user) {
+  return { ...user, id: user.id_usuario, rol: ROL_APP[user.rol] || "ESTUDIANTE" };
 }
 
 export const authClient = {
   async register({ email, password, nombreCompleto }) {
-    if (isLocalDemoEmail(email)) {
-      throw new Error(
-        "Ese email está reservado para una cuenta demo local. Iniciá sesión con la cuenta demo.",
-      );
-    }
-
-    const { data, error } = await getSupabaseClient().auth.signUp({
-      email: email.trim().toLowerCase(),
-      password,
-      options: {
-        data: { full_name: nombreCompleto.trim() },
-      },
+    const result = await request("/api/auth/register", {
+      method: "POST",
+      auth: false,
+      body: { email, password, nombreCompleto },
     });
-    if (error) {
-      if (
-        error.code === "user_already_exists" ||
-        /already (?:registered|exists)/i.test(error.message)
-      ) {
-        throw new Error("Ya existe una cuenta con ese email. Iniciá sesión.");
-      }
-      throw error;
-    }
-    if (!data.user) throw new Error("Supabase no devolvió el usuario creado.");
-    if (data.user.identities?.length === 0) {
-      throw new Error("Ya existe una cuenta con ese email. Iniciá sesión.");
-    }
-    localAuth.logout();
-    if (data.session) startSessionExpiry();
-    else clearSessionExpiry();
-    setAuthSource("supabase");
-
-    return {
-      user: toAppUser(data.user),
-      accessToken: data.session?.access_token ?? null,
-    };
+    setToken(result.accessToken);
+    return result;
   },
 
   async login({ email, password }) {
-    if (isLocalDemoEmail(email)) {
-      const user = await localAuth.login({ email, password });
-      startSessionExpiry();
-      setAuthSource("local");
-      return user;
-    }
-
-    const { data, error } = await getSupabaseClient().auth.signInWithPassword({
-      email: email.trim().toLowerCase(),
-      password,
+    const result = await request("/api/auth/login", {
+      method: "POST",
+      auth: false,
+      body: { email, password },
     });
-    if (error) throw error;
-    if (!data.user) throw new Error("Supabase no devolvió el usuario autenticado.");
-    localAuth.logout();
-    startSessionExpiry();
-    setAuthSource("supabase");
-    return toAppUser(data.user);
+    setToken(result.accessToken);
+    return result.user;
   },
 
   async me() {
-    const authSource = localStorage.getItem(AUTH_SOURCE_KEY);
-    if (authSource === "signed-out") {
+    if (!getToken()) {
       clearSessionExpiry();
-      isLocalAuthEnabled = false;
       return null;
     }
-    if (authSource === "local") {
-      const demoUser = await localAuth.me();
-      if (demoUser) {
-        setAuthSource("local");
-        if (ensureSessionExpiry() <= Date.now()) {
-          await this.logout();
-          return null;
-        }
-        isLocalAuthEnabled = true;
-        return demoUser;
-      }
-      localAuth.logout();
-      clearSessionExpiry();
-      setAuthSource("supabase");
-    }
-
-    if (!authSource) {
-      const demoUser = await localAuth.me();
-      if (demoUser) {
-        setAuthSource("local");
-        if (ensureSessionExpiry() <= Date.now()) {
-          await this.logout();
-          return null;
-        }
-        return demoUser;
-      }
-    }
-    if (!isSupabaseConfigured()) {
-      isLocalAuthEnabled = false;
+    if (ensureSessionExpiry() <= Date.now()) {
+      await this.logout();
       return null;
     }
-    const { data, error } = await getSupabaseClient().auth.getSession();
-    if (error) throw error;
-    if (data.session) {
-      setAuthSource("supabase");
-      if (ensureSessionExpiry() <= Date.now()) {
-        await this.logout();
+    try {
+      const { user } = await request("/api/auth/me");
+      return user;
+    } catch (error) {
+      if (error.status === 401) {
+        setToken(null);
         return null;
       }
-    } else {
-      clearSessionExpiry();
-      isLocalAuthEnabled = false;
+      throw error;
     }
-    return data.session ? toAppUser(data.session.user) : null;
   },
 
   async logout() {
-    const authSource = localStorage.getItem(AUTH_SOURCE_KEY);
-    localAuth.logout();
-    clearSessionExpiry();
-    setAuthSource("signed-out");
-    if (authSource !== "supabase") {
-      return;
+    if (!getToken()) return;
+    try {
+      await request("/api/auth/logout", { method: "POST" });
+    } catch {
+      // La sesión local se borra igual aunque el servidor no responda.
+    } finally {
+      setToken(null);
     }
-    const { error } = await getSupabaseClient().auth.signOut();
-    if (error) throw error;
   },
 
   async changePassword({ currentPassword, newPassword }) {
-    if (isLocalAuthEnabled) {
-      return localAuth.updatePassword({ currentPassword, newPassword });
-    }
-
-    if (typeof currentPassword !== "string" || !currentPassword) {
-      throw new Error("Ingresá tu contraseña actual.");
-    }
-    if (typeof newPassword !== "string" || newPassword.length < 8) {
-      throw new Error("La nueva contraseña debe tener al menos 8 caracteres.");
-    }
-
-    const supabase = getSupabaseClient();
-    const { data: authData, error: authError } = await supabase.auth.getUser();
-    if (authError) throw authError;
-    if (!authData.user?.email) {
-      throw new Error("No se encontró un usuario autenticado con email.");
-    }
-
-    const { data: reauthData, error: reauthError } =
-      await supabase.auth.signInWithPassword({
-        email: authData.user.email,
-        password: currentPassword,
-      });
-    if (reauthError) {
-      if (reauthError.code === "invalid_credentials") {
-        throw new Error("La contraseña actual es incorrecta.");
-      }
-      throw reauthError;
-    }
-    if (reauthData.user?.id !== authData.user.id) {
-      throw new Error("No se pudo verificar la identidad de la sesión actual.");
-    }
-
-    const { error } = await supabase.auth.updateUser({ password: newPassword });
-    if (error) throw error;
+    await request("/api/auth/password", {
+      method: "POST",
+      body: { currentPassword, newPassword },
+    });
   },
 
   getSessionExpiresAt() {
@@ -202,16 +127,15 @@ export const authClient = {
   },
 
   async listUsers() {
-    if (!isLocalAuthEnabled) {
-      throw new Error("La administración local solo está disponible en modo desarrollo.");
-    }
-    return localAuth.listUsers();
+    const { users } = await request("/api/usuarios");
+    return users.map(toParticipante);
   },
 
   async updateUser(id, changes) {
-    if (!isLocalAuthEnabled) {
-      throw new Error("La administración local solo está disponible en modo desarrollo.");
-    }
-    return localAuth.updateUser(id, changes);
+    const { user } = await request(`/api/usuarios/${encodeURIComponent(id)}`, {
+      method: "PATCH",
+      body: changes,
+    });
+    return toParticipante(user);
   },
 };

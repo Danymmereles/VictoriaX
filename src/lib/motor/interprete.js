@@ -9,12 +9,15 @@
 //                    llamó;
 //   - { fin }        termina la página (en Main, termina la ejecución).
 //
-//   const ejecucion = new Ejecucion(compilado, { semilla, maxPasos });
+//   const ejecucion = new Ejecucion(compilado, { semilla, maxPasos, registro });
+//     registro: { tiempo: "T", variables: ["NS"] } para el gráfico
+//     (ver registro.js); el resultado trae su serie.
 //   ejecucion.paso()   → { paginaId, nodoId, tipo } o null si terminó
 //   ejecucion.correr() → resultado()
 //   ejecucion.resultado()
 //     { estado: "terminada" | "error" | "limite" | "en curso",
-//       pasos, semilla, salidas, variables, error }
+//       pasos, semilla, salidas, variables, error, serie }
+//   serie: null sin registro; si no, ver registro.js
 //
 // salidas: lo que mostró cada Resultado, en orden:
 //   [{ paso, pagina, nodoId, valores: [{ nombre, valor }] }]
@@ -24,12 +27,13 @@
 import { crearAleatorio, semillaAlAzar } from "./runtime/aleatorio.js";
 import { ErrorDeEjecucion } from "./runtime/errores.js";
 import { Memoria } from "./runtime/memoria.js";
+import { Registro } from "./registro.js";
 
 export const MAX_PASOS = 5_000_000;
 export const MAX_LLAMADAS = 500;
 
 export class Ejecucion {
-    constructor(compilado, { semilla = semillaAlAzar(), maxPasos = MAX_PASOS, maxLlamadas = MAX_LLAMADAS } = {}) {
+    constructor(compilado, { semilla = semillaAlAzar(), maxPasos = MAX_PASOS, maxLlamadas = MAX_LLAMADAS, registro = null } = {}) {
         this.compilado = compilado;
         this.semilla = semilla;
         this.maxPasos = maxPasos;
@@ -40,6 +44,12 @@ export class Ejecucion {
         this.pasos = 0;
         this.estado = "en curso";
         this.error = null;
+
+        // Evolución de las variables para el gráfico
+        this.registro = registro ? new Registro(this.memoria, registro) : null;
+        if (this.registro) {
+            this.memoria.observarTiempo(this.registro.tiempo, (anterior) => this.registro.anotar(anterior));
+        }
 
         const aleatorio = crearAleatorio(semilla);
 
@@ -155,6 +165,11 @@ export class Ejecucion {
     }
 
     resultado() {
+        // El último instante, al terminar (por Fin, error o límite)
+        if (this.registro && this.terminada) {
+            this.registro.cerrar();
+        }
+
         return {
             estado: this.estado,
             pasos: this.pasos,
@@ -162,6 +177,7 @@ export class Ejecucion {
             salidas: this.salidas,
             variables: this.memoria.instantanea(),
             error: this.error,
+            serie: this.registro && this.terminada ? this.registro.serie() : null,
         };
     }
 }

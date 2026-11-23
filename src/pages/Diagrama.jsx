@@ -878,11 +878,15 @@ export default function Diagrama() {
     // si hay errores, se muestran ahí y no se interpreta; si no,
     // queda el programa listo para el motor
     const revisionRef = useRef(null);
-    const [revision, setRevision] = useState({ errores: [], programa: null });
+    const [revision, setRevision] = useState({ errores: [], programa: null, numero: 0 });
 
     const cambiarVista = useCallback((nueva) => {
         if (nueva === VISTAS.ejecucion) {
-            setRevision(revisionRef.current?.() ?? { errores: [], programa: null });
+            // Cada revisión con su número: la vista de ejecución empieza de cero
+            setRevision((anterior) => ({
+                ...(revisionRef.current?.() ?? { errores: [], programa: null }),
+                numero: anterior.numero + 1,
+            }));
         }
         setVista(nueva);
     }, []);
@@ -954,6 +958,8 @@ export default function Diagrama() {
                         <ExecutionView
                             errores={revision.errores}
                             programa={revision.programa}
+                            graficables={revision.graficables}
+                            revision={revision.numero}
                             onBack={() => setVista(VISTAS.editor)}
                         />
                     </div>

@@ -46,6 +46,10 @@ export class Memoria {
         });
 
         programa.datos.forEach((nombre) => this.globales.set(nombre, null));
+
+        // Registro para el gráfico (ver registro.js): aviso cuando T cambia
+        this.nombreTiempo = null;
+        this.alCambiarTiempo = null;
         programa.randoms.forEach((nombre) => this.globales.set(nombre, null));
     }
 
@@ -68,6 +72,14 @@ export class Memoria {
             this.globales.set(v.nombre, this.crearVector(v.nombre, this.globales.get(variable), v.valorInicial));
         });
         this.pendientes = [];
+    }
+
+
+    // Avisar, antes de que la variable de tiempo cambie de valor, con el
+    // valor que tenía (el registro anota ese instante)
+    observarTiempo(nombre, alCambiar) {
+        this.nombreTiempo = nombre;
+        this.alCambiarTiempo = alCambiar;
     }
 
 
@@ -126,9 +138,16 @@ export class Memoria {
         if (locales.has(nombre)) {
             locales.set(nombre, valor);
         } else if (this.globales.has(nombre)) {
-            if (esVector(this.globales.get(nombre)) && !esVector(valor)) {
+            const actual = this.globales.get(nombre);
+
+            if (esVector(actual) && !esVector(valor)) {
                 fallar(`${nombre} es un vector: asigná una posición, por ejemplo ${nombre}[0] = ${formatear(valor)}.`);
             }
+
+            if (nombre === this.nombreTiempo && valor !== actual) {
+                this.alCambiarTiempo(actual);
+            }
+
             this.globales.set(nombre, valor);
         } else if (pagina.tipo === "main") {
             fallar(`${nombre} no está en la tabla de variables.`);

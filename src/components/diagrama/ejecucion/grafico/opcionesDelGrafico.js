@@ -42,13 +42,16 @@ function eje(colores, etiqueta) {
 }
 
 /*
- * opcionesDelGrafico({ series, colores, ancho, alto, ejeX })
- *   series:  [{ nombre }]  las variables que se grafican (sin T)
+ * opcionesDelGrafico({ series, colores, ancho, alto, ejeX, trazo })
+ *   series:  [{ nombre, color? }]  las variables que se grafican (sin T);
+ *            color: índice fijo en la paleta (si no, el orden)
  *   colores: de coloresDelTema()
  *   ejeX:    nombre del eje horizontal (por defecto "T")
+ *   trazo:   cómo se unen los puntos (p. ej. uPlot.paths.stepped:
+ *            escalones, cada valor se mantiene hasta el siguiente T)
  * Zoom: arrastrar sobre el gráfico (solo en horizontal); doble clic vuelve.
  */
-export function opcionesDelGrafico({ series = [], colores, ancho, alto, ejeX = "T" }) {
+export function opcionesDelGrafico({ series = [], colores, ancho, alto, ejeX = "T", trazo }) {
     return {
         width: Math.max(0, Math.floor(ancho)),
         height: Math.max(0, Math.floor(alto)),
@@ -65,8 +68,9 @@ export function opcionesDelGrafico({ series = [], colores, ancho, alto, ejeX = "
             { label: ejeX, value: (_u, valor) => formatearNumero(valor) },
             ...series.map((serie, i) => ({
                 label: serie.nombre,
-                stroke: colores.series[i % colores.series.length],
+                stroke: colores.series[(serie.color ?? i) % colores.series.length],
                 width: 1.5,
+                ...(trazo && { paths: trazo }),
                 points: { show: false },
                 value: (_u, valor) => formatearNumero(valor),
             })),

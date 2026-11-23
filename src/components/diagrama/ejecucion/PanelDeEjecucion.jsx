@@ -1,23 +1,23 @@
 import { useState } from "react";
 
-import { formatear, prepararEjecucion } from "@/lib/motor";
+import { formatear } from "@/lib/motor";
 
 import BotonVolver from "./BotonVolver.jsx";
+import SelectorDeVariables from "./grafico/SelectorDeVariables.jsx";
 import { elegirDestino, guardarEn, nombreDeArchivo } from "../exportar/guardarArchivo.js";
 import { jsonComoBlob } from "../exportar/json.js";
 
 /*
  * =====================================================
- * PANEL DE EJECUCIÓN (provisorio)
+ * PANEL DE EJECUCIÓN
  * -----------------------------------------------------
  * El diagrama pasó la revisión y ya es un programa
- * (ver ejecucion/armarPrograma.js y lib/motor). Por
- * ahora se puede:
- *   - ejecutarlo completo y ver lo que mostró cada
- *     Resultado, o el error con su página, nodo y línea;
+ * (ver ejecucion/armarPrograma.js y lib/motor):
+ *   - Ejecutar (lo hace VistaDelPrograma.jsx) y ver lo
+ *     que mostró cada Resultado, o el error con su
+ *     página, nodo y línea;
+ *   - elegir las variables que se grafican contra T;
  *   - descargar el programa (JSON) para revisarlo.
- * Los gráficos se suman cuando se defina cómo mostrar
- * la ejecución.
  * =====================================================
  */
 
@@ -28,16 +28,23 @@ const MAX_SALIDAS = 30;
 const mostrar = (valor) =>
     typeof valor === "number" ? formatear(Number(valor.toFixed(4))) : formatear(valor);
 
-export default function PanelDeEjecucion({ programa, onBack }) {
-    const [resultado, setResultado] = useState(null);
+export default function PanelDeEjecucion({
+    programa,
+    resultado,
+    onEjecutar,
+    graficables,
+    marcadas,
+    onMarcar,
+    onBack,
+}) {
     const [aviso, setAviso] = useState("");
 
     const paginas = programa.paginas.length;
-    const nodos = programa.paginas.reduce((total, p) => total + p.nodos.length, 0);
-
-    const ejecutar = () => {
-        setResultado(prepararEjecucion(programa).correr());
-    };
+    // Los nodos del diagrama (la vuelta de un Para no es un nodo más)
+    const nodos = programa.paginas.reduce(
+        (total, p) => total + p.nodos.filter((n) => n.tipo !== "paraVuelta").length,
+        0
+    );
 
     const descargar = async () => {
         const destino = await elegirDestino(nombreDeArchivo("programa", "json"), "json");
@@ -56,7 +63,7 @@ export default function PanelDeEjecucion({ programa, onBack }) {
             </p>
 
             <div className="execution-actions">
-                <button type="button" className="execution-run" onClick={ejecutar}>
+                <button type="button" className="execution-run" onClick={onEjecutar}>
                     <svg viewBox="0 0 24 24" aria-hidden="true">
                         <path d="M8 5.5 V18.5 L18.5 12 Z" />
                     </svg>
@@ -69,6 +76,8 @@ export default function PanelDeEjecucion({ programa, onBack }) {
             </div>
 
             {aviso && <p className="execution-note">{aviso}</p>}
+
+            <SelectorDeVariables graficables={graficables} marcadas={marcadas} onMarcar={onMarcar} />
 
             {resultado && <Resultado resultado={resultado} />}
 

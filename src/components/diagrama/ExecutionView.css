@@ -478,3 +478,110 @@
     line-height: 1.5;
     color: var(--dg-tab-text);
 }
+
+/* =====================================================
+   VARIABLES PARA GRAFICAR (panel de ejecución)
+   ===================================================== */
+
+.execution-vars {
+    width: 100%;
+    margin: 4px 0 18px;
+    padding: 14px 0 0;
+
+    border-top: 1px solid var(--dg-item-border);
+
+    text-align: left;
+}
+
+.execution-vars__title {
+    margin: 0 0 10px;
+
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--dg-tab-text-active);
+}
+
+.execution-vars__group + .execution-vars__group {
+    margin-top: 12px;
+}
+
+.execution-vars__group-title {
+    margin: 0 0 6px;
+
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--dg-tab-text);
+}
+
+.execution-vars__list {
+    margin: 0;
+    padding: 0;
+
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+
+    list-style: none;
+}
+
+.execution-vars__item {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+
+    padding: 5px 10px 5px 8px;
+
+    border: 1px solid var(--dg-item-border);
+    border-radius: 999px;
+
+    font-size: 13px;
+    color: var(--dg-tab-text-active);
+    cursor: pointer;
+    user-select: none;
+
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.execution-vars__item:hover {
+    background: var(--dg-icon-active-bg);
+}
+
+.execution-vars__item:has(input:checked) {
+    border-color: var(--dg-accent);
+    background: var(--dg-icon-active-bg);
+}
+
+.execution-vars__item input {
+    width: 14px;
+    height: 14px;
+    margin: 0;
+
+    accent-color: var(--dg-accent);
+    cursor: pointer;
+}
+
+.execution-vars__item input:focus-visible {
+    outline: 2px solid var(--dg-accent);
+    outline-offset: 2px;
+}
+
+.execution-vars__color {
+    width: 10px;
+    height: 10px;
+    flex-shrink: 0;
+
+    border-radius: 3px;
+}
+
+.execution-vars__name {
+    font-variant-numeric: tabular-nums;
+}
+
+.execution-vars__empty {
+    margin: 0;
+
+    font-size: 12.5px;
+    color: var(--dg-tab-text);
+}

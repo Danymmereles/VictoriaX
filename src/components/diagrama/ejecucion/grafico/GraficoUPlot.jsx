@@ -21,8 +21,14 @@ import { datosDelGrafico, opcionesDelGrafico } from "./opcionesDelGrafico.js";
  *     (ResizeObserver), descontando la leyenda (que
  *     también se observa: cambia de alto al acomodarse).
  *
+ * Las líneas van en escalones: en una simulación por
+ * eventos, cada valor se mantiene hasta el próximo T.
+ * Con más de MAX_ESCALONES puntos se usa una línea común
+ * (uPlot la simplifica por píxel y es mucho más rápida;
+ * a esa densidad los escalones no se distinguen).
+ *
  * Props:
- *   series: [{ nombre }]            variables a graficar
+ *   series: [{ nombre, color }]     variables a graficar
  *   datos:  { t, series: [{ nombre, valores }] }
  *   ejeX:   nombre del eje horizontal ("T")
  * Ver opcionesDelGrafico.js para el formato.
@@ -30,6 +36,10 @@ import { datosDelGrafico, opcionesDelGrafico } from "./opcionesDelGrafico.js";
  */
 
 const SIN_DATOS = { t: [], series: [] };
+
+// Escalones: el valor de cada instante se mantiene hasta el siguiente
+const ESCALONES = uPlot.paths.stepped({ align: 1 });
+export const MAX_ESCALONES = 150_000;
 
 export default function GraficoUPlot({ series = [], datos = SIN_DATOS, ejeX = "T" }) {
     const contenedor = useRef(null);
@@ -40,7 +50,8 @@ export default function GraficoUPlot({ series = [], datos = SIN_DATOS, ejeX = "T
     const datosRef = useRef(datos);
     datosRef.current = datos;
 
-    const nombres = series.map((s) => s.nombre).join("\u0000");
+    const nombres = series.map((s) => `${s.nombre}:${s.color ?? ""}`).join("\u0000");
+    const enEscalones = (datos?.t?.length ?? 0) <= MAX_ESCALONES;
 
     // Crear (y volver a crear si cambian las series o el tema)
     useEffect(() => {
@@ -54,6 +65,7 @@ export default function GraficoUPlot({ series = [], datos = SIN_DATOS, ejeX = "T
             ancho: width,
             alto: height,
             ejeX,
+            trazo: enEscalones ? ESCALONES : undefined,
         });
 
         const u = new uPlot(opciones, datosDelGrafico(datosRef.current), elemento);
@@ -78,7 +90,7 @@ export default function GraficoUPlot({ series = [], datos = SIN_DATOS, ejeX = "T
         // series se compara por nombres (un array nuevo con los mismos
         // nombres no recrea el gráfico)
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [nombres, ejeX, tema]);
+    }, [nombres, ejeX, tema, enEscalones]);
 
     // Datos nuevos: sin recrear
     useEffect(() => {

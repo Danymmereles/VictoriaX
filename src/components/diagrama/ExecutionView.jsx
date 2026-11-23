@@ -1,6 +1,5 @@
 import BotonVolver from "./ejecucion/BotonVolver.jsx";
-import PanelDeEjecucion from "./ejecucion/PanelDeEjecucion.jsx";
-import GraficoDeEjecucion from "./ejecucion/grafico/GraficoDeEjecucion.jsx";
+import VistaDelPrograma from "./ejecucion/VistaDelPrograma.jsx";
 
 import "./ExecutionView.css";
 
@@ -9,8 +8,10 @@ import "./ExecutionView.css";
  * VISTA DE EJECUCIÓN
  * -----------------------------------------------------
  * Con el diagrama listo: a la izquierda, el gráfico de
- * las variables contra T (uPlot, ver ejecucion/grafico/);
- * a la derecha, el panel para ejecutar y el Resultado.
+ * las variables marcadas contra T (uPlot, ver
+ * ejecucion/grafico/); a la derecha, el panel para
+ * ejecutar, elegir las variables y ver el Resultado
+ * (ver ejecucion/VistaDelPrograma.jsx).
  *
  * El editor sigue montado debajo (oculto), así que el
  * diagrama y las variables no se pierden al venir acá.
@@ -22,7 +23,12 @@ import "./ExecutionView.css";
  * =====================================================
  */
 
-export default function ExecutionView({ errores = [], programa = null, onBack }) {
+/*
+ * revision: número de la revisión (cambia cada vez que se abre la
+ * pestaña): la ejecución anterior y las marcas se descartan, porque el
+ * diagrama pudo cambiar.
+ */
+export default function ExecutionView({ errores = [], programa = null, graficables, revision = 0, onBack }) {
     if (errores.length > 0) {
         return <ErroresDeRevision errores={errores} onBack={onBack} />;
     }
@@ -30,10 +36,12 @@ export default function ExecutionView({ errores = [], programa = null, onBack })
     if (programa) {
         return (
             <section className="execution-view execution-view--layout">
-                <div className="execution-layout">
-                    <GraficoDeEjecucion />
-                    <PanelDeEjecucion programa={programa} onBack={onBack} />
-                </div>
+                <VistaDelPrograma
+                    key={revision}
+                    programa={programa}
+                    graficables={graficables}
+                    onBack={onBack}
+                />
             </section>
         );
     }

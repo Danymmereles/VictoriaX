@@ -8,11 +8,13 @@
 //   3. armarPrograma.js salidas sin conectar, Conectores, nodos vacíos,
 //      Entrada y Entrada / Salida, páginas sin Fin; y arma el programa.
 //
-// revisarDiagrama({ foto, paginas, variables }) → { errores, programa }
+// revisarDiagrama({ foto, paginas, variables }) → { errores, programa, graficables }
 //   foto:      fotoDelDiagrama(...)
 //   paginas:   las páginas del editor (derivarPaginas)
 //   variables: la tabla con los Random (todasLasVariables)
 // Si hay errores, programa es null y no se ejecuta.
+// graficables: las variables que se pueden graficar contra T (ver
+// grafico/variablesParaGraficar.js).
 // ===========================================================================
 
 import { problemasDeNodos } from "../pages.js";
@@ -20,6 +22,7 @@ import { problemasDeSintaxis } from "../validacion.js";
 
 import { armarPrograma } from "./armarPrograma.js";
 import { describirNodo, revisarCaminos } from "./caminos.js";
+import { variablesParaGraficar } from "./grafico/variablesParaGraficar.js";
 
 export function revisarDiagrama({ foto, paginas, variables }) {
     const errores = revisarCaminos(foto);
@@ -52,5 +55,12 @@ export function revisarDiagrama({ foto, paginas, variables }) {
         .filter((e) => !(e.clase === "sintaxis" && conProblema.has(e.nodoId)))
         .forEach(({ clase, ...e }) => errores.push(e));
 
-    return { errores, programa: errores.length ? null : armado.programa };
+    return {
+        errores,
+        programa: errores.length ? null : armado.programa,
+        graficables: variablesParaGraficar({
+            variables,
+            main: foto.find((pagina) => pagina.tipo === "main"),
+        }),
+    };
 }

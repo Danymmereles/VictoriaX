@@ -28,12 +28,26 @@ export default function VerifyEmail() {
       title={state.loading ? "Verificando email" : state.error ? "No se pudo verificar" : "Email verificado"}
       subtitle={state.loading ? "Estamos validando el enlace." : state.error || "Tu cuenta ya está activa. Iniciá sesión para continuar."}
       footer={state.loading ? null : (
-        <Link to={state.error ? "/register" : "/login"} className="font-medium text-primary hover:underline">
-          {state.error ? "Crear cuenta nuevamente" : "Iniciar sesión"}
-        </Link>
+        <div className="flex flex-col items-center justify-center gap-3">
+          <Link
+            to={state.error ? "/register" : "/login"}
+            className="inline-flex h-12 w-full max-w-xs items-center justify-center rounded-xl bg-primary px-8 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            {state.error ? "Crear cuenta nuevamente" : "Iniciar sesión"}
+          </Link>
+          {state.error && (
+            <Link to="/login" className="text-sm font-medium text-muted-foreground hover:text-foreground">
+              Volver al inicio de sesión
+            </Link>
+          )}
+        </div>
       )}
     >
-      {state.loading && <Loader2 className="mx-auto h-5 w-5 animate-spin text-primary" aria-label="Cargando" />}
+      {state.loading && (
+        <div className="flex justify-center py-4">
+          <Loader2 className="h-7 w-7 animate-spin text-primary" aria-label="Cargando" />
+        </div>
+      )}
     </AuthLayout>
   );
 }

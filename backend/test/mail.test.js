@@ -50,13 +50,14 @@ test("nodemailer transporter sends email with formatted HTML and recipient", asy
 
   const mailService = createMailService({
     from: "VictoriaX <no-reply@victoriax-simulate.com>",
+    frontendOrigin: "https://victoriax-simulate.com",
     transporter: mockTransporter,
   });
 
   await mailService.sendVerificationEmail({
     to: "estudiante@frba.utn.edu.ar",
     nombre: "Estudiante",
-    verifyUrl: "https://victoriax.example/verify-email?token=abc123xyz",
+    verifyUrl: "https://victoriax-simulate.com/verify-email?token=abc123xyz",
   });
 
   assert.equal(sent.length, 1);
@@ -65,6 +66,38 @@ test("nodemailer transporter sends email with formatted HTML and recipient", asy
   assert.equal(sent[0].subject, "Verificá tu email de VictoriaX");
   assert.match(sent[0].html, /Confirmá tu correo electrónico/);
   assert.match(sent[0].html, /token=abc123xyz/);
+  assert.match(sent[0].html, /Victoria<span style="color:#a78bfa">X<\/span>/);
+  assert.match(sent[0].html, /Plataforma Educativa de Simulación/);
+  assert.match(sent[0].html, /24 horas/);
+  assert.match(sent[0].html, /Si no solicitaste esto, podés ignorar este mensaje de forma segura\./);
+});
+
+test("password changed email includes security warning and recovery link without ignore text", async () => {
+  const sent = [];
+  const mockTransporter = {
+    sendMail: async (options) => {
+      sent.push(options);
+      return { messageId: "456" };
+    },
+  };
+
+  const mailService = createMailService({
+    frontendOrigin: "https://victoriax-simulate.com",
+    transporter: mockTransporter,
+  });
+
+  await mailService.sendPasswordChangedEmail({
+    to: "usuario@frba.utn.edu.ar",
+    nombre: "Usuario",
+  });
+
+  assert.equal(sent.length, 1);
+  assert.equal(sent[0].subject, "Se cambió tu contraseña de VictoriaX");
+  assert.match(sent[0].html, /Contraseña actualizada/);
+  assert.match(sent[0].html, /Si no realizaste este cambio, tu cuenta podría estar comprometida/);
+  assert.match(sent[0].html, /victoriax-simulate\.com\/forgot-password/);
+  assert.match(sent[0].html, /victoria\.x\.simulacion@gmail\.com/);
+  assert.doesNotMatch(sent[0].html, /podés ignorar este mensaje/i);
 });
 
 test("nodemailer transporter error throws descriptive exception", async () => {

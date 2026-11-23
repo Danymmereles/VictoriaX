@@ -51,9 +51,11 @@ export default function MiPerfil() {
         <div className="mt-8">
           <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Perfil</p>
           <h1 className="mt-3 font-heading text-4xl font-semibold tracking-tight">Mi perfil</h1>
-          <p className="mt-4 text-muted-foreground">
-            Rol actual: <span className="font-medium text-foreground">{usuario.rol}</span>
-          </p>
+          {usuario.puedeUsarModoEstudio && (
+            <p className="mt-4 text-muted-foreground">
+              Rol actual: <span className="font-medium text-foreground">{usuario.rol}</span>
+            </p>
+          )}
         </div>
 
         <div className="mt-10 rounded-2xl border border-border bg-card p-8">

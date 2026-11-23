@@ -126,6 +126,26 @@ export function createAuthService({
         255,
       );
 
+      const existingUser = await userRepository.findByEmail(email);
+      if (existingUser) {
+        if (!existingUser.email_verificado) {
+          const createdAt = existingUser.fecha_creacion ? new Date(existingUser.fecha_creacion).getTime() : 0;
+          const isExpiredByTime = (now() - createdAt) >= VERIFICATION_TTL_MS;
+          const hasActiveToken = userRepository.hasActiveVerificationToken
+            ? await userRepository.hasActiveVerificationToken(existingUser.id_usuario, new Date(now()))
+            : !isExpiredByTime;
+
+          if (isExpiredByTime || !hasActiveToken) {
+            await userRepository.deleteUser(existingUser.id_usuario);
+          } else {
+            throw new ConflictError("Ya existe una cuenta con ese email.");
+          }
+        } else {
+          throw new ConflictError("Ya existe una cuenta con ese email.");
+        }
+      }
+
+      const currentTime = new Date(now());
       let user;
       try {
         user = await userRepository.insertUser({
@@ -137,6 +157,8 @@ export function createAuthService({
           password_hash: await hashPassword(password),
           email_verificado: false,
           estado: "ACTIVO",
+          fecha_creacion: currentTime,
+          fecha_actualizacion: currentTime,
         });
       } catch (error) {
         if (isDuplicateEntry(error)) {
@@ -184,6 +206,43 @@ export function createAuthService({
       if (!userId) {
         throw new ValidationError("El enlace de verificación venció o ya fue utilizado.");
       }
+    },
+
+    async resendVerification({ email: emailInput }) {
+      const genericMessage =
+        "Si existe una cuenta pendiente de verificación con ese email, se envió un nuevo enlace.";
+      if (typeof emailInput !== "string" || !emailInput.trim()) {
+        return { message: genericMessage };
+      }
+      let email;
+      try {
+        email = normalizeEmail(emailInput);
+      } catch (error) {
+        if (error instanceof ValidationError) {
+          return { message: genericMessage };
+        }
+        throw error;
+      }
+
+      const user = await userRepository.findByEmail(email);
+      if (!user || user.email_verificado || user.estado !== "ACTIVO") {
+        return { message: genericMessage };
+      }
+
+      const verifyUrl = await createAuthToken(
+        user,
+        "VERIFICACION_EMAIL",
+        VERIFICATION_TTL_MS,
+        "/verify-email",
+        "token",
+      );
+      await mailService.sendVerificationEmail({
+        to: user.email,
+        nombre: user.nombre_completo,
+        verifyUrl,
+      });
+
+      return { message: genericMessage };
     },
 
     async forgotPassword({ email: emailInput }) {
@@ -278,6 +337,17 @@ export function createAuthService({
         to: actor.email,
         nombre: actor.nombre_completo,
       });
+    },
+
+    async deleteAccount(actor, { password }) {
+      if (typeof password !== "string" || !password) {
+        throw new ValidationError("La contraseña es obligatoria.");
+      }
+      if (!(await verifyPassword(password, actor.password_hash))) {
+        throw new ValidationError("La contraseña actual es incorrecta.");
+      }
+      await userRepository.deleteSessions(actor.id_usuario);
+      await userRepository.deleteUser(actor.id_usuario);
     },
 
     async listUsers(actor) {

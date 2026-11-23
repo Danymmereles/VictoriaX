@@ -67,6 +67,12 @@ export function createApiServer({ authService, authMiddleware, frontendOrigin })
       response.writeHead(204);
       response.end();
     }],
+    ["DELETE", /^\/api\/auth\/account$/, async (request, response) => {
+      await authService.deleteAccount(request.user, await readJson(request));
+      response.setHeader("set-cookie", "session=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Lax");
+      response.writeHead(204);
+      response.end();
+    }],
     ["GET", /^\/api\/usuarios$/, async (request, response) => {
       sendJson(response, 200, { users: await authService.listUsers(request.user) });
     }],
@@ -86,7 +92,7 @@ export function createApiServer({ authService, authMiddleware, frontendOrigin })
       response.setHeader("access-control-allow-origin", origin);
       response.setHeader("vary", "Origin");
       response.setHeader("access-control-allow-headers", "authorization, content-type");
-      response.setHeader("access-control-allow-methods", "GET, POST, PATCH, OPTIONS");
+      response.setHeader("access-control-allow-methods", "GET, POST, PATCH, DELETE, OPTIONS");
     }
     if (request.method === "OPTIONS") {
       response.writeHead(204);
@@ -109,6 +115,11 @@ export function createApiServer({ authService, authMiddleware, frontendOrigin })
       if (request.method === "POST" && url.pathname === "/api/auth/verify-email") {
         await authService.verifyEmail(await readJson(request));
         sendJson(response, 200, { message: "Email verificado correctamente." });
+        return;
+      }
+      if (request.method === "POST" && url.pathname === "/api/auth/resend-verification") {
+        const result = await authService.resendVerification(await readJson(request));
+        sendJson(response, 200, result);
         return;
       }
       if (request.method === "POST" && url.pathname === "/api/auth/forgot-password") {

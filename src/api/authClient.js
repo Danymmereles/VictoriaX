@@ -86,6 +86,14 @@ export const authClient = {
     });
   },
 
+  async resendVerification(email) {
+    return request("/api/auth/resend-verification", {
+      method: "POST",
+      auth: false,
+      body: { email },
+    });
+  },
+
   async forgotPassword(email) {
     return request("/api/auth/forgot-password", {
       method: "POST",
@@ -149,6 +157,16 @@ export const authClient = {
       method: "POST",
       body: { currentPassword, newPassword },
     });
+  },
+
+  async deleteAccount(password) {
+    const result = await request("/api/auth/account", {
+      method: "DELETE",
+      auth: true,
+      body: { password },
+    });
+    setToken(null);
+    return result;
   },
 
   getSessionExpiresAt() {

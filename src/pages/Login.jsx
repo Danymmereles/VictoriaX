@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/lib/AuthContext";
 
+import { authClient } from "@/api/authClient";
+
 export default function Login() {
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -15,10 +17,30 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [resendConfirmation, setResendConfirmation] = useState("");
+
+  const isUnverifiedEmail =
+    error.toLowerCase().includes("verificá tu email") ||
+    error.toLowerCase().includes("verifica tu email");
+
+  async function handleResendVerification() {
+    setResending(true);
+    setResendConfirmation("");
+    try {
+      await authClient.resendVerification(email);
+      setResendConfirmation("Te enviamos un nuevo correo de verificación. Revisá tu casilla.");
+    } catch (err) {
+      setResendConfirmation(err.message || "No se pudo reenviar el correo.");
+    } finally {
+      setResending(false);
+    }
+  }
 
   async function handleSubmit(event) {
     event.preventDefault();
     setError("");
+    setResendConfirmation("");
 
     setLoading(true);
     try {
@@ -46,8 +68,25 @@ export default function Login() {
       }
     >
       {error && (
-        <p role="alert" className="mb-4 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
-          {error}
+        <div role="alert" className="mb-4 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
+          <p>{error}</p>
+          {isUnverifiedEmail && (
+            <div className="mt-3">
+              <button
+                type="button"
+                onClick={handleResendVerification}
+                disabled={resending}
+                className="font-semibold underline hover:opacity-80 disabled:opacity-50"
+              >
+                {resending ? "Enviando..." : "Reenviar correo de verificación"}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+      {resendConfirmation && (
+        <p role="status" className="mb-4 rounded-lg bg-primary/10 p-3 text-sm text-foreground">
+          {resendConfirmation}
         </p>
       )}
       <form onSubmit={handleSubmit} className="space-y-4">

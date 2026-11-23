@@ -199,3 +199,45 @@ test("several comma-separated origins are allowed", async (t) => {
   assert.equal(preflight.status, 204);
   assert.equal(preflight.headers.get("access-control-allow-origin"), "https://victoria-x.base44.app");
 });
+
+test("resend-verification route calls authService and returns 200", async (t) => {
+  let received;
+  const baseUrl = await start(t, {
+    resendVerification: async (payload) => {
+      received = payload;
+      return { message: "Si existe una cuenta pendiente de verificación con ese email, se envió un nuevo enlace." };
+    },
+  });
+  const response = await fetch(`${baseUrl}/api/auth/resend-verification`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ email: "pendiente@example.com" }),
+  });
+  assert.equal(response.status, 200);
+  assert.equal(received.email, "pendiente@example.com");
+  assert.match((await response.json()).message, /pendiente de verificación/);
+});
+
+test("delete account route requires password, calls authService and expires session cookie", async (t) => {
+  let deletedActor;
+  let deletedPayload;
+  const baseUrl = await start(t, {
+    deleteAccount: async (actor, payload) => {
+      deletedActor = actor;
+      deletedPayload = payload;
+    },
+  });
+  const response = await fetch(`${baseUrl}/api/auth/account`, {
+    method: "DELETE",
+    headers: {
+      authorization: "Bearer ok",
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({ password: "MiPassword123" }),
+  });
+  assert.equal(response.status, 204);
+  assert.equal(deletedActor.id_usuario, USER.id_usuario);
+  assert.equal(deletedPayload.password, "MiPassword123");
+  assert.match(response.headers.get("set-cookie") || "", /session=;.*Expires=/i);
+});
+

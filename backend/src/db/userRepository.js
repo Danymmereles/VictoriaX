@@ -69,6 +69,20 @@ export function createUserRepository(db) {
       });
     },
 
+    async hasActiveVerificationToken(id_usuario, now = new Date()) {
+      const [record] = await db
+        .select()
+        .from(tokenAuth)
+        .where(and(
+          eq(tokenAuth.id_usuario, id_usuario),
+          eq(tokenAuth.tipo, "VERIFICACION_EMAIL"),
+          isNull(tokenAuth.usado_en),
+          gt(tokenAuth.expira_en, now),
+        ))
+        .limit(1);
+      return Boolean(record);
+    },
+
     async verifyEmailToken(token_hash, now = new Date()) {
       return db.transaction(async (tx) => {
         const [record] = await tx

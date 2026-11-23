@@ -112,7 +112,7 @@ export default function Participantes() {
         </div>
 
         {error && (
-          <p role="alert" className="mt-6 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
+          <p role="alert" className="mt-6 rounded-lg bg-destructive/10 dark:bg-destructive/20 p-3 text-sm text-destructive">
             {error}
           </p>
         )}

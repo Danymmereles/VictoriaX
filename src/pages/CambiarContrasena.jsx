@@ -96,7 +96,7 @@ export default function CambiarContrasena() {
 
         <section className="mt-10 rounded-2xl border border-border bg-card p-8">
           {error && (
-            <p role="alert" className="mb-5 rounded-lg bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            <p role="alert" className="mb-5 rounded-lg bg-destructive/10 dark:bg-destructive/20 px-4 py-3 text-sm text-destructive">
               {error}
             </p>
           )}

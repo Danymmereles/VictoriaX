@@ -1,0 +1,73 @@
+/* =====================================================
+   MANIJAS DE LAS FLECHAS EDITABLES (edges/)
+   Usan los colores del tema (DiagramaTheme.css): el color
+   de la flecha seleccionada y el fondo de las tarjetas.
+   ===================================================== */
+
+.edge-handle {
+    position: absolute;
+    pointer-events: all;
+    box-sizing: border-box;
+
+    background: var(--dg-item-bg);
+    border: 1.5px solid var(--dg-edge-selected);
+
+    cursor: move;
+    transition: background-color 0.15s;
+}
+
+.edge-handle:hover,
+.edge-handle:active {
+    background: var(--dg-edge-selected);
+}
+
+/* Quiebre: cuadrado lleno */
+.edge-handle--waypoint {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    background: var(--dg-edge-selected);
+}
+
+/* Mitad de un tramo: cuadrado chico, agrega un quiebre */
+.edge-handle--midpoint {
+    width: 7px;
+    height: 7px;
+    border-radius: 1.5px;
+    background: var(--dg-edge-selected);
+    cursor: crosshair;
+    opacity: 0.85;
+}
+
+/* Control de la curva: círculo */
+.edge-handle--control {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+}
+
+/* Tramo de la flecha angular: píldora a lo largo del tramo */
+.edge-handle--segment {
+    border-radius: 999px;
+}
+
+.edge-handle--segment.is-vertical {
+    width: 8px;
+    height: 22px;
+    cursor: ew-resize;
+}
+
+.edge-handle--segment.is-horizontal {
+    width: 22px;
+    height: 8px;
+    cursor: ns-resize;
+}
+
+/* Líneas entre un punto y sus controles (curva) */
+.edge-guide {
+    fill: none;
+    stroke: var(--dg-edge-selected);
+    stroke-width: 1;
+    opacity: 0.6;
+    pointer-events: none;
+}

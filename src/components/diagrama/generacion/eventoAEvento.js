@@ -8,16 +8,16 @@
 //   - lo que el análisis no tiene queda en nodos para completar (GV3).
 //
 //   Contexto
-//   (1) → [búsqueda del menor de cada evento vector]
+//   (C1) → [búsqueda del menor de cada evento vector]
 //       → selección del próximo evento → rama de cada evento
-//   → T > TF ?  SÍ: resultados → Fin   NO: (1)
+//   → T > TF ?  SÍ: calcular resultados → Resultado → Fin   NO: (C1)
 // ===========================================================================
 
 import { VALOR_HV } from "./lectura.js";
 import {
     conLlegada,
     nodo,
-    proceso,
+    asignacion,
     salto,
     secuencia,
     seleccion3,
@@ -25,6 +25,7 @@ import {
 } from "./bloques.js";
 import {
     ETIQUETA_CICLO,
+    etiquetaConector,
     actualizarEstado,
     cierre,
     contexto,
@@ -85,7 +86,7 @@ export function construirEventoAEvento({ eventos, lectura }) {
         // Avanzar el tiempo. Si el evento no se vuelve a programar,
         // su tiempo pasa a HV para que no se repita (corrige GV2).
         const pasos = [
-            proceso(e.seReprograma ? `T = ${e.ref}` : [`T = ${e.ref}`, `${e.ref} = HV`]),
+            asignacion(e.seReprograma ? `T = ${e.ref}` : [`T = ${e.ref}`, `${e.ref} = HV`]),
         ];
 
         if (e.efnc) {
@@ -107,7 +108,7 @@ export function construirEventoAEvento({ eventos, lectura }) {
                     condicion,
                     secuencia(programarEvento(e.efc, e)),
                     // Si se condiciona a sí mismo y no se cumple: HV (GV2)
-                    buscar(e.efc) === e ? proceso(`${e.ref} = HV`) : null
+                    buscar(e.efc) === e ? asignacion(`${e.ref} = HV`) : null
                 )
             );
         }
@@ -119,8 +120,9 @@ export function construirEventoAEvento({ eventos, lectura }) {
 
 
     // ---- Búsqueda del menor tiempo de un evento vector ----
-    //   I = 1, H = 2
-    //   (k) → H <= N ?  SÍ: TPS[H] < TPS[I] ? SÍ: I = H  → H++ → (k)
+    // Vectores como en JavaScript (BNF v0.14): posiciones 0 a N - 1.
+    //   I = 0, H = 1
+    //   (Ck) → H < N ?  SÍ: TPS[H] < TPS[I] ? SÍ: I = H  → H++ → (Ck)
     //                   NO: sigue
     const busquedaDelMenor = (e, etiqueta) => {
         const I = e.indice;
@@ -128,19 +130,19 @@ export function construirEventoAEvento({ eventos, lectura }) {
         const dimension = e.dimension || "?";
 
         return secuencia(
-            proceso([`${I} = 1`, `${H} = 2`]),
+            asignacion([`${I} = 0`, `${H} = 1`]),
             conLlegada(
                 etiqueta,
                 si(
                     decision(
-                        `${H} <= ${dimension}`,
+                        `${H} < ${dimension}`,
                         e.dimension
                             ? {}
                             : { pending: `Falta la dimensión del evento "${e.nombre}".` }
                     ),
                     secuencia(
-                        si(`${e.tef}[${H}] < ${e.tef}[${I}]`, proceso(`${I} = ${H}`)),
-                        proceso(`${H}++`),
+                        si(`${e.tef}[${H}] < ${e.tef}[${I}]`, asignacion(`${I} = ${H}`)),
+                        asignacion(`${H}++`),
                         salto(etiqueta)
                     )
                 )
@@ -149,7 +151,7 @@ export function construirEventoAEvento({ eventos, lectura }) {
     };
 
     const busquedas = vectores.map((e, k) =>
-        busquedaDelMenor(e, String(k + 2))
+        busquedaDelMenor(e, etiquetaConector(k + 2))
     );
 
 
@@ -188,9 +190,9 @@ export function construirEventoAEvento({ eventos, lectura }) {
         );
 
         const busqueda = [
-            proceso([`${MEN} = ${r[0]}`, `${EV} = 1`]),
+            asignacion([`${MEN} = ${r[0]}`, `${EV} = 1`]),
             ...r.slice(1).map((ref, k) =>
-                si(`${ref} < ${MEN}`, proceso([`${MEN} = ${ref}`, `${EV} = ${k + 2}`]))
+                si(`${ref} < ${MEN}`, asignacion([`${MEN} = ${ref}`, `${EV} = ${k + 2}`]))
             ),
         ];
 
@@ -222,7 +224,7 @@ export function construirEventoAEvento({ eventos, lectura }) {
     );
 
     const indices = vectores.map((e) =>
-        nuevaGenerada(e.indice, "1", `Posición del menor ${e.tef}`)
+        nuevaGenerada(e.indice, "0", `Posición del menor ${e.tef}`)
     );
 
     if (contador) {

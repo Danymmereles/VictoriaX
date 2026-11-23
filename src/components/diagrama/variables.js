@@ -2,7 +2,11 @@
 // Variables del diagrama: modelo y validación.
 // Lógica pura, sin dependencias de React. La usa VariablesPanel y, más
 // adelante, la validación del diagrama (consistencia de las variables).
+// Los nombres siguen la regla de la BNF (lib/lenguaje), igual que las
+// siglas del Análisis Previo.
 // ===========================================================================
+
+import { motivoNombreInvalido } from "@/lib/lenguaje";
 
 let _id = 0;
 export const nuevoIdVariable = () => `var_${Date.now()}_${_id++}`;
@@ -25,7 +29,6 @@ export function nuevaVariable(id = nuevoIdVariable(), cambios = {}) {
     };
 }
 
-const NOMBRE_VALIDO = /^[A-Za-z_][A-Za-z0-9_]*$/;
 const NUMERO_VALIDO = /^-?\d+([.,]\d+)?$/;
 
 export function valorNumerico(valor) {
@@ -41,9 +44,7 @@ export function valorNumerico(valor) {
  * (las variables de datos, que son funciones de probabilidad).
  */
 export function validarVariables(variables, { nombresReservados = [] } = {}) {
-    const reservados = new Set(
-        nombresReservados.map((n) => String(n).trim().toUpperCase())
-    );
+    const reservados = new Set(nombresReservados.map((n) => String(n).trim()));
 
     const errores = {};
 
@@ -51,10 +52,11 @@ export function validarVariables(variables, { nombresReservados = [] } = {}) {
         errores[id] = { ...errores[id], [campo]: mensaje };
     };
 
-    // Cantidad de veces que aparece cada nombre (sin distinguir mayúsculas)
+    // Cantidad de veces que aparece cada nombre. Como en JavaScript,
+    // distingue mayúsculas: Ic e IC son variables distintas (BNF v0.14).
     const repeticiones = {};
     variables.forEach((v) => {
-        const clave = v.nombre.trim().toUpperCase();
+        const clave = v.nombre.trim();
         if (clave) {
             repeticiones[clave] = (repeticiones[clave] || 0) + 1;
         }
@@ -66,15 +68,11 @@ export function validarVariables(variables, { nombresReservados = [] } = {}) {
 
         if (!nombre) {
             agregar(v.id, "nombre", "La variable necesita un nombre.");
-        } else if (!NOMBRE_VALIDO.test(nombre)) {
-            agregar(
-                v.id,
-                "nombre",
-                "Usá solo letras, números y _, sin empezar con un número."
-            );
-        } else if (repeticiones[nombre.toUpperCase()] > 1) {
+        } else if (motivoNombreInvalido(nombre)) {
+            agregar(v.id, "nombre", motivoNombreInvalido(nombre));
+        } else if (repeticiones[nombre] > 1) {
             agregar(v.id, "nombre", `La variable "${nombre}" está repetida.`);
-        } else if (reservados.has(nombre.toUpperCase())) {
+        } else if (reservados.has(nombre)) {
             agregar(
                 v.id,
                 "nombre",
@@ -142,13 +140,12 @@ export function variablesDesdeAnalisis(analisis) {
     Object.keys(CATEGORIAS_ANALISIS).forEach((categoria) => {
         (analisis.variables[categoria] || []).forEach((v) => {
             const nombre = (v.sigla || "").trim();
-            const clave = nombre.toUpperCase();
 
-            if (!nombre || vistas.has(clave)) {
+            if (!nombre || vistas.has(nombre)) {
                 return;
             }
 
-            vistas.add(clave);
+            vistas.add(nombre);
 
             resultado.push(
                 nuevaVariable(`analisis_${v.id}`, {
@@ -188,7 +185,7 @@ export function funcionesDeDatos(analisis) {
  */
 export function sincronizarConAnalisis(actuales, analisis) {
     const valoresPrevios = new Map(
-        actuales.map((v) => [v.nombre.trim().toUpperCase(), v.valorInicial])
+        actuales.map((v) => [v.nombre.trim(), v.valorInicial])
     );
 
     const importadas = variablesDesdeAnalisis(analisis)
@@ -196,7 +193,7 @@ export function sincronizarConAnalisis(actuales, analisis) {
         .map((v) => ({
             ...v,
             valorInicial:
-                valoresPrevios.get(v.nombre.toUpperCase()) ?? v.valorInicial,
+                valoresPrevios.get(v.nombre) ?? v.valorInicial,
         }));
 
     const propias = actuales.filter((v) => !esImportada(v));

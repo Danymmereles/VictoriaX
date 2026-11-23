@@ -10,6 +10,7 @@ import Footer from "@/components/home/Footer";
 import AnalisisPrevioPanel from "@/components/analisis/AnalisisPrevioPanel";
 import ResolucionEjemplo from "@/components/estudio/ResolucionEjemplo";
 import EstadisticasPlaceholder from "@/components/estudio/EstadisticasPlaceholder";
+import NavegacionEjercicio from "@/components/estudio/NavegacionEjercicio";
 
 export default function EjercicioEstudio() {
   const { id } = useParams();
@@ -21,6 +22,7 @@ export default function EjercicioEstudio() {
   const [validacion, setValidacion] = useState({ errores: [], esValido: false });
   const [mostrarResolucion, setMostrarResolucion] = useState(false);
   const [mostrarEstadisticas, setMostrarEstadisticas] = useState(false);
+  const [guia, setGuia] = useState([]);
 
   useEffect(() => {
     if (!usuario) navigate("/login");
@@ -28,6 +30,17 @@ export default function EjercicioEstudio() {
 
   useEffect(() => {
     if (!usuario) return;
+    base44.entities.Ejercicio.list("-numero", 50).then((res) => {
+      setGuia(Array.isArray(res) ? res : res.items);
+    });
+  }, [usuario]);
+
+  useEffect(() => {
+    if (!usuario) return;
+    setEjercicio(null);
+    setEntrega(null);
+    setMostrarResolucion(false);
+    setMostrarEstadisticas(false);
     (async () => {
       const ej = await base44.entities.Ejercicio.get(id);
       setEjercicio(ej);
@@ -71,6 +84,11 @@ export default function EjercicioEstudio() {
   const esDocenteOAdmin = usuario.rol === ROLES.DOCENTE || usuario.rol === ROLES.ADMINISTRADOR;
   const bloqueado = entrega.resolucion_vista && usuario.rol === ROLES.ESTUDIANTE;
   const puedeEntregar = validacion.esValido && !bloqueado;
+
+  const ordenados = [...guia].sort((a, b) => a.numero - b.numero);
+  const indice = ordenados.findIndex((e) => e.id === id);
+  const anterior = indice > 0 ? ordenados[indice - 1] : null;
+  const siguiente = indice >= 0 && indice < ordenados.length - 1 ? ordenados[indice + 1] : null;
 
   async function entregar() {
     const actualizada = await base44.entities.Entrega.update(entrega.id, {
@@ -155,6 +173,8 @@ export default function EjercicioEstudio() {
 
         {mostrarResolucion && <ResolucionEjemplo />}
         {mostrarEstadisticas && <EstadisticasPlaceholder />}
+
+        {guia.length > 0 && <NavegacionEjercicio anterior={anterior} siguiente={siguiente} />}
       </main>
       <Footer />
     </div>

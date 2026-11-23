@@ -5,10 +5,13 @@
 
 import { CONTEXT_NODE_ID } from "../pages.js";
 import { nuevaVariable, ORIGEN_FUTURO, ORIGEN_GENERADA } from "../variables.js";
-import { completar, fin, nodo, proceso, salto, secuencia, si } from "./bloques.js";
+import { completar, fin, nodo, asignacion, salto, secuencia, si } from "./bloques.js";
 
-// Etiqueta del Conector que vuelve al principio del ciclo de Main
-export const ETIQUETA_CICLO = "1";
+// Etiquetas de los Conectores generados. Son identificadores (BNF v0.14):
+// C1 vuelve al principio del ciclo de Main; C2, C3... son los ciclos de
+// búsqueda del menor de cada evento vector.
+export const etiquetaConector = (n) => `C${n}`;
+export const ETIQUETA_CICLO = etiquetaConector(1);
 
 export const contexto = () =>
     nodo("context", "", { id: CONTEXT_NODE_ID, deletable: false });
@@ -28,7 +31,7 @@ export function programar({ evento, tiempo, indicePendiente = false }) {
             `Intervalo de ${evento}`,
             `Elegí la variable de datos que da el intervalo hasta el próximo evento "${evento}". El Análisis Previo todavía no indica qué variable usa cada evento (encadenador).`
         ),
-        proceso(`${tiempo} = T + ?`, {
+        asignacion(`${tiempo} = T + ?`, {
             pending: indicePendiente
                 ? `Reemplazá los ? por el intervalo de "${evento}" (la variable que se llama arriba) y por la posición a programar (p. ej., un puesto libre).`
                 : `Reemplazá ? por el intervalo de "${evento}": la variable que se llama arriba.`,
@@ -45,7 +48,10 @@ export const actualizarEstado = (evento, estado) =>
 
 /*
  * Cierre del ciclo de Main: si terminó el tiempo, calcular los resultados
- * y terminar; si no, volver al principio con el Conector del ciclo.
+ * (Asignación), mostrarlos (Resultado) y terminar; si no, volver al
+ * principio con el Conector del ciclo.
+ * El Resultado queda vacío, con su nombre como ayuda: falta definir su
+ * sintaxis (BNF, D21).
  */
 export const cierre = (resultado) =>
     si(
@@ -56,6 +62,8 @@ export const cierre = (resultado) =>
                 "Calcular resultados",
                 `Calculá las variables de resultado${lista(resultado)} antes de terminar. El Análisis Previo no dice cómo se calculan.`
             ),
+            // Resultado: muestra las variables de resultado (A, B, C)
+            nodo("document", resultado.join(", ")),
             fin()
         ),
         salto(ETIQUETA_CICLO)

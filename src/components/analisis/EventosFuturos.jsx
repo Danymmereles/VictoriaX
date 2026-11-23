@@ -1,8 +1,10 @@
 import React from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { nuevoEventoFuturo, eventosDeclarados, METODOLOGIAS } from "@/lib/analisisPrevio";
+import ErrorDeSigla from "./ErrorDeSigla";
 
-export default function EventosFuturos({ analisis, onChange }) {
+// `errores` (opcional): { [id]: { mensajes, sigla } } con los problemas de cada sigla.
+export default function EventosFuturos({ analisis, onChange, errores = {} }) {
   const { eventosFuturos, metodologia } = analisis;
   const opciones = metodologia ? eventosDeclarados(analisis) : [];
 
@@ -32,18 +34,21 @@ export default function EventosFuturos({ analisis, onChange }) {
       <div className="mt-4 space-y-3">
         {eventosFuturos.length === 0 && <p className="text-sm text-muted-foreground">Sin eventos futuros.</p>}
         {eventosFuturos.map((e, i) => (
-          <div key={e.id} className="grid items-center gap-3 sm:grid-cols-[140px_1fr_auto]">
-            <input value={e.sigla} onChange={(ev) => actualizar(i, { sigla: ev.target.value })} placeholder="Siglas" className="rounded-lg border border-input bg-background px-3 py-2 text-sm" />
-            <select value={e.eventoRef} onChange={(ev) => actualizar(i, { eventoRef: ev.target.value })} disabled={!metodologia} className="rounded-lg border border-input bg-background px-3 py-2 text-sm disabled:opacity-60">
-              <option value="">{metodologia ? "Seleccionar evento" : "Elegí metodología primero"}</option>
-              {opciones.map((o) => <option key={o} value={o}>{o}</option>)}
-            </select>
-            <button onClick={() => quitar(i)} className="grid place-items-center rounded-lg border border-border px-3 py-2 hover:bg-destructive/10 hover:text-destructive">
-              <Trash2 className="w-4 h-4" />
-            </button>
+          <div key={e.id}>
+            <div className="grid items-center gap-3 sm:grid-cols-[140px_1fr_auto]">
+              <input value={e.sigla} onChange={(ev) => actualizar(i, { sigla: ev.target.value })} placeholder="Siglas" aria-invalid={Boolean(errores[e.id])} className={`rounded-lg border bg-background px-3 py-2 text-sm ${errores[e.id] ? "border-destructive" : "border-input"}`} />
+              <select value={e.eventoRef} onChange={(ev) => actualizar(i, { eventoRef: ev.target.value })} disabled={!metodologia} className="rounded-lg border border-input bg-background px-3 py-2 text-sm disabled:opacity-60">
+                <option value="">{metodologia ? "Seleccionar evento" : "Elegí metodología primero"}</option>
+                {opciones.map((o) => <option key={o} value={o}>{o}</option>)}
+              </select>
+              <button onClick={() => quitar(i)} className="grid place-items-center rounded-lg border border-border px-3 py-2 hover:bg-destructive/10 hover:text-destructive">
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+            {errores[e.id] && <ErrorDeSigla mensajes={errores[e.id].mensajes} />}
           </div>
         ))}
       </div>
     </div>
   );
-}
+}

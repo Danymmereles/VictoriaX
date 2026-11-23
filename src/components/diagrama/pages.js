@@ -6,10 +6,10 @@
 // - Las variables de datos son funciones de probabilidad: cada una tiene su
 //   página para definir el algoritmo que genera su valor (p. ej. "IC").
 //   Las páginas salen del Análisis Previo, no de los nodos.
-// - Cada página de variable arranca con su "nodo ancla": un nodo Preparación
+// - Cada página de variable arranca con su "nodo ancla": un nodo Función Generada
 //   fijo con el nombre de la variable, como inicio del algoritmo (no se borra
 //   ni se renombra).
-// - En cualquier página, un nodo Preparación es una LLAMADA a una variable de
+// - En cualquier página, un nodo Función Generada es una LLAMADA a una variable de
 //   datos ("dame un valor de IC"): su nombre debe ser una variable de datos y,
 //   dentro de la página de una variable, no puede ser ella misma.
 // ===========================================================================
@@ -17,14 +17,14 @@
 export const MAIN_PAGE_ID = "main";
 export const MAIN_PAGE_NAME = "Main";
 
-// Tipo de nodo que llama a una variable de datos (nodo "Preparación")
+// Tipo de nodo que llama a una variable de datos (nodo "Función Generada", tipo preparation)
 export const CALL_NODE_TYPE = "preparation";
 
 export const emptyPage = () => ({ nodes: [], edges: [], viewport: null });
 
 export const esLlamada = (node) => node?.data?.type === CALL_NODE_TYPE;
 
-// Nodo ancla: el nodo Preparación que encabeza la página de su variable
+// Nodo ancla: el nodo Función Generada que encabeza la página de su variable
 export const esAncla = (node) => Boolean(node?.data?.anchorOf);
 
 export const anchorIdDe = (pageId) => `anchor-${pageId}`;
@@ -68,7 +68,9 @@ export function tieneContenido({ nodes = [], edges = [] }) {
     );
 }
 
-const clave = (nombre) => String(nombre ?? "").trim().toUpperCase();
+// Como en JavaScript, los nombres distinguen mayúsculas (BNF v0.14):
+// IA e ia son variables distintas.
+const clave = (nombre) => String(nombre ?? "").trim();
 
 export const mismoNombre = (a, b) => clave(a) === clave(b);
 
@@ -88,7 +90,7 @@ export function derivarPaginas(funciones) {
         })),
     ];
 
-    // Nombres repetidos (sin distinguir mayúsculas). "Main" está reservado.
+    // Nombres repetidos (distinguen mayúsculas). "Main" está reservado.
     const conteo = {};
     paginas.forEach((p) => {
         conteo[clave(p.nombre)] = (conteo[clave(p.nombre)] || 0) + 1;
@@ -184,7 +186,7 @@ export function validarNombreNodo({ data, nombre, pagina }) {
  *   { [nodeId]: mensaje }
  * - Nodos generados desde el Análisis Previo que el usuario tiene que
  *   completar (data.pending, ver generacion/). Se marcan hasta editarlos.
- * - Llamadas (nodos Preparación, menos el ancla) cuyo nombre no es una
+ * - Llamadas (nodos Función Generada, menos el ancla) cuyo nombre no es una
  *   variable de datos, o es una variable repetida.
  */
 export function problemasDeNodos({ nodes, pagina, paginas }) {

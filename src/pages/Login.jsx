@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/lib/AuthContext";
-import { esEmailUtn } from "@/lib/instituciones";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -20,10 +19,6 @@ export default function Login() {
   async function handleSubmit(event) {
     event.preventDefault();
     setError("");
-    if (!esEmailUtn(email)) {
-      setError("El Modo Estudio es exclusivo para la comunidad académica de UTN (@frba.utn.edu.ar o @frre.utn.edu.ar).");
-      return;
-    }
 
     setLoading(true);
     try {
@@ -40,7 +35,7 @@ export default function Login() {
     <AuthLayout
       icon={Lock}
       title="Iniciar sesión"
-      subtitle="Accedé al Modo Estudio con tu cuenta institucional UTN.BA."
+      subtitle="Iniciá sesión para continuar en VictoriaX."
       footer={
         <>
           ¿Todavía no tenés cuenta?{" "}
@@ -57,7 +52,7 @@ export default function Login() {
       )}
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="email">Email institucional</Label>
+          <Label htmlFor="email">Correo electrónico</Label>
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
             <Input
@@ -66,7 +61,7 @@ export default function Login() {
               autoComplete="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              placeholder="nombre@frba.utn.edu.ar"
+              placeholder="nombre@ejemplo.com"
               className="h-12 pl-10"
               required
             />
@@ -100,6 +95,11 @@ export default function Login() {
           {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Ingresando…</> : "Iniciar sesión"}
         </Button>
       </form>
+      <p className="mt-4 text-center text-sm">
+        <Link to="/forgot-password" className="font-medium text-primary hover:underline">
+          ¿Olvidaste tu contraseña?
+        </Link>
+      </p>
     </AuthLayout>
   );
 }

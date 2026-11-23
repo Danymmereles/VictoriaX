@@ -31,8 +31,12 @@ function setToken(token) {
   }
 }
 
+/**
+ * @param {string} path
+ * @param {{ method?: string, body?: unknown, auth?: boolean }} [options]
+ */
 async function request(path, { method = "GET", body, auth = true } = {}) {
-  const headers = {};
+  const headers = /** @type {Record<string, string>} */ ({});
   if (body !== undefined) headers["content-type"] = "application/json";
   const token = auth ? getToken() : null;
   if (token) headers.authorization = `Bearer ${token}`;
@@ -50,6 +54,7 @@ async function request(path, { method = "GET", body, auth = true } = {}) {
   if (response.status === 204) return null;
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
+    /** @type {Error & { status?: number }} */
     const error = new Error(data.error || "Ocurrió un error inesperado.");
     error.status = response.status;
     throw error;
@@ -63,14 +68,38 @@ function toParticipante(user) {
 }
 
 export const authClient = {
-  async register({ email, password, nombreCompleto }) {
+  async register({ email, confirmPassword, password, nombreCompleto }) {
     const result = await request("/api/auth/register", {
       method: "POST",
       auth: false,
-      body: { email, password, nombreCompleto },
+      body: { email, confirmPassword, password, nombreCompleto },
     });
     setToken(result.accessToken);
     return result;
+  },
+
+  async verifyEmail(token) {
+    return request("/api/auth/verify-email", {
+      method: "POST",
+      auth: false,
+      body: { token },
+    });
+  },
+
+  async forgotPassword(email) {
+    return request("/api/auth/forgot-password", {
+      method: "POST",
+      auth: false,
+      body: { email },
+    });
+  },
+
+  async resetPassword({ token, newPassword }) {
+    return request("/api/auth/reset-password", {
+      method: "POST",
+      auth: false,
+      body: { token, newPassword },
+    });
   },
 
   async login({ email, password }) {

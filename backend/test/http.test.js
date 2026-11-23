@@ -12,18 +12,19 @@ const USER = {
   institucion: "UTN FRBA",
   rol: "ALUMNO",
   password_hash: "secreto",
+  puedeUsarModoEstudio: true,
 };
 
-async function start(t, authService) {
+async function start(t, authService, authenticatedUser = USER) {
   const server = createApiServer({
     authService,
     authMiddleware: async (request, response, next) => {
-      if (request.headers.authorization !== "Bearer ok") {
+      if (typeof request.headers.authorization !== "string" || !request.headers.authorization) {
         response.writeHead(401);
         response.end();
         return;
       }
-      request.user = USER;
+      request.user = authenticatedUser;
       request.sessionId = "session-hash";
       await next();
     },
@@ -35,23 +36,58 @@ async function start(t, authService) {
   return `http://127.0.0.1:${server.address().port}`;
 }
 
-test("register route returns the created user and token", async (t) => {
+test("register route passes password confirmation and returns the created user", async (t) => {
+  let received;
   const baseUrl = await start(t, {
-    register: async (input) => ({
-      user: { id_usuario: "user-uuid", email: input.email, rol: "ALUMNO" },
-      accessToken: "token",
-    }),
+    register: async (input) => {
+      received = input;
+      return {
+        user: { id_usuario: "user-uuid", email: input.email, rol: "ALUMNO" },
+        accessToken: null,
+      };
+    },
   });
   const response = await fetch(`${baseUrl}/api/auth/register`, {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ email: "alumna@frba.utn.edu.ar" }),
+    body: JSON.stringify({
+      email: "alumna@frba.utn.edu.ar",
+      password: "Secreta123",
+      confirmPassword: "Secreta123",
+    }),
   });
   assert.equal(response.status, 201);
+  assert.equal(received.confirmPassword, "Secreta123");
   assert.deepEqual(await response.json(), {
     user: { id_usuario: "user-uuid", email: "alumna@frba.utn.edu.ar", rol: "ALUMNO" },
-    accessToken: "token",
+    accessToken: null,
   });
+});
+
+test("public email verification, password recovery and reset routes are wired", async (t) => {
+  const calls = [];
+  const baseUrl = await start(t, {
+    verifyEmail: async ({ token }) => calls.push(["verify", token]),
+    forgotPassword: async ({ email }) => calls.push(["forgot", email]),
+    resetPassword: async ({ token, newPassword }) => calls.push(["reset", token, newPassword]),
+  });
+  const post = (path, body) => fetch(`${baseUrl}${path}`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+  assert.equal((await post("/api/auth/verify-email", { token: "verify-token" })).status, 200);
+  assert.equal((await post("/api/auth/forgot-password", { email: "nobody@example.com" })).status, 200);
+  assert.equal((await post("/api/auth/reset-password", {
+    token: "reset-token",
+    newPassword: "NuevaClave123",
+  })).status, 204);
+  assert.deepEqual(calls, [
+    ["verify", "verify-token"],
+    ["forgot", "nobody@example.com"],
+    ["reset", "reset-token", "NuevaClave123"],
+  ]);
 });
 
 test("me requires a token and never exposes the password hash", async (t) => {
@@ -65,6 +101,36 @@ test("me requires a token and never exposes the password hash", async (t) => {
   const { user } = await response.json();
   assert.equal(user.email, USER.email);
   assert.equal("password_hash" in user, false);
+  assert.equal(user.puedeUsarModoEstudio, true);
+});
+
+test("external sessions can use auth but cannot list Modo Estudio participants", async (t) => {
+  const externalUser = {
+    ...USER,
+    email: "persona@gmail.com",
+    institucion: "Externa",
+    puedeUsarModoEstudio: false,
+  };
+  const baseUrl = await start(t, {
+    listUsers: async (actor) => {
+      if (!actor.puedeUsarModoEstudio) {
+        throw new ForbiddenError("El listado de participantes requiere una cuenta académica FRBA o FRRE.");
+      }
+      return [];
+    },
+  }, externalUser);
+
+  const meResponse = await fetch(`${baseUrl}/api/auth/me`, {
+    headers: { authorization: "******" },
+  });
+  assert.equal(meResponse.status, 200);
+  assert.equal((await meResponse.json()).user.puedeUsarModoEstudio, false);
+
+  const participantsResponse = await fetch(`${baseUrl}/api/usuarios`, {
+    headers: { authorization: "******" },
+  });
+  assert.equal(participantsResponse.status, 403);
+  assert.match((await participantsResponse.json()).error, /cuenta académica/);
 });
 
 test("logout closes the current session", async (t) => {

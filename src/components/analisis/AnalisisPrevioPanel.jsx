@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo } from "react";
 import { AlertTriangle } from "lucide-react";
-import { camposConError, eventosVacio, validarAnalisis } from "@/lib/analisisPrevio";
+import { camposConError, claveEventoFuturo, erroresPorCampo, eventosVacio, validarAnalisis } from "@/lib/analisisPrevio";
 import MetodologiaSelector from "./MetodologiaSelector";
 import VariableList from "./VariableList";
 import VariableControlImplicita from "./VariableControlImplicita";
@@ -34,6 +34,12 @@ export default function AnalisisPrevioPanel({ analisis, setAnalisis, onValidacio
   const idsConError = (lista) => lista.filter((v) => campos.has(`variable:${v.id}`)).map((v) => v.id);
   const filasConError = (analisis.eventos.filas || []).filter((f) => campos.has(`evento:${f.id}`)).map((f) => f.id);
   const variablesConError = [...campos].some((c) => c.startsWith("variables.") || c.startsWith("variable:"));
+  const porCampo = useMemo(() => erroresPorCampo(validacion), [validacion]);
+  const erroresFuturos = Object.fromEntries(
+    (analisis.eventosFuturos || [])
+      .map((e, i) => [e.id, porCampo.get(claveEventoFuturo(e, i))])
+      .filter(([, e]) => e)
+  );
 
   useEffect(() => {
     onValidacionChange?.({ ...validacion, esValido: validacion.esValido && controlOk });
@@ -98,8 +104,8 @@ export default function AnalisisPrevioPanel({ analisis, setAnalisis, onValidacio
         <TablaEventos analisis={analisis} onChange={setEventos} error={campos.has("eventos")} filasConError={filasConError} />
       </Seccion>
 
-      <Seccion titulo="Tabla de Eventos Futuros" desc="Listado de siglas de tiempo ligadas a eventos." error={campos.has("eventosFuturos")}>
-        <EventosFuturos analisis={analisis} onChange={setEventosFuturos} />
+      <Seccion titulo="Tabla de Eventos Futuros" desc="Listado de siglas de tiempo ligadas a eventos." error={campos.has("eventosFuturos") || Object.keys(erroresFuturos).length > 0}>
+        <EventosFuturos analisis={analisis} onChange={setEventosFuturos} errores={erroresFuturos} />
       </Seccion>
 
       <Validacion validacion={validacion} controlOk={controlOk} />

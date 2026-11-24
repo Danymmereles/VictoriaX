@@ -37,7 +37,7 @@ export function eventosVacio() {
   return { filas: [], propios: [], anteriores: [], posteriores: [] };
 }
 export function nuevoEventoFuturo() {
-  return { id: uid(), sigla: "", eventoRef: "" };
+  return { id: uid(), sigla: "", eventoRef: "", eventoAnterior: "", eventoPosterior: "" };
 }
 
 export function analisisVacio() {
@@ -189,6 +189,16 @@ export function validarAnalisis(a) {
     if (totalAnt !== totalPost) {
       error("eventos", `La cantidad de eventos comprometidos anteriores (${totalAnt}) y posteriores (${totalPost}) debe ser igual.`);
     }
+    // En Δt constante cada evento futuro liga un comprometido anterior con uno posterior.
+    (a.eventosFuturos || []).forEach((e, i) => {
+      const campo = claveEventoFuturo(e, i);
+      if (!e.eventoAnterior?.trim()) {
+        error(campo, "Cada evento futuro debe indicar un evento comprometido anterior.");
+      }
+      if (!e.eventoPosterior?.trim()) {
+        error(campo, "Cada evento futuro debe indicar un evento comprometido posterior.");
+      }
+    });
   }
 
   return { errores, detalles, advertencias, esValido: errores.length === 0 };

@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/lib/AuthContext";
 import { esEmailUtn } from "@/lib/instituciones";
+import { validatePassword, PASSWORD_REQUIREMENTS_MESSAGE } from "@/lib/passwordValidation";
+import PasswordRequirements from "@/components/PasswordRequirements";
 
 const VALID_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -27,6 +29,10 @@ export default function Register() {
     setConfirmationMessage("");
     if (!VALID_EMAIL.test(email.trim())) {
       setError("Ingresá un email válido.");
+      return;
+    }
+    if (!validatePassword(password)) {
+      setError(PASSWORD_REQUIREMENTS_MESSAGE);
       return;
     }
 
@@ -113,7 +119,7 @@ export default function Register() {
           </p>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="password">Contraseña (mínimo 8 caracteres)</Label>
+          <Label htmlFor="password">Contraseña</Label>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
             <Input
@@ -136,6 +142,7 @@ export default function Register() {
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
+          <PasswordRequirements password={password} className="mt-2" />
         </div>
         <Button type="submit" className="h-12 w-full font-medium" disabled={loading}>
           {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Creando cuenta…</> : "Crear cuenta"}

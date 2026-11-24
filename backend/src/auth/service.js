@@ -46,14 +46,27 @@ export function assertAcademicEmail(email) {
   if (!isAcademicEmail(email)) throw new DomainRestrictionError();
 }
 
+export const PASSWORD_REQUIREMENTS_MESSAGE =
+  "La contraseña debe tener al menos 8 caracteres e incluir mayúsculas, minúsculas y al menos un número o carácter especial.";
+
+export function isStrongPassword(password) {
+  if (typeof password !== "string") return false;
+  if (password.length < 8) return false;
+  if (!/[A-Z]/.test(password)) return false;
+  if (!/[a-z]/.test(password)) return false;
+  if (!/[0-9]|[^A-Za-z0-9]/.test(password)) return false;
+  return true;
+}
+
 function assertNewPassword(password) {
-  if (typeof password !== "string" || password.length < 8) {
-    throw new ValidationError("La contraseña debe tener al menos 8 caracteres.");
+  if (!isStrongPassword(password)) {
+    throw new ValidationError(PASSWORD_REQUIREMENTS_MESSAGE);
   }
   if (Buffer.byteLength(password) > 1024) {
     throw new ValidationError("La contraseña es demasiado larga.");
   }
 }
+
 
 function requiredText(value, message, maxLength) {
   if (typeof value !== "string" || !value.trim()) throw new ValidationError(message);

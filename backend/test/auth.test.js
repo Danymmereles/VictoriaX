@@ -235,3 +235,67 @@ test("middleware rejects missing tokens and non-academic accounts", async () => 
   assert.deepEqual(await run("Bearer invalido"), { status: 401, called: false });
   assert.deepEqual(await run(`Bearer ${accessToken}`), { status: 403, called: false });
 });
+
+test("passwords must meet security criteria (min length, uppercase, lowercase, number/special)", async () => {
+  const { service } = setup();
+
+  // Débiles: longitud menor a 8
+  await assert.rejects(
+    service.register({ email: "test1@frba.utn.edu.ar", password: "123456", nombreCompleto: "Test" }),
+    (err) => err instanceof ValidationError && /al menos 8 caracteres/i.test(err.message),
+  );
+  await assert.rejects(
+    service.register({ email: "test2@frba.utn.edu.ar", password: "Abc1!", nombreCompleto: "Test" }),
+    (err) => err instanceof ValidationError && /al menos 8 caracteres/i.test(err.message),
+  );
+
+  // Débiles: sin mayúsculas
+  await assert.rejects(
+    service.register({ email: "test3@frba.utn.edu.ar", password: "secreta123", nombreCompleto: "Test" }),
+    (err) => err instanceof ValidationError && /mayúsculas/i.test(err.message),
+  );
+
+  // Débiles: sin minúsculas
+  await assert.rejects(
+    service.register({ email: "test4@frba.utn.edu.ar", password: "SECRETA123", nombreCompleto: "Test" }),
+    (err) => err instanceof ValidationError && /minúsculas/i.test(err.message),
+  );
+
+  // Débiles: sin números ni caracteres especiales
+  await assert.rejects(
+    service.register({ email: "test5@frba.utn.edu.ar", password: "SecretaPassword", nombreCompleto: "Test" }),
+    (err) => err instanceof ValidationError && /número o carácter especial/i.test(err.message),
+  );
+
+  // Seguras: con número o con símbolo especial
+  const ok1 = await service.register({
+    email: "ok1@frba.utn.edu.ar",
+    password: "Secreta123",
+    nombreCompleto: "Ok Uno",
+  });
+  assert.ok(ok1.accessToken);
+
+  const ok2 = await service.register({
+    email: "ok2@frba.utn.edu.ar",
+    password: "Password!Segura",
+    nombreCompleto: "Ok Dos",
+  });
+  assert.ok(ok2.accessToken);
+
+  // Al cambiar contraseña también se rechaza una débil
+  const session = await service.authenticate(ok1.accessToken);
+  await assert.rejects(
+    service.changePassword(session.user, session.sessionId, {
+      currentPassword: "Secreta123",
+      newPassword: "debil",
+    }),
+    (err) => err instanceof ValidationError && /al menos 8 caracteres/i.test(err.message),
+  );
+
+  // Y se acepta una segura
+  await service.changePassword(session.user, session.sessionId, {
+    currentPassword: "Secreta123",
+    newPassword: "NuevaPassword2024!",
+  });
+});
+

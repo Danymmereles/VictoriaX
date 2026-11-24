@@ -12,7 +12,8 @@ import EventosFuturos from "./EventosFuturos";
 // checkbox de "implícita" en vez del popup de confirmación al pasar a diagramar.
 export default function AnalisisPrevioPanel({ analisis, setAnalisis, onValidacionChange }) {
   function setMetodologia(m) {
-    setAnalisis((a) => ({ ...a, metodologia: m, eventos: eventosVacio() }));
+    // Al cambiar de metodología se vacían las tablas de eventos y de eventos futuros.
+    setAnalisis((a) => (a.metodologia === m ? a : { ...a, metodologia: m, eventos: eventosVacio(), eventosFuturos: [] }));
   }
   function setVariables(patch) {
     setAnalisis((a) => ({ ...a, variables: { ...a.variables, ...patch } }));

@@ -45,7 +45,8 @@ export default function ModoLibre() {
   const variablesConError = [...campos].some((c) => c.startsWith("variables.") || c.startsWith("variable:"));
 
   function setMetodologia(m) {
-    setAnalisis((a) => ({...a, metodologia: m, eventos: eventosVacio() }));
+    // Al cambiar de metodología se vacían las tablas de eventos y de eventos futuros.
+    setAnalisis((a) => (a.metodologia === m ? a : { ...a, metodologia: m, eventos: eventosVacio(), eventosFuturos: [] }));
   }
   
   function setVariables(patch) {

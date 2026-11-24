@@ -10,7 +10,8 @@
 //     necesita su SI y su NO);
 //   - Conectores: cada etiqueta con exactamente una llegada; un Conector
 //     no puede tener flechas que entran y salen;
-//   - nodos vacíos, Entrada y Entrada / Salida (todavía no se ejecutan);
+//   - nodos vacíos y Entrada (todavía no se ejecuta); Salida y
+//     Entrada / Salida ya no existen (pueden venir de diagramas viejos);
 //   - el Para (for): su ciclo y su salida conectados, y al menos una
 //     flecha que vuelve por la izquierda;
 //   - cada página con al menos un Fin.
@@ -45,11 +46,13 @@ const TIPOS = {
     for: { tipo: "para" },
 };
 
-// Todavía sin comportamiento al ejecutar (BNF: Entrada y Entrada / Salida)
+// Nodos que no se ejecutan: la Entrada todavía no tiene comportamiento
+// (BNF E1); la Salida (21/11) y la Entrada / Salida (23/11) se
+// eliminaron, pero pueden venir en un diagrama viejo o importado
 const SIN_EJECUCION = {
-    input: "Entrada",
-    io: "Entrada / Salida",
-    output: "Salida",
+    input: "Entrada todavía no se puede ejecutar: sacala del diagrama.",
+    io: "Entrada / Salida ya no existe: sacala del diagrama.",
+    output: "Salida ya no existe: sacala del diagrama.",
 };
 
 const texto = (node) => String(node.data?.label ?? "");
@@ -184,7 +187,7 @@ function armarPagina(pagina, errores) {
         }
 
         if (SIN_EJECUCION[tipoEditor]) {
-            error(node.id, `${SIN_EJECUCION[tipoEditor]} todavía no se puede ejecutar: sacalo del diagrama.`);
+            error(node.id, SIN_EJECUCION[tipoEditor]);
             return;
         }
 

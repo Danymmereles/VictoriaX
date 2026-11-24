@@ -6,7 +6,8 @@
 //   2. los controles del editor: sintaxis y uso de variables
 //      (validacion.js), nodos para completar y llamadas (pages.js);
 //   3. armarPrograma.js salidas sin conectar, Conectores, nodos vacíos,
-//      Entrada y Entrada / Salida, páginas sin Fin; y arma el programa.
+//      Entrada (y Salida o Entrada / Salida de diagramas viejos), páginas
+//      sin Fin; y arma el programa.
 //
 // revisarDiagrama({ foto, paginas, variables }) → { errores, programa, graficables }
 //   foto:      fotoDelDiagrama(...)

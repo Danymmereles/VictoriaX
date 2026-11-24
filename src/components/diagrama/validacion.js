@@ -22,8 +22,8 @@
 //   En las pestañas de las variables de datos y de las subrutinas no se
 //   exige que los nombres estén en la tabla (pueden usar variables propias).
 //
-// Los nodos vacíos no se marcan (todavía no se escribieron). Entrada,
-// Salida y Entrada / Salida no tienen sintaxis por ahora. Los nodos
+// Los nodos vacíos no se marcan (todavía no se escribieron). La Entrada
+// no tiene sintaxis por ahora; Salida y Entrada / Salida ya no existen. Los nodos
 // pendientes y las llamadas tienen sus propios mensajes (pages.js), que
 // tienen prioridad: ver Diagrama.jsx.
 // ===========================================================================

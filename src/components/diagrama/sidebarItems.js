@@ -42,7 +42,8 @@ export const SIDEBAR_ITEMS = [
     // Para (for): variable, valor inicial y valor final (ver para/)
     { id: "for", type: "for", data: { desde: "", hasta: "" }, label: "Para (for)" },
     { id: "document", type: "document" },
-    { id: "io", type: "io" },
+    // Entrada / Salida: eliminada el 23/11 (no tiene comportamiento). La
+    // figura sigue existiendo para los diagramas viejos (ver armarPrograma)
     { id: "funcion-generada", type: "preparation", label: FUNCION_GENERADA, opciones: OPCIONES_FUNCION_GENERADA },
     { id: "connector-left", type: "connector", data: { handleSide: "left" }, label: "Conector (punto a la izquierda)" },
     { id: "connector-right", type: "connector", data: { handleSide: "right" }, label: "Conector (punto a la derecha)" },

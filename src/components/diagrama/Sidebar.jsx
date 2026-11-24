@@ -16,7 +16,6 @@ const PREVIEW_SIZES = {
     decision: [38, 38],
     for: [36, 36],
     document: [46, 34],
-    io: [46, 34],
     preparation: [46, 34],
     subroutine: [46, 34],
     random: [46, 34],

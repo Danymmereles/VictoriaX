@@ -21,6 +21,8 @@ export default function TablaEventosEaE({ filas, onChange, controlVars, filasCon
   }
 
   const declarados = filas.map((f) => f.evento?.nombre).filter((n) => n && n.trim());
+  // En las columnas de futuro el nombre se muestra acortado (10 caracteres + ...)
+  const acortar = (n) => (n.length > 10 ? `${n.slice(0, 10)}...` : n);
 
   return (
     <div>
@@ -54,6 +56,7 @@ export default function TablaEventosEaE({ filas, onChange, controlVars, filasCon
                       <input
                         value={f.evento.nombre}
                         onChange={(e) => actualizarEvento(i, { nombre: e.target.value })}
+                        maxLength={25}
                         placeholder="Nombre"
                         className="w-32 rounded-lg border border-input bg-background px-3 py-2 text-sm"
                       />
@@ -81,13 +84,13 @@ export default function TablaEventosEaE({ filas, onChange, controlVars, filasCon
                   <td className="px-3 py-3">
                     <select value={f.futuroNoCond} onChange={(e) => actualizar(i, { futuroNoCond: e.target.value })} className="rounded-lg border border-input bg-background px-3 py-2 text-sm">
                       <option value="">(vacío)</option>
-                      {declarados.map((n) => <option key={n} value={n}>{n}</option>)}
+                      {declarados.map((n) => <option key={n} value={n}>{acortar(n)}</option>)}
                     </select>
                   </td>
                   <td className="px-3 py-3">
                     <select value={f.futuroCond} onChange={(e) => actualizar(i, { futuroCond: e.target.value })} className="rounded-lg border border-input bg-background px-3 py-2 text-sm">
                       <option value="">(vacío)</option>
-                      {declarados.map((n) => <option key={n} value={n}>{n}</option>)}
+                      {declarados.map((n) => <option key={n} value={n}>{acortar(n)}</option>)}
                     </select>
                   </td>
                   <td className="px-3 py-3">

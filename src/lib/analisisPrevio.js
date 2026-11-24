@@ -148,6 +148,12 @@ export function validarAnalisis(a) {
     if (futurosCargados.length === 0) {
       error("eventosFuturos", "Debe haber al menos un evento en la Tabla de Eventos Futuros.");
     }
+    // Cada evento futuro debe indicar a qué evento corresponde.
+    (a.eventosFuturos || []).forEach((e, i) => {
+      if (!e.eventoRef?.trim()) {
+        error(claveEventoFuturo(e, i), "Cada evento futuro debe indicar el evento al que corresponde.");
+      }
+    });
 
     const declarados = a.eventos.filas.map((f) => f.evento?.nombre).filter((n) => n && n.trim());
     a.eventos.filas.forEach((f, i) => {

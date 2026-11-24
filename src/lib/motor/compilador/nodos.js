@@ -5,14 +5,16 @@
 //
 // ejecutar(ctx) devuelve un salto:
 //   { siguiente: nodoId }              seguir en esta página
-//   { fin: true }                      terminar la página
+//   { fin: true, valor? }              terminar la página (valor: lo que
+//                                      devuelve el Fin de una subrutina)
 //   { llamar: pagina, retorno: nodoId, // ir a otra página y volver
 //     antes, alEntrar, alSalir, alVolver }
 // Los cuatro pasos de una llamada (los usa interprete.js):
 //   antes(memoria)              en quien llama, antes de entrar
 //   alEntrar(memoria, datos)    ya en la página llamada
 //   alSalir(memoria, marco)     al llegar a su Fin, antes de salir
-//   alVolver(memoria, datos)    de nuevo en quien llamó
+//   alVolver(memoria, datos, valor, ctx)  de nuevo en quien llamó
+//                               (valor: lo que devolvió su Fin)
 //
 // ctx: { memoria, aleatorio(), emitir(valores) } (ver interprete.js)
 // ===========================================================================
@@ -21,7 +23,7 @@ import { fallar } from "../runtime/errores.js";
 import { copiar, exigirNumero, formatear } from "../runtime/valores.js";
 
 import { compilarExpresion } from "./expresiones.js";
-import { compilarSentencias } from "./sentencias.js";
+import { compilarDestino, compilarSentencias } from "./sentencias.js";
 import { textoDe } from "./texto.js";
 
 const base = (nodo) => ({
@@ -101,7 +103,7 @@ export function compilarNodo(nodo, paginaCompilada) {
             return compilarPara(nodo);
 
         case "fin":
-            return { ...base(nodo), ejecutar: () => ({ fin: true }) };
+            return compilarFin(nodo);
 
         case "funcionGenerada":
             return compilarFuncionGenerada(nodo, paginaCompilada, siguiente);
@@ -109,6 +111,25 @@ export function compilarNodo(nodo, paginaCompilada) {
         default:
             throw new Error(`Nodo desconocido: ${nodo.tipo}`);
     }
+}
+
+
+/*
+ * Fin. En una subrutina (v0.17) devuelve una variable o un valor
+ * (arbol: { tipo: "retorno", valor }); quien la llama lo guarda en su
+ * destino (IN = calcular()). Los vectores se copian.
+ */
+function compilarFin(nodo) {
+    if (!nodo.arbol) {
+        return { ...base(nodo), ejecutar: () => ({ fin: true }) };
+    }
+
+    const valor = compilarExpresion(nodo.arbol.valor);
+
+    return {
+        ...base(nodo),
+        ejecutar: (ctx) => ({ fin: true, valor: copiar(valor(ctx)) }),
+    };
 }
 
 
@@ -198,8 +219,10 @@ function compilarFuncionGenerada(nodo, paginaCompilada, siguiente) {
 
     // Subrutina calcular(A, B): los parámetros van y vuelven. Al llamar,
     // toman los valores de A y B de quien llama; al llegar al Fin, los
-    // valores nuevos vuelven a A y B.
+    // valores nuevos vuelven a A y B. Con IN = calcular(A, B) (v0.17), lo
+    // que devuelve su Fin se guarda en IN, después de los parámetros.
     const parametros = nodo.arbol.parametros;
+    const guardarRetorno = nodo.arbol.destino ? compilarDestino(nodo.arbol.destino) : null;
 
     const salto = {
         retorno: nodo.siguiente,
@@ -209,8 +232,9 @@ function compilarFuncionGenerada(nodo, paginaCompilada, siguiente) {
             propios.forEach((p, i) => memoria.crearLocal(p, valores[i]));
         },
         alSalir: (memoria) => memoria.marco.pagina.parametros.map((p) => copiar(memoria.leer(p))),
-        alVolver(memoria, valores) {
+        alVolver(memoria, valores, valor, ctx) {
             parametros.forEach((p, i) => memoria.escribir(p, valores[i]));
+            if (guardarRetorno) guardarRetorno(ctx, valor);
         },
     };
 

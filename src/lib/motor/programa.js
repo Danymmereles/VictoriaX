@@ -36,7 +36,9 @@
 //   paraVuelta       la vuelta del cuerpo (entrada de la izquierda del
 //                    mismo Para): para = id del Para; suma 1 a la variable.
 //                    Su id es "<id del Para>#vuelta"
-//   fin              sin salidas
+//   fin              sin salidas. En una subrutina (v0.17) devuelve algo:
+//                    arbol { tipo: "retorno", valor }; la llamada que lo
+//                    guarda lleva arbol.destino (IN = calcular())
 // Los dos del Para siguen por cuerpo mientras variable <= hasta, y por
 // salida cuando la pasa.
 // Los Conectores ya vienen resueltos: no aparecen.
@@ -130,6 +132,10 @@ export function validarPrograma(json) {
 
             if (nodo.tipo === "para" && nodo.arbol?.tipo !== "para") {
                 p(`El Para ${nodo.id} no tiene su variable y sus valores ${en}.`);
+            }
+
+            if (nodo.tipo === "fin" && pagina.tipo === "subrutina" && nodo.arbol?.tipo !== "retorno") {
+                p(`El Fin ${nodo.id} de la subrutina ${pagina.nombre} no dice qué devuelve.`);
             }
 
             if (nodo.tipo !== "fin" && !nodo.arbol) {

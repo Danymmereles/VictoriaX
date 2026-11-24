@@ -87,8 +87,9 @@ export class Ejecucion {
         this.pila.push({ pagina, nodoId: pagina.inicio, salto });
     }
 
-    // Llegó al Fin de la página de arriba
-    volver() {
+    // Llegó al Fin de la página de arriba (valor: lo que devuelve el Fin
+    // de una subrutina)
+    volver(valor) {
         const { salto } = this.cima;
 
         if (this.pila.length === 1) {
@@ -102,7 +103,7 @@ export class Ejecucion {
 
         this.pila.pop();
         this.memoria.salir();
-        salto.alVolver?.(this.memoria, datos);
+        salto.alVolver?.(this.memoria, datos, valor, this.ctx);
     }
 
     paso() {
@@ -125,7 +126,7 @@ export class Ejecucion {
             const salto = instruccion.ejecutar(this.ctx);
 
             if (salto.fin) {
-                this.volver();
+                this.volver(salto.valor);
             } else if (salto.llamar) {
                 const datos = salto.antes?.(this.memoria);
                 cima.nodoId = salto.retorno;

@@ -24,7 +24,7 @@
 // ===========================================================================
 
 import { FORMATO_JSON, VERSION_JSON } from "../exportar/json.js";
-import { firmaDe, textoFirma } from "../funcionGenerada.js";
+import { firmaDelAncla, textoFirma } from "../funcionGenerada.js";
 import {
     CONTEXT_NODE_TYPE,
     MAIN_PAGE_ID,
@@ -151,7 +151,7 @@ export function leerDiagrama(texto, { funciones = [], tiposDeFlecha = [] } = {})
         .forEach((p) => {
             const firma = esLista(p.parametros)
                 ? { nombre: p.nombre, parametros: p.parametros }
-                : firmaDe(p.firma ?? "");
+                : firmaDelAncla(p.firma ?? "");
 
             if (
                 !p.id ||

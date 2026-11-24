@@ -8,7 +8,11 @@
 //         "resultado"  nombres separados por coma (sección 9)
 //         "etiqueta"   un nombre (Conector, sección 7)
 //         "fdp"        un nombre (Función Generada tipo fdp)
-//         "subrutina"  nombre(parametros) (Función Generada tipo Subrutina)
+//         "subrutina"  nombre(parametros): el inicio de su pestaña (la firma)
+//         "llamada"    [destino =] nombre(parametros): el nodo que la llama
+//                      (v0.17: destino recibe lo que devuelve su Fin)
+//         "retorno"    el Fin de una subrutina: una variable o un valor
+//                      (v0.17, sección 5b)
 //         "random"     R1, R2... (Función Generada tipo Random)
 //         "contador"   un nombre: la variable del Para (sección 5d)
 //         "expresion"  una cuenta: los valores inicial y final del Para
@@ -210,6 +214,75 @@ function firmaDeSubrutina(c) {
     return ast.firma(nombre, parametros);
 }
 
+// v0.17: el nodo que llama a una subrutina puede guardar lo que devuelve
+// <llamada> ::= [ <variable> "=" ] <firma>        IN = menorTPS(), calcular(A)
+function llamadaDeSubrutina(c, chequearEn) {
+    let destino = null;
+
+    // Un nombre que sigue con algo que no es "(" es la variable que recibe
+    // el valor (un nombre solo es una subrutina sin paréntesis)
+    const proximo = c.proximo;
+    const llamaDirecto = proximo.tipo === "fin" || (proximo.tipo === "op" && proximo.valor === "(");
+
+    if (c.es("nombre") && !llamaDirecto) {
+        destino = variable(c);
+
+        if (destino.indice) {
+            chequearEn(destino.indice, "cuenta");
+        }
+
+        if (c.esOp("==")) {
+            c.error("Para guardar lo que devuelve se usa =, no ==.");
+        }
+        c.esperarOp(
+            "=",
+            `Después de ${destino.nombre} va = para guardar lo que devuelve (${destino.nombre} = calcular()), o los paréntesis de la subrutina (${destino.nombre}()).`
+        );
+
+        if (c.es("fin")) {
+            c.error(`Falta la subrutina después del =: ${destino.nombre} = calcular().`);
+        }
+    }
+
+    const firma = firmaDeSubrutina(c);
+    return ast.llamadaSubrutina(firma.nombre, firma.parametros, destino);
+}
+
+// v0.17: el Fin de una subrutina devuelve una variable o un valor
+// <retorno> ::= <variable> | <numero> | "-" <numero> | "TRUE" | "FALSE"
+function retorno(c, chequearEn) {
+    if (c.es("fin")) {
+        c.error("Falta lo que devuelve la subrutina: una variable o un valor (por ejemplo, I o 0).");
+    }
+
+    const inicio = c.actual;
+    const valor = parsearExpresion(c);
+
+    if (!c.es("fin")) {
+        c.error(`Sobra ${describir(c.actual)} al final: el Fin devuelve una sola variable o un valor.`);
+    }
+
+    const esValor =
+        valor.tipo === "numero" ||
+        (valor.tipo === "constante" && valor.valor !== null) ||
+        (valor.tipo === "unario" && valor.operando.tipo === "numero");
+
+    if (valor.tipo !== "variable" && !esValor) {
+        c.error(
+            valor.tipo === "constante"
+                ? "El Fin no devuelve NULL: devolvé una variable o un valor."
+                : "El Fin devuelve una variable o un valor (por ejemplo, I, TPS[I] o 0): no van cuentas ni condiciones.",
+            inicio
+        );
+    }
+
+    if (valor.tipo === "variable" && valor.indice) {
+        chequearEn(valor.indice, "cuenta");
+    }
+
+    return ast.retorno(valor);
+}
+
 function random(c) {
     if (!c.es("nombre") || c.proximo.tipo !== "fin") {
         c.error("Un Random se llama R seguido de un número: R1, R2, R3…");
@@ -283,6 +356,8 @@ const PARSERS = {
     etiqueta,
     fdp: llamadaFdp,
     subrutina: firmaDeSubrutina,
+    llamada: llamadaDeSubrutina,
+    retorno,
     random,
     contador,
     expresion,

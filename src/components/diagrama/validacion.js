@@ -46,7 +46,18 @@ const REGLA_POR_TIPO = {
     random: "random",
 };
 
-export const reglaDeNodo = (node) => REGLA_POR_TIPO[node?.data?.type] ?? null;
+export const reglaDeNodo = (node) => {
+    // v0.17: el inicio de la pestaña es la firma; los demás nodos la
+    // llaman y pueden guardar lo que devuelve (IN = calcular())
+    if (node?.data?.type === "subroutine" && !node.data.anchorOf) {
+        return "llamada";
+    }
+    return REGLA_POR_TIPO[node?.data?.type] ?? null;
+};
+
+// v0.17: el Fin de una subrutina devuelve algo (obligatorio)
+const FALTA_RETORNO =
+    "Escribí lo que devuelve la subrutina: una variable o un valor (por ejemplo, I o 0). Quien la llama lo guarda con IN = nombre().";
 
 
 // Los nodos se revisan cada vez que cambia la página (también al moverlos):
@@ -86,9 +97,13 @@ function problemaDeUso({ node, usos, regla, pagina, tabla, datos, contexto, cont
 
     if (regla === "subrutina") {
         // El ancla es la definición: no se compara consigo misma
-        return node.data.anchorOf
-            ? null
-            : problemaDeSubrutina({ firma: usos.subrutina, pagina, ...contexto });
+        return null;
+    }
+
+    if (regla === "llamada") {
+        const problema = problemaDeSubrutina({ firma: usos.subrutina, pagina, ...contexto });
+        if (problema) return problema;
+        // Sigue: el destino y los parámetros, como cualquier asignación
     }
 
     for (const { nombre } of usos.asignaciones) {
@@ -216,8 +231,14 @@ export function problemasDeSintaxis({ nodes, pagina, paginas = [], variables = [
             return;
         }
 
-        const regla = reglaDeNodo(node);
+        const esRetorno = node.data?.type === "end" && pagina.tipo === "subrutina";
+        const regla = esRetorno ? "retorno" : reglaDeNodo(node);
         const texto = String(node.data?.label ?? "");
+
+        if (esRetorno && !texto.trim()) {
+            problemas[node.id] = FALTA_RETORNO;
+            return;
+        }
 
         if (!regla || !texto.trim()) {
             return;

@@ -39,11 +39,16 @@ const texto = (node) => String(node?.data?.label ?? "").trim();
 /*
  * Firma escrita en un nodo Subrutina: { nombre, parametros }, o null si el
  * texto no respeta la BNF (el error lo muestra validacion.js).
+ * El nodo que la llama puede guardar lo que devuelve (v0.17):
+ * "IN = calcular(A)" → { nombre: "calcular", parametros: ["A"] }.
  */
-export function firmaDe(textoDelNodo) {
-    const resultado = analizar(String(textoDelNodo ?? ""), "subrutina");
+export function firmaDe(textoDelNodo, { regla = "llamada" } = {}) {
+    const resultado = analizar(String(textoDelNodo ?? ""), regla);
     return resultado.ok ? resultado.usos.subrutina : null;
 }
+
+// La firma del inicio de una pestaña: sin destino (IN = …)
+export const firmaDelAncla = (textoDelNodo) => firmaDe(textoDelNodo, { regla: "subrutina" });
 
 export const textoFirma = ({ nombre, parametros = [] }) =>
     `${nombre}(${parametros.join(", ")})`;
@@ -152,7 +157,7 @@ export function subrutinasEnUso(listas) {
  */
 export function parametrosDelAncla(nodes, subrutina) {
     const ancla = nodes.find((node) => node.data?.anchorOf && esSubrutina(node));
-    const firma = ancla && firmaDe(ancla.data.label);
+    const firma = ancla && firmaDelAncla(ancla.data.label);
 
     if (
         !firma ||

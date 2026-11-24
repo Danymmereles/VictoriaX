@@ -39,7 +39,8 @@ const TIPOS = {
     document: { tipo: "resultado", regla: "resultado" },
     end: { tipo: "fin" },
     preparation: { tipo: "funcionGenerada", subtipo: "fdp", regla: "fdp" },
-    subroutine: { tipo: "funcionGenerada", subtipo: "subrutina", regla: "subrutina" },
+    // El ancla (la firma) no llega acá: es el inicio de la página
+    subroutine: { tipo: "funcionGenerada", subtipo: "subrutina", regla: "llamada" },
     random: { tipo: "funcionGenerada", subtipo: "random", regla: "random" },
     for: { tipo: "para" },
 };
@@ -216,7 +217,7 @@ function armarPagina(pagina, errores) {
 
         if (forma.tipo === "fin") {
             tieneFin = true;
-            programa.push({ id: node.id, tipo: "fin" });
+            programa.push(armarFin(node));
             return;
         }
 
@@ -259,6 +260,30 @@ function armarPagina(pagina, errores) {
 
         programa.push(nodo);
     });
+
+    // Fin. En una subrutina devuelve una variable o un valor (v0.17):
+    // { tipo: "fin", texto, arbol: { tipo: "retorno", valor } }
+    function armarFin(node) {
+        if (pagina.tipo !== "subrutina") {
+            return { id: node.id, tipo: "fin" };
+        }
+
+        const contenido = texto(node).trim();
+        let arbol = null;
+
+        if (!contenido) {
+            error(node.id, `Un Fin de ${pagina.firma ?? pagina.nombre} no devuelve nada: escribí una variable o un valor (por ejemplo, I o 0).`, "sintaxis");
+        } else {
+            const resultado = analizar(contenido, "retorno");
+            if (resultado.ok) {
+                arbol = resultado.arbol;
+            } else {
+                error(node.id, `Fin "${contenido}": ${resultado.error.mensaje}`, "sintaxis");
+            }
+        }
+
+        return { id: node.id, tipo: "fin", texto: contenido, arbol };
+    }
 
     // Para (for): dos nodos en el programa, la entrada (arriba) y la
     // vuelta (izquierda)

@@ -28,7 +28,10 @@
 //   resultado   { tipo: "resultado", nombres: [...] }
 //   etiqueta    { tipo: "etiqueta", nombre }                 (Conector)
 //   fdp         { tipo: "fdp", nombre }                      (Función Generada fdp)
-//   subrutina   { tipo: "firma", nombre, parametros }
+//   subrutina   { tipo: "firma", nombre, parametros }          (inicio de su pestaña)
+//   llamada     { tipo: "llamadaSubrutina", nombre, parametros, destino }
+//               (nodo que la llama; destino: nodo "variable" o null, v0.17)
+//   retorno     { tipo: "retorno", valor }   (Fin de una subrutina, v0.17)
 //   random      { tipo: "random", nombre }
 // ===========================================================================
 
@@ -66,6 +69,17 @@ export const etiqueta = (nombre) => ({ tipo: "etiqueta", nombre });
 export const fdp = (nombre) => ({ tipo: "fdp", nombre });
 
 export const firma = (nombre, parametros) => ({ tipo: "firma", nombre, parametros });
+
+// v0.17: llamada a una subrutina; destino recibe lo que devuelve su Fin
+export const llamadaSubrutina = (nombre, parametros, destino = null) => ({
+    tipo: "llamadaSubrutina",
+    nombre,
+    parametros,
+    destino,
+});
+
+// v0.17: lo que devuelve el Fin de una subrutina (una variable o un valor)
+export const retorno = (valor) => ({ tipo: "retorno", valor });
 
 export const random = (nombre) => ({ tipo: "random", nombre });
 

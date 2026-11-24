@@ -21,7 +21,7 @@
 //   parametros y sinUso (ningún nodo la llama: se puede borrar).
 // ===========================================================================
 
-import { TIPO_SUBRUTINA, firmaDe, textoFirma } from "./funcionGenerada.js";
+import { TIPO_SUBRUTINA, firmaDe, firmaDelAncla, textoFirma } from "./funcionGenerada.js";
 
 export const MAIN_PAGE_ID = "main";
 export const MAIN_PAGE_NAME = "Main";
@@ -200,7 +200,7 @@ export function validarNombreNodo({ data, nombre, pagina }) {
     }
 
     if (pagina?.tipo === "subrutina" && data?.type === TIPO_SUBRUTINA) {
-        const firma = firmaDe(nombre);
+        const firma = data.anchorOf ? firmaDelAncla(nombre) : firmaDe(nombre);
 
         // Ancla: solo se cambian los parámetros
         if (data.anchorOf) {

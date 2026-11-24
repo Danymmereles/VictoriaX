@@ -14,8 +14,9 @@ import { aritmetica, esVector } from "../runtime/valores.js";
 import { compilarExpresion } from "./expresiones.js";
 import { textoDe } from "./texto.js";
 
-// Dónde se guarda: (ctx, valor) => void
-function compilarDestino(destino) {
+// Dónde se guarda: (ctx, valor) => void (también lo usa la llamada a una
+// subrutina para guardar lo que devuelve, ver nodos.js)
+export function compilarDestino(destino) {
     const { nombre } = destino;
 
     if (!destino.indice) {

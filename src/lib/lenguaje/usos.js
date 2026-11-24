@@ -62,6 +62,22 @@ export function usosDe(arbol) {
         case "firma":
             usos.subrutina = { nombre: arbol.nombre, parametros: arbol.parametros };
             break;
+        case "llamadaSubrutina":
+            // Los parámetros van y vuelven: se leen y se asignan
+            usos.subrutina = { nombre: arbol.nombre, parametros: arbol.parametros };
+            arbol.parametros.forEach((nombre) => {
+                usos.lecturas.push({ nombre, indexada: false });
+                usos.asignaciones.push({ nombre, indexada: false });
+            });
+            // El destino recibe lo que devuelve
+            if (arbol.destino) {
+                usos.asignaciones.push({ nombre: arbol.destino.nombre, indexada: Boolean(arbol.destino.indice) });
+                if (arbol.destino.indice) leer(arbol.destino.indice);
+            }
+            break;
+        case "retorno":
+            leer(arbol.valor);
+            break;
         case "etiqueta":
         case "fdp":
         case "random":

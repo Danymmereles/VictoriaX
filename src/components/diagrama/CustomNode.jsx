@@ -58,13 +58,13 @@ const TOOLTIPS_FUNCION_GENERADA = {
     preparation:
         "fdp: llama a una variable de datos del Análisis Previo (p. ej. IA). Doble clic para cambiarla.",
     subroutine:
-        "Subrutina: doble clic para escribir su nombre y parámetros, p. ej. calcular() o calcular(A, B). La primera vez crea su pestaña; con el mismo nombre, la llama.",
+        "Subrutina: doble clic para escribir su nombre y parámetros, p. ej. calcular() o calcular(A, B). La primera vez crea su pestaña; con el mismo nombre, la llama. Para guardar lo que devuelve su Fin: IN = calcular().",
     random:
         "Random: toma un valor nuevo, entre 0 y 1, cada vez que pasa por acá. Doble clic para cambiar su nombre (R1, R2…).",
 };
 
 // Texto de ayuda (tooltip) de un nodo sin problemas
-function ayudaDelNodo({ anchorEditable, isAnchor, type, isContext, isConnector, isEnd, multiline }) {
+function ayudaDelNodo({ anchorEditable, isAnchor, type, isContext, isConnector, isEnd, isReturn, multiline }) {
     if (anchorEditable) {
         return "Inicio de la subrutina. Doble clic para cambiar sus parámetros (el nombre no cambia).";
     }
@@ -79,6 +79,9 @@ function ayudaDelNodo({ anchorEditable, isAnchor, type, isContext, isConnector, 
     }
     if (isConnector) {
         return "Doble clic para editar la etiqueta (un nombre, p. ej. C1). Los conectores con la misma etiqueta están vinculados.";
+    }
+    if (isReturn) {
+        return "Fin de la subrutina: doble clic para escribir lo que devuelve (una variable o un valor, p. ej. I o 0). Quien la llama lo guarda con IN = nombre().";
     }
     if (isEnd) {
         return "Fin: el algoritmo de esta página termina acá.";
@@ -139,7 +142,7 @@ export default function CustomNode(props) {
 function NodoComun({ id, data, selected }) {
     const { setNodes } = useReactFlow();
     const { takeSnapshot } = useHistory();
-    const { nodeIssues, validateLabel } = usePageContext();
+    const { page, nodeIssues, validateLabel } = usePageContext();
 
     const nodeRef = useRef(null);
     const size = useNodeSize(nodeRef);
@@ -168,6 +171,10 @@ function NodoComun({ id, data, selected }) {
     // Fin: texto fijo, solo entrada (arriba). Termina el algoritmo
     // de la página (en Main, la simulación).
     const isEnd = data.type === END_NODE_TYPE;
+
+    // v0.17: en una subrutina, el Fin es su return. Se edita (una
+    // variable o un valor) y muestra "Fin" como ayuda mientras está vacío
+    const isReturn = isEnd && page?.tipo === "subrutina";
 
     // Contexto: inicio fijo de Main, donde se declaran variables
     // (una por línea). Solo tiene salida y se edita en varias líneas.
@@ -209,7 +216,7 @@ function NodoComun({ id, data, selected }) {
     const startEditing = () => {
         // Ya editando (p. ej. doble clic dentro del campo para
         // seleccionar una palabra): no reiniciar el texto
-        if ((isAnchor && !anchorEditable) || isEnd || editingRef.current) {
+        if ((isAnchor && !anchorEditable) || (isEnd && !isReturn) || editingRef.current) {
             return;
         }
 
@@ -306,6 +313,7 @@ function NodoComun({ id, data, selected }) {
         isContext,
         isConnector,
         isEnd,
+        isReturn,
         multiline,
     });
 
@@ -313,12 +321,12 @@ function NodoComun({ id, data, selected }) {
     // (p. ej. "Asignación"), que desaparece al editar. Los nodos
     // generados traen una ayuda propia (p. ej. "Actualizar estado").
     const placeholder = data.hint || placeholderDe(data.type);
-    const isEmpty = !isEnd && !editing && !String(data.label ?? "").trim();
+    const isEmpty = (!isEnd || isReturn) && !editing && !String(data.label ?? "").trim();
 
     // Texto que define el tamaño del nodo (ver flow-node__label).
     // Al editar un nodo vacío se mide con el texto de ayuda, así
     // la figura no cambia de tamaño al empezar a escribir.
-    const mirrorText = isEnd
+    const mirrorText = isEnd && !isReturn
         ? NODE_NAMES[END_NODE_TYPE]
         : editing
             ? (text || placeholder) + (text.endsWith("\n") ? "\u00a0" : "")

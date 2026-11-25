@@ -133,7 +133,7 @@ function Validacion({ validacion, controlOk }) {
       {errores.length > 0 && (
         <div className="rounded-xl border border-destructive/30 dark:border-destructive bg-destructive/5 dark:bg-destructive/20 p-4">
           <p className="flex items-center gap-2 text-sm font-medium text-destructive"><AlertTriangle className="w-4 h-4" /> Errores bloqueantes</p>
-          <ul className="mt-2 list-disc pl-8 text-sm text-destructive/90">
+          <ul className="mt-2 list-disc pl-8 text-sm text-destructive dark:text-white">
             {errores.map((e, i) => <li key={i}>{e}</li>)}
           </ul>
         </div>

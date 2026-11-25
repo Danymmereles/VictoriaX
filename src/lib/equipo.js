@@ -5,9 +5,9 @@ export const EQUIPO = [
     linkedin: "https://www.linkedin.com/in/maria-daniela-mereles-a0b2a8142",
   },
   {
-    nombre: "Ailén Da Ruos",
-    email: "adaruosalvezdeolivera@frba.utn.edu.ar",
-    linkedin: "https://www.linkedin.com/in/ail%C3%A9n-da-ruos/",
+    nombre: "Aldo Callisaya",
+    email: "acallisaya@frba.utn.edu.ar",
+    linkedin: "https://www.linkedin.com/in/aldo-callisaya/",
   },
   {
     nombre: "Natalia Vargas",
@@ -20,9 +20,9 @@ export const EQUIPO = [
     linkedin: "https://www.linkedin.com/in/yamilaylensoto/",
   },
   {
-    nombre: "Aldo Callisaya",
-    email: "acallisaya@frba.utn.edu.ar",
-    linkedin: "https://www.linkedin.com/in/aldo-callisaya/",
+    nombre: "Ailén Da Ruos",
+    email: "adaruosalvezdeolivera@frba.utn.edu.ar",
+    linkedin: "https://www.linkedin.com/in/ail%C3%A9n-da-ruos/",
   },
 ];
 

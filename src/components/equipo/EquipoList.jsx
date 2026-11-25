@@ -4,9 +4,14 @@ import { EQUIPO } from "@/lib/equipo";
 
 export default function EquipoList({ mostrarEmail = false }) {
   return (
-    <ul className="grid gap-5">
-      {EQUIPO.map((persona) => (
-        <li key={persona.nombre} className="flex flex-col gap-2">
+    <ul className="grid gap-5 sm:grid-cols-2">
+      {EQUIPO.map((persona, index) => (
+        <li
+          key={persona.nombre}
+          className={`flex flex-col gap-2 ${
+            index === EQUIPO.length - 1 && EQUIPO.length % 2 === 1 ? "sm:col-span-2" : ""
+          }`}
+        >
           <span className="font-medium text-foreground">{persona.nombre}</span>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
             <a

@@ -5,12 +5,15 @@ import { authClient } from "@/api/authClient";
 import { useSesionUsuario } from "@/lib/sesionUsuario";
 import NavBar from "@/components/home/NavBar";
 import Footer from "@/components/home/Footer";
+import { validatePassword, PASSWORD_REQUIREMENTS_MESSAGE } from "@/lib/passwordValidation";
+import PasswordRequirements from "@/components/PasswordRequirements";
 
 export default function CambiarContrasena() {
   const { usuario } = useSesionUsuario();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [newPassword, setNewPassword] = useState("");
   const [visiblePasswords, setVisiblePasswords] = useState({
     currentPassword: false,
     newPassword: false,
@@ -49,15 +52,14 @@ export default function CambiarContrasena() {
 
     const formData = new FormData(form);
     const currentPassword = formData.get("currentPassword");
-    const newPassword = formData.get("newPassword");
     const confirmPassword = formData.get("confirmPassword");
 
-    if (newPassword !== confirmPassword) {
-      setError("La nueva contraseña y su confirmación no coinciden.");
+    if (!validatePassword(newPassword)) {
+      setError(PASSWORD_REQUIREMENTS_MESSAGE);
       return;
     }
-    if (typeof newPassword !== "string" || newPassword.length < 8) {
-      setError("La nueva contraseña debe tener al menos 8 caracteres.");
+    if (newPassword !== confirmPassword) {
+      setError("La nueva contraseña y su confirmación no coinciden.");
       return;
     }
 
@@ -65,6 +67,7 @@ export default function CambiarContrasena() {
     try {
       await authClient.changePassword({ currentPassword, newPassword });
       form.reset();
+      setNewPassword("");
       setMessage("Tu contraseña se actualizó correctamente.");
     } catch (changeError) {
       setError(changeError?.message || "No se pudo cambiar la contraseña.");
@@ -90,7 +93,7 @@ export default function CambiarContrasena() {
             Cambiar contraseña
           </h1>
           <p className="mt-4 text-muted-foreground">
-            Confirmá tu contraseña actual y elegí una nueva de al menos 8 caracteres.
+            Confirmá tu contraseña actual y elegí una nueva contraseña segura.
           </p>
         </div>
 
@@ -143,6 +146,8 @@ export default function CambiarContrasena() {
                   type={visiblePasswords.newPassword ? "text" : "password"}
                   autoComplete="new-password"
                   minLength={8}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
                   required
                   className="w-full rounded-lg border border-input bg-background px-4 py-3 pr-12 text-sm"
                 />
@@ -158,7 +163,9 @@ export default function CambiarContrasena() {
                     : <Eye className="h-4 w-4" aria-hidden="true" />}
                 </button>
               </div>
+              <PasswordRequirements password={newPassword} className="mt-2" />
             </div>
+
             <div>
               <label htmlFor="confirmPassword" className="text-sm font-medium text-muted-foreground">
                 Confirmar nueva contraseña

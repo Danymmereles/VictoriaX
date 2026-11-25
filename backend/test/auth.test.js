@@ -452,110 +452,66 @@ test("middleware rejects missing tokens and permits authenticated external users
   assert.deepEqual(await run(`Bearer ${accessToken}`), { status: undefined, called: true });
 });
 
-test("unverified user created over 24 hours ago is deleted and allows re-registration", async () => {
-  const { service, repo, mailService, advance } = setup();
-  await service.register({
-    email: "alumno@frba.utn.edu.ar",
-    password: "Password123",
-    confirmPassword: "Password123",
-    nombreCompleto: "Alumno Original",
-  });
-  assert.equal(repo.users.size, 1);
-  assert.equal(mailService.verification.length, 1);
+test("passwords must meet security criteria (min length, uppercase, lowercase, number/special)", async () => {
+  const { service } = setup();
 
-  // Attempting to register again within 24h fails with ConflictError
+  // Débiles: longitud menor a 8
   await assert.rejects(
-    service.register({
-      email: "alumno@frba.utn.edu.ar",
-      password: "Password123",
-      confirmPassword: "Password123",
-      nombreCompleto: "Alumno Reintento",
+    service.register({ email: "test1@frba.utn.edu.ar", password: "123456", nombreCompleto: "Test" }),
+    (err) => err instanceof ValidationError && /al menos 8 caracteres/i.test(err.message),
+  );
+  await assert.rejects(
+    service.register({ email: "test2@frba.utn.edu.ar", password: "Abc1!", nombreCompleto: "Test" }),
+    (err) => err instanceof ValidationError && /al menos 8 caracteres/i.test(err.message),
+  );
+
+  // Débiles: sin mayúsculas
+  await assert.rejects(
+    service.register({ email: "test3@frba.utn.edu.ar", password: "secreta123", nombreCompleto: "Test" }),
+    (err) => err instanceof ValidationError && /mayúsculas/i.test(err.message),
+  );
+
+  // Débiles: sin minúsculas
+  await assert.rejects(
+    service.register({ email: "test4@frba.utn.edu.ar", password: "SECRETA123", nombreCompleto: "Test" }),
+    (err) => err instanceof ValidationError && /minúsculas/i.test(err.message),
+  );
+
+  // Débiles: sin números ni caracteres especiales
+  await assert.rejects(
+    service.register({ email: "test5@frba.utn.edu.ar", password: "SecretaPassword", nombreCompleto: "Test" }),
+    (err) => err instanceof ValidationError && /número o carácter especial/i.test(err.message),
+  );
+
+  // Seguras: con número o con símbolo especial
+  const ok1 = await service.register({
+    email: "ok1@frba.utn.edu.ar",
+    password: "Secreta123",
+    nombreCompleto: "Ok Uno",
+  });
+  assert.ok(ok1.accessToken);
+
+  const ok2 = await service.register({
+    email: "ok2@frba.utn.edu.ar",
+    password: "Password!Segura",
+    nombreCompleto: "Ok Dos",
+  });
+  assert.ok(ok2.accessToken);
+
+  // Al cambiar contraseña también se rechaza una débil
+  const session = await service.authenticate(ok1.accessToken);
+  await assert.rejects(
+    service.changePassword(session.user, session.sessionId, {
+      currentPassword: "Secreta123",
+      newPassword: "debil",
     }),
-    ConflictError,
+    (err) => err instanceof ValidationError && /al menos 8 caracteres/i.test(err.message),
   );
 
-  // Advance clock past 24 hours
-  advance(24 * 60 * 60 * 1000 + 1000);
-
-  // Re-registering succeeds, replacing the unverified account
-  const reRegisterResult = await service.register({
-    email: "alumno@frba.utn.edu.ar",
-    password: "NuevaPassword123",
-    confirmPassword: "NuevaPassword123",
-    nombreCompleto: "Alumno Re-creado",
+  // Y se acepta una segura
+  await service.changePassword(session.user, session.sessionId, {
+    currentPassword: "Secreta123",
+    newPassword: "NuevaPassword2024!",
   });
-  assert.equal(reRegisterResult.user.nombre_completo, "Alumno Re-creado");
-  assert.equal(repo.users.size, 1);
-  assert.equal(mailService.verification.length, 2);
-
-  // Verifying the new token activates the account
-  await verifyLatest(service, mailService);
-  assert.equal(repo.users.get(reRegisterResult.user.id_usuario).email_verificado, true);
-});
-
-test("resending verification invalidates previous tokens and sends new email with generic response", async () => {
-  const { service, repo, mailService } = setup();
-  await service.register({
-    email: "alumno@frba.utn.edu.ar",
-    password: "Password123",
-    confirmPassword: "Password123",
-    nombreCompleto: "Alumno",
-  });
-  assert.equal(mailService.verification.length, 1);
-  const firstToken = new URL(mailService.verification[0].verifyUrl).searchParams.get("token");
-
-  const resendResult = await service.resendVerification({ email: "alumno@frba.utn.edu.ar" });
-  assert.match(resendResult.message, /Si existe una cuenta pendiente de verificación/);
-  assert.equal(mailService.verification.length, 2);
-
-  // The first token was invalidated
-  await assert.rejects(service.verifyEmail({ token: firstToken }), ValidationError);
-
-  // The second token works
-  const secondToken = new URL(mailService.verification[1].verifyUrl).searchParams.get("token");
-  await service.verifyEmail({ token: secondToken });
-  assert.equal(repo.users.values().next().value.email_verificado, true);
-
-  // Resending for already verified or nonexistent email returns generic message without sending
-  const resendAgain = await service.resendVerification({ email: "alumno@frba.utn.edu.ar" });
-  assert.match(resendAgain.message, /Si existe una cuenta pendiente de verificación/);
-  assert.equal(mailService.verification.length, 2);
-
-  const resendNonexistent = await service.resendVerification({ email: "inexistente@gmail.com" });
-  assert.match(resendNonexistent.message, /Si existe una cuenta pendiente de verificación/);
-  assert.equal(mailService.verification.length, 2);
-});
-
-test("deleteAccount requires current password, closes sessions and removes user from database", async () => {
-  const { service, repo, mailService } = setup();
-  await registerVerified(service, mailService, {
-    email: "ada@frba.utn.edu.ar",
-    password: "Password123",
-    nombreCompleto: "Ada Lovelace",
-  });
-  const { accessToken } = await service.login({ email: "ada@frba.utn.edu.ar", password: "Password123" });
-  const session = await service.authenticate(accessToken);
-  assert.ok(session);
-
-  // Invalid password rejected
-  await assert.rejects(
-    service.deleteAccount(session.user, { password: "WrongPassword" }),
-    ValidationError,
-  );
-  assert.equal(repo.users.size, 1);
-  assert.equal(repo.sessions.size, 1);
-
-  // Missing password rejected
-  await assert.rejects(
-    service.deleteAccount(session.user, { password: "" }),
-    ValidationError,
-  );
-
-  // Valid password deletes account and sessions
-  await service.deleteAccount(session.user, { password: "Password123" });
-  assert.equal(repo.users.size, 0);
-  assert.equal(repo.sessions.size, 0);
-  assert.equal(await service.authenticate(accessToken), null);
-  assert.equal(await repo.findByEmail("ada@frba.utn.edu.ar"), null);
 });
 

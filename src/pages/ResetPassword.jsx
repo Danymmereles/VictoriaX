@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Lock, Loader2, AlertTriangle } from "lucide-react";
 import AuthLayout from "@/components/AuthLayout";
+import { validatePassword, PASSWORD_REQUIREMENTS_MESSAGE } from "@/lib/passwordValidation";
+import PasswordRequirements from "@/components/PasswordRequirements";
 
 export default function ResetPassword() {
   const navigate = useNavigate();
@@ -20,6 +22,10 @@ export default function ResetPassword() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    if (!validatePassword(newPassword)) {
+      setError(PASSWORD_REQUIREMENTS_MESSAGE);
+      return;
+    }
     if (newPassword !== confirmPassword) {
       setError("Las contraseñas no coinciden.");
       return;
@@ -29,7 +35,7 @@ export default function ResetPassword() {
       await authClient.resetPassword({ token: resetToken, newPassword });
       navigate("/login");
     } catch (err) {
-      setError(err.message || "No se pudo cambiar la contraseña.");
+      setError(err.message || "No se pudo restablecer la contraseña.");
     } finally {
       setLoading(false);
     }
@@ -39,16 +45,16 @@ export default function ResetPassword() {
     return (
       <AuthLayout
         icon={AlertTriangle}
-        title="Enlace no válido"
-        subtitle="El enlace para cambiar la contraseña falta o no es válido."
+        title="Enlace inválido"
+        subtitle="El enlace de recuperación es inválido o expiró"
         footer={
           <Link to="/forgot-password" className="text-primary font-medium hover:underline">
-            Solicitar otro enlace
+            Solicitar un nuevo enlace
           </Link>
         }
       >
         <p className="text-sm text-foreground text-center">
-          El enlace parece incompleto. Solicitá un nuevo correo para cambiar la contraseña.
+          El enlace utilizado no es válido. Por favor solicitá un nuevo correo para restablecer tu contraseña.
         </p>
       </AuthLayout>
     );
@@ -58,8 +64,7 @@ export default function ResetPassword() {
     <AuthLayout
       icon={Lock}
       title="Nueva contraseña"
-      subtitle="Ingresá la nueva contraseña para tu cuenta."
-      footer={<Link to="/login" className="font-medium text-primary hover:underline">Volver a iniciar sesión</Link>}
+      subtitle="Ingresá tu nueva contraseña segura"
     >
       {error && (
         <div className="mb-4 p-3 rounded-lg bg-destructive/10 dark:bg-destructive/20 text-destructive text-sm">
@@ -84,9 +89,10 @@ export default function ResetPassword() {
               required
             />
           </div>
+          <PasswordRequirements password={newPassword} className="mt-2" />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="confirm">Confirmar contraseña</Label>
+          <Label htmlFor="confirm">Confirmar nueva contraseña</Label>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
             <Input
@@ -106,10 +112,10 @@ export default function ResetPassword() {
           {loading ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Actualizando...
+              Restableciendo…
             </>
           ) : (
-            "Cambiar contraseña"
+            "Restablecer contraseña"
           )}
         </Button>
       </form>

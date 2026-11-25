@@ -29,7 +29,12 @@ export default function VariableControlImplicita({
     <div>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h4 className={`font-heading text-lg font-semibold ${error ? "text-destructive" : ""}`}>Variables de Control</h4>
-        {error && <ErrorBadge />}
+        <div className="flex items-center gap-3">
+          {error && <ErrorBadge />}
+          <button onClick={agregar} className="inline-flex items-center gap-1 text-sm font-medium text-[#AF9BEF] hover:underline">
+            <Plus className="w-4 h-4" /> Agregar
+          </button>
+        </div>
       </div>
 
       {variables.length === 0 && (
@@ -61,9 +66,6 @@ export default function VariableControlImplicita({
               </div>
             );
           })}
-          <button onClick={agregar} className="inline-flex items-center gap-1 text-sm font-medium text-[#AF9BEF] hover:underline">
-            <Plus className="w-4 h-4" /> Agregar variable de control
-          </button>
         </div>
       )}
     </div>

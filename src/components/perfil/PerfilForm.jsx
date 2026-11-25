@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { institucionDeUsuario, LISTA_INSTITUCIONES } from "@/lib/instituciones";
+import { ROLES } from "@/lib/permisos";
 
 // Formulario reutilizable de perfil (DER USUARIO).
 // `editable` se controla con permisos del diagrama de seguridad:
@@ -11,6 +12,8 @@ export default function PerfilForm({
   editable = true,
   rolEditable = editable,
   institucionEditable = rolEditable,
+  // Solo un super administrador puede otorgar ese rol.
+  permitirSuperAdmin = false,
   onSave,
   saving = false,
 }) {
@@ -56,21 +59,31 @@ export default function PerfilForm({
         </select>
       </div>
 
-      {usuario?.puedeUsarModoEstudio && (
-        <div>
-          <label className="text-sm font-medium text-muted-foreground">Rol</label>
-          <select
-            value={form.rol}
-            onChange={cambiar("rol")}
-            disabled={!rolEditable}
-            className="mt-2 w-full rounded-lg border border-input bg-background px-4 py-3 text-sm disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            <option value="ADMINISTRADOR">Administrador</option>
-            <option value="DOCENTE">Docente</option>
-            <option value="ESTUDIANTE">Estudiante</option>
-          </select>
-        </div>
+{(usuario?.puedeUsarModoEstudio ||
+  permitirSuperAdmin ||
+  form.rol === ROLES.SUPER_ADMINISTRADOR) && (
+  <div>
+    <label className="text-sm font-medium text-muted-foreground">
+      Rol
+    </label>
+    <select
+      value={form.rol}
+      onChange={cambiar("rol")}
+      disabled={!rolEditable}
+      className="mt-2 w-full rounded-lg border border-input bg-background px-4 py-3 text-sm disabled:cursor-not-allowed disabled:opacity-60"
+    >
+      {(permitirSuperAdmin ||
+        form.rol === ROLES.SUPER_ADMINISTRADOR) && (
+        <option value="SUPER_ADMINISTRADOR">
+          Super administrador
+        </option>
       )}
+      <option value="ADMINISTRADOR">Administrador</option>
+      <option value="DOCENTE">Docente</option>
+      <option value="ESTUDIANTE">Estudiante</option>
+    </select>
+  </div>
+)}
 
       {editable && (
         <button

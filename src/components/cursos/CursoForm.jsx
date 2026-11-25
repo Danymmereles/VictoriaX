@@ -19,8 +19,22 @@ import {
 } from "@/components/ui/select";
 import { PERIODOS, periodoAbrev, anioLectivo } from "@/lib/cursos";
 import { ROLES } from "@/lib/permisos";
+import ListaSeleccionUsuarios from "@/components/cursos/ListaSeleccionUsuarios";
 
-export default function CursoForm({ open, onClose, onSave, curso = null, usuarios = [] }) {
+// Institución del curso:
+//  - super admin (puedeElegirInstitucion): la elige al crear; recién ahí se listan sus docentes.
+//  - admin: es la suya (institucionFija) y no se puede cambiar.
+// Al editar se muestra la del curso, sin poder cambiarla.
+export default function CursoForm({
+  open,
+  onClose,
+  onSave,
+  curso = null,
+  usuarios = [],
+  instituciones = [],
+  puedeElegirInstitucion = false,
+  institucionFija = "",
+}) {
   const esCrear = !curso;
   const [codigo, setCodigo] = useState("");
   const [nombre, setNombre] = useState("");
@@ -29,6 +43,9 @@ export default function CursoForm({ open, onClose, onSave, curso = null, usuario
   const [fechaFinal, setFechaFinal] = useState("");
   const [forzarCierre, setForzarCierre] = useState(false);
   const [docentesSel, setDocentesSel] = useState([]);
+  const eligeInstitucion = esCrear && puedeElegirInstitucion;
+  const institucionInicial = curso?.institucion || (eligeInstitucion ? "" : institucionFija);
+  const [institucion, setInstitucion] = useState(institucionInicial);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -40,15 +57,15 @@ export default function CursoForm({ open, onClose, onSave, curso = null, usuario
       setFechaFinal(curso?.fecha_final ? String(curso.fecha_final).slice(0, 10) : "");
       setForzarCierre(Boolean(curso?.forzar_cierre));
       setDocentesSel([]);
+      setInstitucion(institucionInicial);
       setError("");
     }
-  }, [open, curso]);
+  }, [open, curso, institucionInicial]);
 
-  const docentes = usuarios.filter((u) => u.rol === ROLES.DOCENTE);
-
-  function toggleDocente(id) {
-    setDocentesSel((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
-  }
+  // Los docentes tienen que ser de la institución del curso.
+  const docentes = institucion
+    ? usuarios.filter((u) => u.rol === ROLES.DOCENTE && u.institucion === institucion)
+    : [];
 
   function previsual() {
     if (nombre.trim()) return nombre.trim();
@@ -58,6 +75,7 @@ export default function CursoForm({ open, onClose, onSave, curso = null, usuario
   }
 
   function submit() {
+    if (eligeInstitucion && !institucion) return setError("Elegí la institución del curso.");
     if (!codigo.trim()) return setError("El código es obligatorio.");
     if (!periodo) return setError("Seleccioná un período lectivo.");
     if (!fechaInicio || !fechaFinal) return setError("Las fechas de inicio y final son obligatorias.");
@@ -73,6 +91,7 @@ export default function CursoForm({ open, onClose, onSave, curso = null, usuario
         fecha_inicio: fechaInicio,
         fecha_final: fechaFinal,
         forzar_cierre: forzarCierre,
+        ...(eligeInstitucion ? { institucion } : {}),
       },
       esCrear ? docentesSel : null
     );
@@ -80,11 +99,36 @@ export default function CursoForm({ open, onClose, onSave, curso = null, usuario
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{esCrear ? "Crear curso" : "Editar curso"}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
+          <div>
+            <Label>Institución</Label>
+            {eligeInstitucion ? (
+              <Select
+                value={institucion}
+                onValueChange={(v) => {
+                  setInstitucion(v);
+                  setDocentesSel([]);
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Elegí una institución" />
+                </SelectTrigger>
+                <SelectContent>
+                  {instituciones.map((inst) => (
+                    <SelectItem key={inst} value={inst}>
+                      {inst}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <Input value={institucion} disabled readOnly />
+            )}
+          </div>
           <div>
             <Label>Código del curso</Label>
             <Input value={codigo} onChange={(e) => setCodigo(e.target.value)} placeholder="Ej. K4651" />
@@ -141,25 +185,20 @@ export default function CursoForm({ open, onClose, onSave, curso = null, usuario
           {esCrear && (
             <div>
               <Label>Docentes integrantes (obligatorio al menos uno)</Label>
-              <div className="mt-2 max-h-44 space-y-1 overflow-y-auto rounded-lg border border-border p-2">
-                {docentes.length === 0 && (
-                  <p className="p-2 text-sm text-muted-foreground">No hay usuarios con rol docente.</p>
+              <div className="mt-2">
+                {institucion ? (
+                  <ListaSeleccionUsuarios
+                    usuarios={docentes}
+                    seleccion={docentesSel}
+                    onChange={setDocentesSel}
+                    vacio={`No hay docentes en ${institucion}.`}
+                    placeholder="Buscar docente por nombre o email…"
+                  />
+                ) : (
+                  <p className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
+                    Elegí una institución para ver sus docentes.
+                  </p>
                 )}
-                {docentes.map((d) => (
-                  <label
-                    key={d.id}
-                    className="flex cursor-pointer items-center gap-3 rounded px-2 py-1.5 hover:bg-muted/40"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={docentesSel.includes(d.id)}
-                      onChange={() => toggleDocente(d.id)}
-                      className="h-4 w-4 accent-[#AF9BEF]"
-                    />
-                    <span className="text-sm">{d.nombre_completo}</span>
-                    <span className="text-xs text-muted-foreground">{d.email}</span>
-                  </label>
-                ))}
               </div>
             </div>
           )}

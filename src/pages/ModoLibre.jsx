@@ -11,6 +11,9 @@ import {
   METODOLOGIAS
 } from "@/lib/analisisPrevio";
 import { cargarAnalisis, guardarAnalisis, limpiarAnalisis } from "@/lib/analisisPrevioStorage";
+import { resolucionesClient } from "@/api/resolucionesClient";
+import { useSesionUsuario } from "@/lib/sesionUsuario";
+import { useGuardadoResolucion } from "@/lib/useGuardadoResolucion";
 import NavBar from "@/components/home/NavBar";
 import Footer from "@/components/home/Footer";
 import MetodologiaSelector from "@/components/analisis/MetodologiaSelector";
@@ -26,9 +29,37 @@ export default function ModoLibre() {
   const [mostrarImplicita, setMostrarImplicita] = useState(false);
   const [mostrarAdvertencias, setMostrarAdvertencias] = useState(false);
 
+  const [errorCarga, setErrorCarga] = useState("");
+  const { usuario } = useSesionUsuario();
+  const idUsuario = usuario?.id;
+  const { error: errorGuardado, iniciar, detener } = useGuardadoResolucion(analisis);
+
+  // El navegador guarda siempre una copia: la usa el diagrama y sirve sin sesión.
   useEffect(() => {
     guardarAnalisis(analisis);
   }, [analisis]);
+
+  // Con sesión, el análisis se guarda en MySQL (ANALISIS_PREVIO + RESOLUCION sin ejercicio)
+  // y se retoma el último del Modo Libre.
+  useEffect(() => {
+    detener();
+    setErrorCarga("");
+    if (!idUsuario) return undefined;
+    let cancelado = false;
+    resolucionesClient
+      .ultimaLibre()
+      .then((ultima) => {
+        if (cancelado) return;
+        if (ultima) setAnalisis(ultima.analisis);
+        iniciar({ resolucion: ultima });
+      })
+      .catch(() => {
+        if (!cancelado) setErrorCarga("No se pudo conectar con el servidor: el análisis se guarda solo en este navegador.");
+      });
+    return () => {
+      cancelado = true;
+    };
+  }, [idUsuario, iniciar, detener]);
 
   const validacion = useMemo(() => validarAnalisis(analisis), [analisis]);
   const campos = useMemo(() => camposConError(validacion), [validacion]);
@@ -76,9 +107,14 @@ export default function ModoLibre() {
   }
 
   function reiniciar() {
-    if (window.confirm("¿Reiniciar el análisis previo? Se perderán los datos cargados.")) {
+    const mensaje = idUsuario
+      ? "¿Empezar un análisis previo nuevo? El actual queda guardado en tu cuenta."
+      : "¿Reiniciar el análisis previo? Se perderán los datos cargados.";
+    if (window.confirm(mensaje)) {
       setAnalisis(analisisVacio());
       limpiarAnalisis();
+      // El nuevo análisis crea otra resolución al primer cambio.
+      if (idUsuario && !errorCarga) iniciar();
     }
   }
 
@@ -97,6 +133,12 @@ export default function ModoLibre() {
         </div>
 
         <Pasos activo={1} />
+
+        {(errorCarga || errorGuardado) && (
+          <p className="mt-6 rounded-xl border border-amber-500/40 bg-amber-500/10 px-5 py-4 text-sm text-amber-700 dark:text-amber-300">
+            {errorCarga || `No se pudo guardar el análisis en tu cuenta: ${errorGuardado}`}
+          </p>
+        )}
 
         <Seccion titulo="1 · Metodología" desc="Define la estructura de la tabla de eventos." error={campos.has("metodologia")}>
           <MetodologiaSelector value={analisis.metodologia} onChange={setMetodologia} error={campos.has("metodologia")} />

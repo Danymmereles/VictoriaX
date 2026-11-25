@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { getPermisos } from "@/lib/permisos";
+import { getPermisos, rolDesdeApi } from "@/lib/permisos";
 import { useAuth } from "@/lib/AuthContext";
 
 const SesionUsuarioContext = createContext(null);
@@ -12,16 +12,11 @@ export function SesionUsuarioProvider({ children }) {
     setPerfilActualizado(null);
   }, [user?.id_usuario]);
 
-  const rolAplicacion = {
-    ADMIN: "ADMINISTRADOR",
-    DOCENTE: "DOCENTE",
-    ALUMNO: "ESTUDIANTE",
-  };
   const usuario = user
     ? {
         ...user,
         id: user.id_usuario,
-        rol: rolAplicacion[user.rol] || "ESTUDIANTE",
+        rol: rolDesdeApi(user.rol),
         ...perfilActualizado,
       }
     : null;

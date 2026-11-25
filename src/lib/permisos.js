@@ -16,9 +16,27 @@
 // ===========================================================================
 
 export const ROLES = {
+  SUPER_ADMINISTRADOR: "SUPER_ADMINISTRADOR",
   ADMINISTRADOR: "ADMINISTRADOR",
   DOCENTE: "DOCENTE",
   ESTUDIANTE: "ESTUDIANTE",
+};
+
+// Roles de la API (backend) -> roles de la aplicación.
+export const ROL_DESDE_API = {
+  SUPER_ADMIN: ROLES.SUPER_ADMINISTRADOR,
+  ADMIN: ROLES.ADMINISTRADOR,
+  DOCENTE: ROLES.DOCENTE,
+  ALUMNO: ROLES.ESTUDIANTE,
+};
+
+export const rolDesdeApi = (rol) => ROL_DESDE_API[rol] || ROLES.ESTUDIANTE;
+
+export const ETIQUETAS_ROL = {
+  SUPER_ADMINISTRADOR: "Super administrador",
+  ADMINISTRADOR: "Administrador",
+  DOCENTE: "Docente",
+  ESTUDIANTE: "Estudiante",
 };
 
 const estrategias = {
@@ -34,7 +52,9 @@ const estrategias = {
     puedoEliminarCurso: true,
     puedoGestionarIntegrantes: true,
     puedoVerEstadisticasCurso: true,
-    puedoVerTodosLosCursos: true,
+    puedoVerTodosLosCursos: true,       // de su institución
+    puedoVerTodasLasInstituciones: false,
+    puedoOtorgarSuperAdmin: false,
   },
   DOCENTE: {
     puedoCambiarRol: false,             // [diag]
@@ -49,6 +69,8 @@ const estrategias = {
     puedoGestionarIntegrantes: true,
     puedoVerEstadisticasCurso: true,
     puedoVerTodosLosCursos: false,
+    puedoVerTodasLasInstituciones: false,
+    puedoOtorgarSuperAdmin: false,
   },
   ESTUDIANTE: {
     puedoCambiarRol: false,              // [diag]
@@ -65,7 +87,16 @@ const estrategias = {
     puedoGestionarIntegrantes: false,
     puedoVerEstadisticasCurso: false,
     puedoVerTodosLosCursos: false,
+    puedoVerTodasLasInstituciones: false,
+    puedoOtorgarSuperAdmin: false,
   },
+};
+
+// Super administrador: todo lo del administrador, en todas las instituciones.
+estrategias.SUPER_ADMINISTRADOR = {
+  ...estrategias.ADMINISTRADOR,
+  puedoVerTodasLasInstituciones: true,
+  puedoOtorgarSuperAdmin: true,
 };
 
 const POR_DEFECTO = estrategias.ESTUDIANTE;

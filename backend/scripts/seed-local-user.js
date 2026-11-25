@@ -9,6 +9,7 @@ const DEMO_USERS = [
   { email: "alumno@frba.utn.edu.ar", nombre_completo: "Alumno de prueba", rol: "ALUMNO", institucion: "UTN FRBA" },
   { email: "docente@frba.utn.edu.ar", nombre_completo: "Docente de prueba", rol: "DOCENTE", institucion: "UTN FRBA" },
   { email: "admin@frba.utn.edu.ar", nombre_completo: "Administrador de prueba", rol: "ADMIN", institucion: "UTN FRBA" },
+  { email: "superadmin@frba.utn.edu.ar", nombre_completo: "Super administrador de prueba", rol: "SUPER_ADMIN", institucion: "UTN FRBA" },
 ];
 
 const { DATABASE_URL } = process.env;

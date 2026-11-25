@@ -7,6 +7,7 @@ import {
   AuthenticationError,
   ConflictError,
   ForbiddenError,
+  NotFoundError,
   ValidationError,
 } from "../src/auth/errors.js";
 
@@ -62,6 +63,7 @@ function createMemoryRepository() {
     async listByInstitucion(institucion) {
       return [...users.values()].filter((user) => user.institucion === institucion);
     },
+    async listAll() { return [...users.values()]; },
     async createSession(row) { sessions.set(row.id_sesion, row); },
     async createAuthToken(record, now) {
       for (const token of tokens.values()) {
@@ -515,3 +517,26 @@ test("passwords must meet security criteria (min length, uppercase, lowercase, n
   });
 });
 
+test("the super admin lists and manages users of every institution", async () => {
+  const { repo, service } = setup();
+  const admin = await registerAdmin(service, repo);
+  const superAdmin = await registerAdmin(service, repo, "super@frba.utn.edu.ar");
+  await repo.updateUser(superAdmin.id_usuario, { rol: "SUPER_ADMIN" });
+  const sa = await repo.findById(superAdmin.id_usuario);
+  const frre = (await service.register({ email: "otro@frre.utn.edu.ar", password: "Secreta123", nombreCompleto: "Otro" })).user;
+
+  assert.equal((await service.listUsers(sa)).length, 3);
+  assert.deepEqual((await service.listUsers(sa, { institucion: "UTN FRRE" })).map((u) => u.email), ["otro@frre.utn.edu.ar"]);
+  // Para el resto, el filtro se ignora: siempre su institución.
+  assert.equal((await service.listUsers(admin, { institucion: "UTN FRRE" })).some((u) => u.institucion === "UTN FRRE"), false);
+
+  // Un admin no gestiona otras instituciones ni toca el rol de super admin.
+  await assert.rejects(service.updateUser(admin, frre.id_usuario, { nombre_completo: "X" }), NotFoundError);
+  await assert.rejects(service.updateUser(admin, sa.id_usuario, { nombre_completo: "X" }), ForbiddenError);
+  const alumno = (await service.register({ email: "al@frba.utn.edu.ar", password: "Secreta123", nombreCompleto: "Al" })).user;
+  await assert.rejects(service.updateUser(admin, alumno.id_usuario, { rol: "SUPER_ADMINISTRADOR" }), ForbiddenError);
+
+  assert.equal((await service.updateUser(sa, frre.id_usuario, { rol: "ADMINISTRADOR" })).rol, "ADMIN");
+  assert.equal((await service.updateUser(sa, alumno.id_usuario, { rol: "SUPER_ADMINISTRADOR" })).rol, "SUPER_ADMIN");
+  await assert.rejects(service.updateUser(sa, sa.id_usuario, { rol: "ADMINISTRADOR" }), ForbiddenError);
+});

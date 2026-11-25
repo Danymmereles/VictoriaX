@@ -16,13 +16,19 @@ import {
 import { institucionDesdeEmail } from "./instituciones.js";
 import { isDuplicateEntry } from "../db/userRepository.js";
 import { createMailService } from "../mail/mailService.js";
+import { esAdmin, esSuperAdmin } from "./roles.js";
 
 export const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const VERIFICATION_TTL_MS = 24 * 60 * 60 * 1000;
 const PASSWORD_RESET_TTL_MS = 60 * 60 * 1000;
-const ROLES = new Set(["ADMIN", "DOCENTE", "ALUMNO"]);
+const ROLES = new Set(["SUPER_ADMIN", "ADMIN", "DOCENTE", "ALUMNO"]);
 // El frontend usa los nombres del diagrama de seguridad.
-const ROLES_APP = { ADMINISTRADOR: "ADMIN", DOCENTE: "DOCENTE", ESTUDIANTE: "ALUMNO" };
+const ROLES_APP = {
+  SUPER_ADMINISTRADOR: "SUPER_ADMIN",
+  ADMINISTRADOR: "ADMIN",
+  DOCENTE: "DOCENTE",
+  ESTUDIANTE: "ALUMNO",
+};
 const NOMBRE_USUARIO = /^[A-Za-z0-9._-]{3,50}$/;
 
 export function normalizeEmail(input) {
@@ -363,11 +369,22 @@ export function createAuthService({
       await userRepository.deleteUser(actor.id_usuario);
     },
 
-    async listUsers(actor) {
-      if (toPublicUser(actor).puedeUsarModoEstudio !== true) {
-        throw new ForbiddenError("El listado de participantes requiere una cuenta académica FRBA o FRRE.");
-      }
-      const users = await userRepository.listByInstitucion(actor.institucion);
+// El SUPER_ADMIN puede consultar todas las instituciones.
+// Los demás usuarios académicos solo pueden consultar la suya.
+async listUsers(actor, { institucion } = {}) {
+  const usuario = toPublicUser(actor);
+
+  if (!esSuperAdmin(actor) && usuario.puedeUsarModoEstudio !== true) {
+    throw new ForbiddenError(
+      "El listado de participantes requiere una cuenta académica FRBA o FRRE."
+    );
+  }
+
+  const users = esSuperAdmin(actor)
+    ? typeof institucion === "string" && institucion.trim()
+      ? await userRepository.listByInstitucion(institucion.trim())
+      : await userRepository.listAll()
+    : await userRepository.listByInstitucion(actor.institucion);
       return users.map(toPublicUser);
     },
 
@@ -375,12 +392,18 @@ export function createAuthService({
       if (!changes || typeof changes !== "object") {
         throw new ValidationError("No hay cambios para guardar.");
       }
-      const isAdmin = actor.rol === "ADMIN";
+      const isAdmin = esAdmin(actor);
       if (!isAdmin && actor.id_usuario !== id) {
         throw new ForbiddenError("Solo un administrador puede editar a otros participantes.");
       }
       const current = await userRepository.findById(id);
-      if (!current) throw new NotFoundError("No se encontró el participante.");
+      // Un administrador solo gestiona usuarios de su institución; el super admin, de todas.
+      if (!current || (!esSuperAdmin(actor) && current.institucion !== actor.institucion)) {
+        throw new NotFoundError("No se encontró el participante.");
+      }
+      if (current.rol === "SUPER_ADMIN" && !esSuperAdmin(actor)) {
+        throw new ForbiddenError("Solo un super administrador puede editar a otro super administrador.");
+      }
 
       const update = {};
       let emailChanged = false;
@@ -426,6 +449,9 @@ export function createAuthService({
           if (!isAdmin) throw new ForbiddenError("Solo un administrador puede cambiar roles.");
           if (current.id_usuario === actor.id_usuario) {
             throw new ForbiddenError("El administrador no puede cambiar su propio rol.");
+          }
+          if (rol === "SUPER_ADMIN" && !esSuperAdmin(actor)) {
+            throw new ForbiddenError("Solo un super administrador puede otorgar ese rol.");
           }
           update.rol = rol;
           notificationChanges.Rol = rol;

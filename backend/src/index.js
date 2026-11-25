@@ -4,6 +4,13 @@ import { createAuthService } from "./auth/service.js";
 import { createAuthMiddleware } from "./auth/middleware.js";
 import { createApiServer } from "./http/server.js";
 import { createMailService } from "./mail/mailService.js";
+import { createEjercicioRepository } from "./db/ejercicioRepository.js";
+import { createEjercicioService } from "./ejercicios/service.js";
+import { createResolucionRepository } from "./db/resolucionRepository.js";
+import { createResolucionService } from "./resoluciones/service.js";
+import { createCursoRepository } from "./db/cursoRepository.js";
+import { createCursoService } from "./cursos/service.js";
+import { createInstitucionRepository, createInstitucionService } from "./instituciones/service.js";
 
 const {
   DATABASE_URL,
@@ -19,9 +26,24 @@ const { db, close } = createBusinessDatabase(DATABASE_URL);
 const userRepository = createUserRepository(db);
 const mailService = createMailService();
 const authService = createAuthService({ userRepository, mailService, frontendOrigin: FRONTEND_ORIGIN });
+const ejercicioRepository = createEjercicioRepository(db);
+const ejercicioService = createEjercicioService({ ejercicioRepository });
+const resolucionRepository = createResolucionRepository(db);
+const resolucionService = createResolucionService({ resolucionRepository, ejercicioRepository });
+const cursoService = createCursoService({
+  cursoRepository: createCursoRepository(db),
+  userRepository,
+  resolucionRepository,
+});
 const server = createApiServer({
   authService,
   authMiddleware: createAuthMiddleware(authService),
+  ejercicioService,
+  resolucionService,
+  cursoService,
+  institucionService: createInstitucionService({
+    institucionRepository: createInstitucionRepository(db),
+  }),
   frontendOrigin: FRONTEND_ORIGIN,
 });
 

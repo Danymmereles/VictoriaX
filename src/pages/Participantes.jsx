@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { ArrowLeft, Search, Users } from "lucide-react";
 import { authClient } from "@/api/authClient";
 import { useSesionUsuario } from "@/lib/sesionUsuario";
+import { ROLES } from "@/lib/permisos";
 import { institucionDeUsuario } from "@/lib/instituciones";
 import NavBar from "@/components/home/NavBar";
 import Footer from "@/components/home/Footer";
@@ -10,6 +11,7 @@ import PerfilForm from "@/components/perfil/PerfilForm";
 
 const FILTROS_ROL = [
   { value: "TODOS", label: "Todos los roles" },
+  { value: "SUPER_ADMINISTRADOR", label: "Super administrador" },
   { value: "ADMINISTRADOR", label: "Administrador" },
   { value: "DOCENTE", label: "Docente" },
   { value: "ESTUDIANTE", label: "Estudiante" },
@@ -31,8 +33,22 @@ export default function Participantes() {
   const [error, setError] = useState("");
   const [busqueda, setBusqueda] = useState("");
   const [rolFiltro, setRolFiltro] = useState("TODOS");
+  const [institucionFiltro, setInstitucionFiltro] = useState("TODAS");
 
   const institucionSesion = institucionDeUsuario(usuario);
+  // El super admin recibe los usuarios de todas las instituciones y puede filtrar por una.
+  const esSuper = Boolean(permisos?.puedoVerTodasLasInstituciones);
+  const instituciones = useMemo(
+    () => [...new Set(lista.map(institucionDeUsuario))].sort((a, b) => a.localeCompare(b, "es")),
+    [lista],
+  );
+  const deLaInstitucion = (u) =>
+    esSuper
+      ? institucionFiltro === "TODAS" || institucionDeUsuario(u) === institucionFiltro
+      : institucionDeUsuario(u) === institucionSesion;
+  const alcance = esSuper
+    ? institucionFiltro === "TODAS" ? "todas las instituciones" : institucionFiltro
+    : institucionSesion;
 
   async function cargar() {
     setCargando(true);
@@ -53,7 +69,7 @@ export default function Participantes() {
   const filtrados = useMemo(() => {
     const termino = normalizar(busqueda.trim());
     return lista
-      .filter((u) => institucionDeUsuario(u) === institucionSesion)
+      .filter(deLaInstitucion)
       .filter((u) => rolFiltro === "TODOS" || u.rol === rolFiltro)
       .filter((u) => {
         if (!termino) return true;
@@ -61,7 +77,7 @@ export default function Participantes() {
           normalizar(campo).includes(termino),
         );
       });
-  }, [lista, busqueda, rolFiltro, institucionSesion]);
+  }, [lista, busqueda, rolFiltro, institucionFiltro, institucionSesion, esSuper]);
 
   // Guarda de acceso: solo quien puede visualizar otros perfiles (Admin, Docente)
   if (!usuario || !permisos?.puedoVisualizarOtrosPerfiles) {
@@ -107,7 +123,7 @@ export default function Participantes() {
           <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Administracion</p>
           <h1 className="mt-3 font-heading text-4xl font-semibold tracking-tight">Participantes</h1>
           <p className="mt-4 text-muted-foreground">
-            Usuarios registrados en <span className="font-medium text-foreground">{institucionSesion}</span>.
+            Usuarios registrados en <span className="font-medium text-foreground">{alcance}</span>.
           </p>
         </div>
 
@@ -137,6 +153,7 @@ export default function Participantes() {
                     editable={permisos.puedoEditarOtrosPerfiles}
                     rolEditable={permisos.puedoCambiarRol}
                     institucionEditable={permisos.puedoCambiarRol}
+                    permitirSuperAdmin={permisos.puedoOtorgarSuperAdmin}
                     onSave={guardarOtro}
                     saving={saving}
                   />
@@ -167,11 +184,25 @@ export default function Participantes() {
                 <option key={opcion.value} value={opcion.value}>{opcion.label}</option>
               ))}
             </select>
-            {(busqueda || rolFiltro !== "TODOS") && (
+            {esSuper && (
+              <select
+                value={institucionFiltro}
+                onChange={(e) => setInstitucionFiltro(e.target.value)}
+                className="rounded-lg border border-input bg-background px-3 py-2.5 text-sm"
+                aria-label="Filtrar por institución"
+              >
+                <option value="TODAS">Todas las instituciones</option>
+                {instituciones.map((inst) => (
+                  <option key={inst} value={inst}>{inst}</option>
+                ))}
+              </select>
+            )}
+            {(busqueda || rolFiltro !== "TODOS" || institucionFiltro !== "TODAS") && (
               <button
                 onClick={() => {
                   setBusqueda("");
                   setRolFiltro("TODOS");
+                  setInstitucionFiltro("TODAS");
                 }}
                 className="text-sm text-muted-foreground hover:text-foreground"
               >
@@ -209,7 +240,9 @@ export default function Participantes() {
                     <td className="px-5 py-4"><BadgeRol rol={u.rol} /></td>
                     <td className="px-5 py-4 text-muted-foreground">{institucionDeUsuario(u)}</td>
                     <td className="px-5 py-4 text-right">
-                      {permisos.puedoEditarOtrosPerfiles ? (
+                      {/* Un administrador no puede editar a un super administrador. */}
+                      {permisos.puedoEditarOtrosPerfiles &&
+                      (u.rol !== ROLES.SUPER_ADMINISTRADOR || permisos.puedoOtorgarSuperAdmin) ? (
                         <button
                           onClick={() => setSeleccionado(u)}
                           className="text-sm font-medium text-[#AF9BEF] hover:underline"
@@ -227,7 +260,8 @@ export default function Participantes() {
           </div>
 
           <p className="text-xs text-muted-foreground">
-            {filtrados.length} de {lista.filter((u) => institucionDeUsuario(u) === institucionSesion).length} participantes de tu institución.
+            {filtrados.length} de {lista.filter(deLaInstitucion).length} participantes
+            {esSuper ? (institucionFiltro === "TODAS" ? " en total." : ` de ${institucionFiltro}.`) : " de tu institución."}
           </p>
         </div>
       </main>
@@ -238,6 +272,7 @@ export default function Participantes() {
 
 function BadgeRol({ rol }) {
   const styles = {
+    SUPER_ADMINISTRADOR: "bg-amber-500/15 text-amber-600 dark:text-amber-300",
     ADMINISTRADOR: "bg-[#73C3EE]/15 text-[#73C3EE]",
     DOCENTE: "bg-[#AF9BEF]/15 text-[#AF9BEF]",
     ESTUDIANTE: "bg-[#EA84B4]/15 text-[#EA84B4]",

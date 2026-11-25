@@ -3,17 +3,10 @@ import {
   clearSessionExpiry,
   ensureSessionExpiry,
   getSessionExpiresAt,
-  startSessionExpiry,
 } from "@/api/sessionExpiry";
+import { getToken, request, setToken } from "@/api/apiClient";
+import { rolDesdeApi } from "@/lib/permisos";
 
-// En desarrollo local se usa la API de la PC; publicado, la del dominio (vía Cloudflare Tunnel).
-// VITE_API_URL permite forzar otra URL.
-const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]"]);
-const DEFAULT_API_URL = LOCAL_HOSTS.has(globalThis.location?.hostname)
-  ? "http://localhost:3001"
-  : "https://api.victoriax-simulate.com";
-const API_URL = (import.meta.env.VITE_API_URL || DEFAULT_API_URL).replace(/\/$/, "");
-const TOKEN_KEY = "victoriax-access-token";
 
 const ROL_APP = { ADMIN: "ADMINISTRADOR", DOCENTE: "DOCENTE", ALUMNO: "ESTUDIANTE" };
 
@@ -64,7 +57,7 @@ async function request(path, { method = "GET", body, auth = true } = {}) {
 
 // Formato que usan las pantallas de perfil y participantes.
 function toParticipante(user) {
-  return { ...user, id: user.id_usuario, rol: ROL_APP[user.rol] || "ESTUDIANTE" };
+  return { ...user, id: user.id_usuario, rol: rolDesdeApi(user.rol) };
 }
 
 export const authClient = {

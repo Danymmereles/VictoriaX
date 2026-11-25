@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Plus, Pencil, Trash2, Search, GraduationCap, ArrowLeft } from "lucide-react";
-import { base44 } from "@/api/base44Client";
+import { cursosClient } from "@/api/cursosClient";
+import { authClient } from "@/api/authClient";
+import { institucionesClient } from "@/api/institucionesClient";
 import { useSesionUsuario } from "@/lib/sesionUsuario";
 import { nombreCurso, esVigente, periodoLabel, anioLectivo } from "@/lib/cursos";
 import NavBar from "@/components/home/NavBar";
@@ -27,7 +29,11 @@ export default function Cursos() {
   const { usuario, permisos } = useSesionUsuario();
   const { toast } = useToast();
   const [cursos, setCursos] = useState(null);
-  const [misInsc, setMisInsc] = useState([]);
+  const [errorCarga, setErrorCarga] = useState("");
+  // Super admin: ve los cursos de todas las instituciones y puede filtrar por una.
+  const esSuper = Boolean(permisos?.puedoVerTodasLasInstituciones);
+  const [institucionFiltro, setInstitucionFiltro] = useState("TODAS");
+  const [instituciones, setInstituciones] = useState([]);
   const [usuarios, setUsuarios] = useState([]);
   const [busqueda, setBusqueda] = useState("");
   const [formOpen, setFormOpen] = useState(false);
@@ -39,41 +45,46 @@ export default function Cursos() {
       navigate("/login");
       return;
     }
-    (async () => {
-      const cs = await base44.entities.Curso.list();
-      setCursos(cs);
-      const ins = await base44.entities.Inscripcion.filter({ usuario_id: usuario.id });
-      setMisInsc(ins);
-      setUsuarios(await base44.entities.Usuario.list());
-    })();
+    // La API ya devuelve solo los cursos visibles para el usuario.
+    cursosClient
+      .list()
+      .then(setCursos)
+      .catch((e) => {
+        setCursos([]);
+        setErrorCarga(e.message || "No se pudieron cargar los cursos.");
+      });
+    // Los docentes disponibles para un curso nuevo (solo lo usa el administrador).
+    authClient.listUsers().then(setUsuarios).catch(() => setUsuarios([]));
+    if (permisos?.puedoVerTodasLasInstituciones) {
+      institucionesClient.list().then(setInstituciones).catch(() => setInstituciones([]));
+    }
   }, [usuario]);
 
   if (!usuario) return null;
 
   const esAdmin = Boolean(permisos?.puedoVerTodosLosCursos);
-  const misIds = new Set(misInsc.map((i) => i.curso_id));
-  const visibles = (cursos || []).filter((c) => esAdmin || misIds.has(c.id));
+  const visibles = (cursos || []).filter(
+    (c) => !esSuper || institucionFiltro === "TODAS" || c.institucion === institucionFiltro
+  );
+  const institucionesConCursos = [...new Set((cursos || []).map((c) => c.institucion))].sort((a, b) =>
+    a.localeCompare(b, "es")
+  );
   const filtrados = visibles.filter((c) => {
     const q = busqueda.toLowerCase();
     return nombreCurso(c).toLowerCase().includes(q) || (c.codigo || "").toLowerCase().includes(q);
   });
 
   async function recargar() {
-    const cs = await base44.entities.Curso.list();
-    setCursos(cs);
+    setCursos(await cursosClient.list());
   }
 
   async function guardar(data, docenteIds) {
     try {
       if (editando) {
-        await base44.entities.Curso.update(editando.id, data);
+        await cursosClient.update(editando.id, data);
       } else {
-        const c = await base44.entities.Curso.create(data);
-        if (docenteIds?.length) {
-          await base44.entities.Inscripcion.bulkCreate(
-            docenteIds.map((uid) => ({ curso_id: c.id, usuario_id: uid }))
-          );
-        }
+        // El curso y sus docentes se crean juntos.
+        await cursosClient.create(data, docenteIds);
       }
       setFormOpen(false);
       setEditando(null);
@@ -87,13 +98,13 @@ export default function Cursos() {
   async function eliminar() {
     const c = aEliminar;
     try {
-      await base44.entities.Inscripcion.deleteMany({ curso_id: c.id });
-      await base44.entities.Curso.delete(c.id);
+      // Las inscripciones se borran junto con el curso.
+      await cursosClient.remove(c.id);
       setAEliminar(null);
       toast({ title: "Curso eliminado" });
       recargar();
     } catch (e) {
-      toast({ title: "No se pudo eliminar", variant: "destructive" });
+      toast({ title: "No se pudo eliminar", description: e.message, variant: "destructive" });
     }
   }
 
@@ -119,19 +130,35 @@ export default function Cursos() {
           )}
         </div>
 
-        <div className="relative mt-6 max-w-md">
-          <Search className="absolute left-3 top-1/2 w-4 h-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-            placeholder="Buscar por nombre o código…"
-            className="pl-9"
-          />
+        <div className="mt-6 flex flex-wrap items-center gap-3">
+          <div className="relative w-full max-w-md">
+            <Search className="absolute left-3 top-1/2 w-4 h-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              placeholder="Buscar por nombre o código…"
+              className="pl-9"
+            />
+          </div>
+          {esSuper && (
+            <select
+              value={institucionFiltro}
+              onChange={(e) => setInstitucionFiltro(e.target.value)}
+              className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+              aria-label="Filtrar por institución"
+            >
+              <option value="TODAS">Todas las instituciones</option>
+              {institucionesConCursos.map((inst) => (
+                <option key={inst} value={inst}>{inst}</option>
+              ))}
+            </select>
+          )}
         </div>
 
         <div className="mt-8 divide-y divide-border rounded-2xl border border-border bg-card">
           {cursos === null && <p className="p-6 text-sm text-muted-foreground">Cargando cursos…</p>}
-          {cursos !== null && filtrados.length === 0 && (
+          {errorCarga && <p className="p-6 text-sm text-destructive">{errorCarga}</p>}
+          {cursos !== null && !errorCarga && filtrados.length === 0 && (
             <p className="p-6 text-sm text-muted-foreground">No se encontraron cursos.</p>
           )}
           {filtrados.map((c) => {
@@ -146,6 +173,7 @@ export default function Cursos() {
                     <span className="block font-medium">{nombreCurso(c)}</span>
                     <span className="block text-xs text-muted-foreground">
                       {c.codigo} · {periodoLabel(c.periodo_lectivo)} · {anioLectivo(c)}
+                      {esSuper && <> · <span className="font-medium text-foreground/80">{c.institucion}</span></>}
                     </span>
                   </span>
                 </button>
@@ -189,6 +217,9 @@ export default function Cursos() {
         onSave={guardar}
         curso={editando}
         usuarios={usuarios}
+        instituciones={instituciones}
+        puedeElegirInstitucion={esSuper}
+        institucionFija={usuario.institucion}
       />
 
       <AlertDialog open={Boolean(aEliminar)} onOpenChange={(o) => !o && setAEliminar(null)}>

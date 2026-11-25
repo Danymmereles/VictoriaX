@@ -9,6 +9,9 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
+import VerifyEmail from './pages/VerifyEmail';
 import ModoLibre from './pages/ModoLibre';
 import ModoEstudio from './pages/ModoEstudio';
 import EjercicioEstudio from './pages/EjercicioEstudio';
@@ -28,18 +31,23 @@ const AppRoutes = () => {
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/verify-email" element={<VerifyEmail />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/modo-libre" element={<ModoLibre />} />
       <Route path="/modo-libre/diagrama" element={<Diagrama />} />
       <Route path="/contacto" element={<Contacto />} />
       <Route path="/sobre-nosotros" element={<SobreNosotros />} />
       <Route element={<ProtectedRoute />}>
-        <Route path="/modo-estudio" element={<ModoEstudio />} />
-        <Route path="/modo-estudio/:id" element={<EjercicioEstudio />} />
         <Route path="/perfil" element={<MiPerfil />} />
         <Route path="/perfil/cambiar-contrasena" element={<CambiarContrasena />} />
-        <Route path="/participantes" element={<Participantes />} />
-        <Route path="/cursos" element={<Cursos />} />
-        <Route path="/cursos/:id" element={<CursoDetalle />} />
+        <Route element={<ProtectedRoute requireModoEstudio />}>
+          <Route path="/modo-estudio" element={<ModoEstudio />} />
+          <Route path="/modo-estudio/:id" element={<EjercicioEstudio />} />
+          <Route path="/participantes" element={<Participantes />} />
+          <Route path="/cursos" element={<Cursos />} />
+          <Route path="/cursos/:id" element={<CursoDetalle />} />
+        </Route>
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

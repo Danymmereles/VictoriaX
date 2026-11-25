@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { authClient } from "@/api/authClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +10,7 @@ import { validatePassword, PASSWORD_REQUIREMENTS_MESSAGE } from "@/lib/passwordV
 import PasswordRequirements from "@/components/PasswordRequirements";
 
 export default function ResetPassword() {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const resetToken = searchParams.get("token");
 
@@ -31,8 +32,8 @@ export default function ResetPassword() {
     }
     setLoading(true);
     try {
-      await base44.auth.resetPassword({ resetToken, newPassword });
-      window.location.href = "/login";
+      await authClient.resetPassword({ token: resetToken, newPassword });
+      navigate("/login");
     } catch (err) {
       setError(err.message || "No se pudo restablecer la contraseña.");
     } finally {
@@ -80,6 +81,7 @@ export default function ResetPassword() {
               type="password"
               autoComplete="new-password"
               autoFocus
+              minLength={8}
               placeholder="••••••••"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
@@ -97,6 +99,7 @@ export default function ResetPassword() {
               id="confirm"
               type="password"
               autoComplete="new-password"
+              minLength={8}
               placeholder="••••••••"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}

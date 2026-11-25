@@ -31,9 +31,20 @@ try {
     const password_hash = await hashPassword(PASSWORD);
     const existing = await repository.findByEmail(demo.email);
     if (existing) {
-      await repository.updateUser(existing.id_usuario, { ...demo, password_hash });
+      await repository.updateUser(existing.id_usuario, {
+        ...demo,
+        password_hash,
+        email_verificado: true,
+        estado: "ACTIVO",
+      });
     } else {
-      await repository.insertUser({ id_usuario: randomUUID(), ...demo, password_hash });
+      await repository.insertUser({
+        id_usuario: randomUUID(),
+        ...demo,
+        password_hash,
+        email_verificado: true,
+        estado: "ACTIVO",
+      });
     }
     console.log(`Listo: ${demo.email} (${demo.rol})`);
   }

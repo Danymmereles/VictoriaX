@@ -67,8 +67,10 @@ When you use `base44 dev`, the command injects the local Base44 values for you, 
 Los usuarios, contraseñas y sesiones viven en **MySQL** y se gestionan con la API de `backend/` (Node.js 20+, Drizzle ORM y `mysql2`). El frontend (`src/api/authClient.js`) llama a esa API; ya no usa Supabase ni la entidad `Usuario` de Base44. El resto de los datos (cursos, ejercicios, entregas) todavía está en Base44 y se va a migrar por etapas.
 
 - Las contraseñas se guardan con **scrypt**; nunca en claro.
-- Cada login crea una sesión de **7 días** en la tabla `SESION` (se guarda el SHA-256 del token). Cerrar sesión la borra; cambiar la contraseña cierra las demás sesiones.
-- El registro acepta cualquier email válido y crea la cuenta con rol `ALUMNO`. El login y las rutas protegidas exigen `@frba.utn.edu.ar` (Modo Estudio).
+- Cada login verificado y activo crea una sesión de **7 días** en `SESION` (se guarda el SHA-256 del token). Cerrar sesión la borra; cambiar o recuperar la contraseña cierra las demás sesiones.
+- El registro requiere confirmar el email. La cuenta queda sin sesión hasta usar el enlace de verificación, válido por 24 horas. Los enlaces de recuperación vencen en una hora y solo pueden usarse una vez.
+- Las cuentas pueden estar `ACTIVO` o `SUSPENDIDO`; suspender una cuenta invalida sus sesiones activas. La API envía notificaciones con Resend si `RESEND_API_KEY` y `EMAIL_FROM` están configurados; sin clave, registra el destinatario, asunto y contenido/enlace para pruebas locales.
+- El registro y el login aceptan cualquier email válido. Cuentas `@frba.utn.edu.ar` y `@frre.utn.edu.ar` tienen acceso a Modo Estudio; las demás se registran con institución `Externa` y usan Modo Libre. Login y `/api/auth/me` devuelven `puedeUsarModoEstudio`.
 - Solo un `ADMIN` puede editar a otros usuarios, cambiar roles o instituciones. El listado de participantes devuelve solo los usuarios de la misma institución.
 
 ### Endpoints
@@ -76,12 +78,17 @@ Los usuarios, contraseñas y sesiones viven en **MySQL** y se gestionan con la A
 | Método | Ruta | Auth |
 |---|---|---|
 | POST | `/api/auth/register` | — |
+| POST | `/api/auth/verify-email` | — |
 | POST | `/api/auth/login` | — |
+| POST | `/api/auth/forgot-password` | — |
+| POST | `/api/auth/reset-password` | — |
 | GET | `/api/auth/me` | Bearer |
 | POST | `/api/auth/logout` | Bearer |
 | POST | `/api/auth/password` | Bearer |
 | GET | `/api/usuarios` | Bearer |
 | PATCH | `/api/usuarios/:id` | Bearer |
+
+`register` recibe `email`, `password`, `confirmPassword` y `nombreCompleto`; las contraseñas deben coincidir exactamente. `verify-email` recibe `{ "token": "..." }`. Recuperar contraseña usa `forgot-password` con `{ "email": "..." }` y `reset-password` con `{ "token": "...", "newPassword": "..." }`. `forgot-password` devuelve el mismo 200 exista o no una cuenta activa para ese email.
 
 ### Puesta en marcha local
 

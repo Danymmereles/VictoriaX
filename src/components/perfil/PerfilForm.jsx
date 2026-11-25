@@ -56,19 +56,21 @@ export default function PerfilForm({
         </select>
       </div>
 
-      <div>
-        <label className="text-sm font-medium text-muted-foreground">Rol</label>
-        <select
-          value={form.rol}
-          onChange={cambiar("rol")}
-          disabled={!rolEditable}
-          className="mt-2 w-full rounded-lg border border-input bg-background px-4 py-3 text-sm disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          <option value="ADMINISTRADOR">Administrador</option>
-          <option value="DOCENTE">Docente</option>
-          <option value="ESTUDIANTE">Estudiante</option>
-        </select>
-      </div>
+      {usuario?.puedeUsarModoEstudio && (
+        <div>
+          <label className="text-sm font-medium text-muted-foreground">Rol</label>
+          <select
+            value={form.rol}
+            onChange={cambiar("rol")}
+            disabled={!rolEditable}
+            className="mt-2 w-full rounded-lg border border-input bg-background px-4 py-3 text-sm disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <option value="ADMINISTRADOR">Administrador</option>
+            <option value="DOCENTE">Docente</option>
+            <option value="ESTUDIANTE">Estudiante</option>
+          </select>
+        </div>
+      )}
 
       {editable && (
         <button

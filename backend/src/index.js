@@ -3,6 +3,7 @@ import { createUserRepository } from "./db/userRepository.js";
 import { createAuthService } from "./auth/service.js";
 import { createAuthMiddleware } from "./auth/middleware.js";
 import { createApiServer } from "./http/server.js";
+import { createMailService } from "./mail/mailService.js";
 
 const {
   DATABASE_URL,
@@ -16,7 +17,8 @@ if (!DATABASE_URL) {
 
 const { db, close } = createBusinessDatabase(DATABASE_URL);
 const userRepository = createUserRepository(db);
-const authService = createAuthService({ userRepository });
+const mailService = createMailService();
+const authService = createAuthService({ userRepository, mailService, frontendOrigin: FRONTEND_ORIGIN });
 const server = createApiServer({
   authService,
   authMiddleware: createAuthMiddleware(authService),

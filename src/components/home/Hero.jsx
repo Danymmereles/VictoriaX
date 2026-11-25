@@ -43,15 +43,19 @@ export default function Hero() {
               Entrar a Modo Libre
               <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
             </Link>
-            <Link
-              to={usuario ? "/modo-estudio" : "/login"}
-              className="inline-flex items-center gap-2 rounded-full border border-border px-7 py-4 text-base font-medium transition-colors hover:border-[#AF9BEF]"
-            >
-              {usuario ? "Ir a Modo Estudio" : "Acceder a Modo Estudio"}
-            </Link>
+            {(!usuario || usuario.puedeUsarModoEstudio) && (
+              <Link
+                to={usuario ? "/modo-estudio" : "/login"}
+                className="inline-flex items-center gap-2 rounded-full border border-border px-7 py-4 text-base font-medium transition-colors hover:border-[#AF9BEF]"
+              >
+                {usuario ? "Ir a Modo Estudio" : "Acceder a Modo Estudio"}
+              </Link>
+            )}
           </div>
           <p className="mt-6 text-sm text-muted-foreground">
-            Modo Libre no requiere cuenta · Modo Estudio requiere inicio de sesión institucional
+            {(!usuario || usuario.puedeUsarModoEstudio)
+              ? "Modo Libre está disponible para todos · Modo Estudio requiere cuenta académica FRBA o FRRE"
+              : "Modo Libre está disponible para todos"}
           </p>
         </motion.div>
 

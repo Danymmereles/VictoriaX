@@ -68,7 +68,7 @@ export default function Login() {
       }
     >
       {error && (
-        <p role="alert" className="mb-4 rounded-lg bg-destructive/10 dark:bg-destructive/20 p-3 text-sm text-destructive">
+        <div role="alert" className="mb-4 rounded-lg bg-destructive/10 dark:bg-destructive/20 p-3 text-sm text-destructive">
           <p>{error}</p>
           {isUnverifiedEmail && (
             <div className="mt-3">

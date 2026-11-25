@@ -74,7 +74,8 @@ export function leerAnalisis(analisis) {
 
     (analisis.eventosFuturos || []).forEach((ef) => {
         const sigla = limpiar(ef.sigla);
-        const evento = limpiar(ef.eventoRef);
+        // En Δt constante la sigla de tiempo pertenece al comprometido anterior.
+        const evento = limpiar(ef.eventoAnterior || ef.eventoRef);
 
         if (!sigla || !evento) {
             return;

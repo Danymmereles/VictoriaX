@@ -178,7 +178,10 @@ export default function ResolucionEstudiante({ open, onClose, entrega, alumno, e
                 <ul className="mt-2 space-y-1 text-sm">
                   {a.eventosFuturos.map((ef) => (
                     <li key={ef.id}>
-                      <span className="font-mono">{ef.sigla}</span> → {ef.eventoRef || "—"}
+                      <span className="font-mono">{ef.sigla}</span> →{" "}
+                      {a.metodologia === METODOLOGIAS.DELTA_T_CONSTANTE
+                        ? `${ef.eventoAnterior || ef.eventoRef || "—"} / ${ef.eventoPosterior || "—"}`
+                        : ef.eventoRef || "—"}
                     </li>
                   ))}
                 </ul>

@@ -25,7 +25,11 @@ import { ubicar } from "./ubicar.js";
 
 const sinGenerar = (motivo = null) => ({ generado: false, motivo });
 
-// Página de una variable de datos: ancla → generar el valor → Fin
+// Random que usan las páginas de datos generadas (22/11: RND() ya no
+// existe; el azar sale de un nodo Random)
+const RANDOM_GENERADO = "R1";
+
+// Página de una variable de datos: ancla → Random → generar el valor → Fin
 function paginaDeDato(pagina) {
     return secuencia(
         nodo("preparation", pagina.nombre, {
@@ -33,8 +37,9 @@ function paginaDeDato(pagina) {
             anchorOf: pagina.id,
             deletable: false,
         }),
-        asignacion(`${pagina.nombre} = RND()`, {
-            pending: `Escribí cómo se genera ${pagina.nombre}. RND() da un valor al azar entre 0 y 1: reemplazalo por el algoritmo de su distribución (el Análisis Previo todavía no tiene la fdp).`,
+        nodo("random", RANDOM_GENERADO),
+        asignacion(`${pagina.nombre} = ${RANDOM_GENERADO}`, {
+            pending: `Escribí cómo se genera ${pagina.nombre}. ${RANDOM_GENERADO} da un valor al azar entre 0 y 1: usalo en el algoritmo de su distribución (el Análisis Previo todavía no tiene la fdp).`,
         }),
         fin()
     );

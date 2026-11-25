@@ -132,7 +132,29 @@ const SHAPES = {
             </>
         );
     },
+
+    // Para (for): círculo en tres partes. Arriba la variable; abajo, el
+    // valor inicial (izquierda) y el final (derecha)
+    for: (w, h, s) => {
+        const r = (Math.min(w, h) - s) / 2;
+        const cx = w / 2;
+        const cy = h / 2;
+
+        return (
+            <>
+                <circle cx={cx} cy={cy} r={r} />
+                <path
+                    className="flow-shape__line"
+                    d={`M ${cx - r} ${cy} H ${cx + r} M ${cx} ${cy} V ${cy + r}`}
+                />
+            </>
+        );
+    },
 };
+
+// Los tres tipos de Función Generada comparten el hexágono (cambia el color)
+SHAPES.subroutine = SHAPES.preparation;
+SHAPES.random = SHAPES.preparation;
 
 export function FlowShape({
     type,

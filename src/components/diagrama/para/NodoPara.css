@@ -1,0 +1,105 @@
+/* =====================================================
+   NODO PARA (for): círculo en tres partes
+   El tamaño lo pone NodoPara.jsx (diámetro, ver tamano.js);
+   la figura es "for" en shapes.jsx.
+   ===================================================== */
+
+.flow-node--for {
+    padding: 0;
+}
+
+/* Cada parte ocupa su zona del círculo, encima de la figura */
+.para-parte {
+    position: absolute;
+    z-index: 1;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    min-width: 0;
+
+    cursor: text;
+}
+
+.para-parte--variable {
+    top: 12%;
+    left: 12%;
+    right: 12%;
+    height: 34%;
+}
+
+.para-parte--desde {
+    top: 54%;
+    left: 11%;
+    width: 37%;
+    height: 32%;
+}
+
+.para-parte--hasta {
+    top: 54%;
+    right: 11%;
+    width: 37%;
+    height: 32%;
+}
+
+.para-parte__texto {
+    max-width: 100%;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.para-parte__texto.is-empty {
+    opacity: 0.5;
+}
+
+.para-parte__input {
+    width: 100%;
+    min-width: 0;
+    padding: 1px 2px;
+
+    border: none;
+    border-bottom: 1px dashed var(--dg-accent);
+    border-radius: 0;
+    outline: none;
+    background: transparent;
+
+    text-align: center;
+    font: inherit;
+    color: inherit;
+}
+
+.para-parte__input::placeholder {
+    color: inherit;
+    opacity: 0.45;
+}
+
+/* Etiquetas de los puntos de conexión, como el SI / NO de la Decisión */
+.para-label {
+    position: absolute;
+
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1;
+    color: var(--dg-decision-label);
+
+    pointer-events: none;
+}
+
+/* Afuera del círculo, sin tocar su borde */
+.para-label--vuelta {
+    bottom: calc(50% + 6px);
+    right: calc(100% + 5px);
+}
+
+.para-label--salida {
+    bottom: calc(50% + 6px);
+    left: calc(100% + 5px);
+}
+
+.para-label--ciclo {
+    top: calc(100% + 4px);
+    left: calc(50% + 8px);
+}

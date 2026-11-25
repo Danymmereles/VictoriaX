@@ -1,0 +1,122 @@
+/* =====================================================
+   FUNCIÓN GENERADA (barra lateral)
+   Botón con el hexágono y menú con sus tres tipos.
+   Mismo estilo que el menú de Exportar; se abre hacia
+   abajo, encima de las figuras de la barra.
+   ===================================================== */
+
+/* El botón se ve como las demás figuras (.sidebar-item) */
+.sidebar-item.fg-trigger {
+    position: relative;
+    width: 100%;
+
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+}
+
+.sidebar-item.fg-trigger[aria-expanded="true"] {
+    border-color: var(--dg-accent);
+    background: var(--dg-icon-active-bg);
+}
+
+.fg-trigger:focus-visible {
+    outline: 2px solid var(--dg-accent);
+    outline-offset: 1px;
+}
+
+/* Flechita: abre un menú */
+.fg-trigger__caret {
+    position: absolute;
+    right: 6px;
+    bottom: 6px;
+
+    width: 12px;
+    height: 12px;
+
+    fill: none;
+    stroke: var(--dg-icon);
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+
+    transition: transform 0.2s;
+}
+
+.fg-trigger[aria-expanded="true"] .fg-trigger__caret {
+    transform: rotate(180deg);
+}
+
+/* Menú: a lo ancho de la grilla de figuras */
+.fg-menu {
+    position: absolute;
+    left: 0;
+    right: 0;
+    z-index: 10;
+
+    display: grid;
+    gap: 2px;
+    padding: 4px;
+
+    background: var(--dg-item-bg);
+    border: 1px solid var(--dg-item-border);
+    border-radius: 10px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.14);
+}
+
+.fg-menu__title {
+    margin: 4px 8px 2px;
+
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--dg-icon);
+    opacity: 0.8;
+}
+
+.fg-menu__option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    padding: 6px 8px;
+
+    border-radius: 6px;
+
+    color: var(--dg-icon);
+    cursor: grab;
+    user-select: none;
+
+    transition: background-color 0.15s, color 0.15s;
+}
+
+.fg-menu__option:hover {
+    background: var(--dg-icon-active-bg);
+    color: var(--dg-icon-active);
+}
+
+.fg-menu__option:active {
+    cursor: grabbing;
+}
+
+/* Hexágono de la opción: también es la imagen al arrastrar */
+.fg-menu__preview {
+    display: flex;
+    flex-shrink: 0;
+}
+
+.fg-menu__text {
+    display: grid;
+    min-width: 0;
+}
+
+.fg-menu__name {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.fg-menu__detail {
+    font-size: 11.5px;
+    white-space: nowrap;
+    opacity: 0.8;
+}

@@ -168,10 +168,18 @@
     padding: 8px 32px;
 }
 
-.flow-node--preparation {
+.flow-node--preparation,
+.flow-node--subroutine {
     min-width: 160px;
     min-height: 80px;
     padding: 8px 32px;
+}
+
+/* Random: su nombre es corto (R1) */
+.flow-node--random {
+    min-width: 120px;
+    min-height: 64px;
+    padding: 8px 26px;
 }
 
 .flow-node--connector {

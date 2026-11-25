@@ -6,7 +6,7 @@
 // siglas del Análisis Previo.
 // ===========================================================================
 
-import { motivoNombreInvalido } from "@/lib/lenguaje";
+import { motivoNombreDeVariable } from "@/lib/lenguaje";
 
 let _id = 0;
 export const nuevoIdVariable = () => `var_${Date.now()}_${_id++}`;
@@ -42,9 +42,12 @@ export function valorNumerico(valor) {
  *
  * nombresReservados: nombres que no se pueden usar en la tabla
  * (las variables de datos, que son funciones de probabilidad).
+ * subrutinas: nombres de las subrutinas creadas en el diagrama.
+ * Los nombres R1, R2... tampoco: son de los nodos Random (BNF v0.15).
  */
-export function validarVariables(variables, { nombresReservados = [] } = {}) {
+export function validarVariables(variables, { nombresReservados = [], subrutinas = [] } = {}) {
     const reservados = new Set(nombresReservados.map((n) => String(n).trim()));
+    const deSubrutinas = new Set(subrutinas.map((n) => String(n).trim()));
 
     const errores = {};
 
@@ -68,8 +71,8 @@ export function validarVariables(variables, { nombresReservados = [] } = {}) {
 
         if (!nombre) {
             agregar(v.id, "nombre", "La variable necesita un nombre.");
-        } else if (motivoNombreInvalido(nombre)) {
-            agregar(v.id, "nombre", motivoNombreInvalido(nombre));
+        } else if (motivoNombreDeVariable(nombre)) {
+            agregar(v.id, "nombre", motivoNombreDeVariable(nombre));
         } else if (repeticiones[nombre] > 1) {
             agregar(v.id, "nombre", `La variable "${nombre}" está repetida.`);
         } else if (reservados.has(nombre)) {
@@ -78,6 +81,8 @@ export function validarVariables(variables, { nombresReservados = [] } = {}) {
                 "nombre",
                 `"${nombre}" es una variable de datos: se define en su propia pestaña.`
             );
+        } else if (deSubrutinas.has(nombre)) {
+            agregar(v.id, "nombre", `"${nombre}" es el nombre de una subrutina.`);
         }
 
         if (!valor) {
@@ -112,12 +117,30 @@ export const CATEGORIAS_ANALISIS = {
  */
 export const ORIGEN_FUTURO = "futuro";
 export const ORIGEN_GENERADA = "generada";
+// Random (22/11): sale de un nodo Random del diagrama (R1, R2...). No tiene
+// valor inicial: toma uno nuevo, entre 0 y 1, cada vez que pasa por su nodo.
+export const ORIGEN_RANDOM = "random";
 
 const ORIGENES = {
     ...CATEGORIAS_ANALISIS,
     [ORIGEN_FUTURO]: "Evento futuro",
     [ORIGEN_GENERADA]: "Agregada al generar el diagrama",
+    [ORIGEN_RANDOM]: "Random: toma un valor nuevo entre 0 y 1 cada vez que pasa por su nodo",
 };
+
+/*
+ * Filas de la tabla para los Random del diagrama (ver funcionGenerada.js).
+ * No se guardan con las demás: salen de los nodos, así aparecen y se van
+ * con ellos.
+ */
+export const variablesRandom = (nombres) =>
+    nombres.map((nombre) => ({
+        id: `random-${nombre}`,
+        nombre,
+        valorInicial: "",
+        origen: ORIGEN_RANDOM,
+        esRandom: true,
+    }));
 
 // Viene del Análisis Previo: nombre fijo, no se borra en el diagrama
 export const esImportada = (variable) =>

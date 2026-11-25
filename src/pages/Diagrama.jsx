@@ -46,11 +46,26 @@ import {
     validarNombreNodo,
 } from "../components/diagrama/pages.js";
 import { problemasDeSintaxis } from "../components/diagrama/validacion.js";
+import { fotoDelDiagrama } from "../components/diagrama/fotoDelDiagrama.js";
+import { problemasDeSalidas } from "../components/diagrama/ejecucion/caminos.js";
+import { revisarDiagrama } from "../components/diagrama/ejecucion/revision.js";
+import {
+    TIPO_RANDOM,
+    parametrosDelAncla,
+    randomsDelDiagrama,
+    siguienteRandom,
+    subrutinasEnUso,
+    subrutinasNuevas,
+} from "../components/diagrama/funcionGenerada.js";
 import { PageProvider } from "../components/diagrama/PageContext.jsx";
 import {
     funcionesDeDatos,
     sincronizarConAnalisis,
+    variablesRandom,
 } from "../components/diagrama/variables.js";
+// Importar un diagrama guardado (JSON de Exportar)
+import { leerDiagrama, tablaDelArchivo } from "../components/diagrama/importar/leerDiagrama.js";
+import { EDGE_TYPES } from "../components/diagrama/EdgeTypeSelector.jsx";
 import CustomNode from "../components/diagrama/CustomNode.jsx";
 // Flechas editables (quiebres, tramos y curvas, como en Lucidchart)
 import { edgeTypes } from "../components/diagrama/edges/index.js";
@@ -111,6 +126,10 @@ function initialViewport(nodes, canvasWidth) {
     };
 }
 
+// Id de la pestaña de una subrutina nueva
+let _subrutina = 0;
+const nuevoIdSubrutina = () => `subrutina-${Date.now()}-${_subrutina++}`;
+
 const deselect = (items) =>
     items.map((item) => (item.selected ? { ...item, selected: false } : item));
 
@@ -127,8 +146,11 @@ const preventContextMenu = (event) => {
  *   active: false cuando hay otra vista abierta (Ejecución):
  *           se desactivan Supr y los atajos de Deshacer/Rehacer.
  *   onRun:  botón Ejecutar de la barra lateral.
+ *   revisionRef: Flow deja acá revisar() → { errores, programa }
+ *           (ver ejecucion/revision.js). Lo usa Diagrama al abrir
+ *           la pestaña Ejecución, venga de donde venga.
  */
-function Flow({ active = true, onRun }) {
+function Flow({ active = true, onRun, revisionRef }) {
 
     // Análisis Previo (se guarda en cada cambio, por eso está
     // al día al "Pasar a Diagramar")
@@ -146,18 +168,13 @@ function Flow({ active = true, onRun }) {
         [funciones]
     );
 
-    // Lista de páginas: Main + una por variable de datos
-    const pages = useMemo(
-        () => derivarPaginas(funciones),
-        [funciones]
-    );
-
     // Diagrama generado desde el Análisis Previo, una sola vez al
     // entrar (ver generacion/). Si no se puede generar, Main arranca
-    // solo con el Contexto, como antes.
+    // solo con el Contexto, como antes. Usa las páginas de datos
+    // (al entrar todavía no hay subrutinas).
     const [generacion] = useState(() =>
         generarDiagrama(analisis, {
-            paginas: pages,
+            paginas: derivarPaginas(funciones),
             edgeType: INITIAL_EDGE_TYPE,
         })
     );
@@ -216,7 +233,60 @@ function Flow({ active = true, onRun }) {
         generacion.generado ? { ...generacion.paginas } : {}
     );
     // Fuerza un render al cambiar lo guardado (p. ej. hasDiagram)
-    const [, setStoreVersion] = useState(0);
+    const [storeVersion, setStoreVersion] = useState(0);
+
+    // Subrutinas creadas con la Función Generada tipo Subrutina:
+    // [{ id, nombre, parametros }], una pestaña cada una (22/11)
+    const [subrutinas, setSubrutinas] = useState([]);
+
+    // Nodos de todas las páginas (la activa y las guardadas), para
+    // los Random de la tabla y las subrutinas en uso
+    const nodosDeTodas = useMemo(
+        () => [
+            nodes,
+            ...Object.entries(pagesStoreRef.current)
+                .filter(([pageId]) => pageId !== activePage)
+                .map(([, page]) => page.nodes),
+        ],
+        // storeVersion: cambió lo guardado
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [nodes, activePage, storeVersion]
+    );
+
+    // Random del diagrama (R1, R2...): variables de la tabla sin valor
+    // inicial, que aparecen y se van con sus nodos
+    const randoms = useMemo(() => randomsDelDiagrama(nodosDeTodas), [nodosDeTodas]);
+    const filasRandom = useMemo(() => variablesRandom(randoms), [randoms]);
+
+    // Toda la tabla (para validar los nodos y exportar)
+    const todasLasVariables = useMemo(
+        () => [...variables, ...filasRandom],
+        [variables, filasRandom]
+    );
+
+    const enUso = useMemo(() => subrutinasEnUso(nodosDeTodas), [nodosDeTodas]);
+
+    // Lista de páginas: Main, una por variable de datos y una por
+    // subrutina
+    const pages = useMemo(
+        () => derivarPaginas(funciones, subrutinas, enUso),
+        [funciones, subrutinas, enUso]
+    );
+
+    const nombresDeSubrutinas = useMemo(
+        () => subrutinas.map((s) => s.nombre),
+        [subrutinas]
+    );
+
+    // Nombres que una subrutina nueva no puede usar
+    const ocupados = useMemo(
+        () => ({
+            variables: new Set(variables.map((v) => String(v.nombre ?? "").trim())),
+            datos: new Set(nombresDeFunciones),
+            randoms: new Set(randoms),
+        }),
+        [variables, nombresDeFunciones, randoms]
+    );
 
     const applyEdgeTypeToStoredPages = useCallback((newType) => {
         const store = pagesStoreRef.current;
@@ -265,17 +335,71 @@ function Flow({ active = true, onRun }) {
     );
 
 
+    // Subrutinas: al nombrar un nodo Subrutina con un nombre nuevo se
+    // crea su pestaña (con el mismo nombre, la llama). En el ancla de
+    // una subrutina se cambian sus parámetros.
+    useEffect(() => {
+        const nuevas = subrutinasNuevas({
+            nodes,
+            subrutinas,
+            pagina: currentPage,
+            ocupados,
+        });
+
+        if (nuevas.length > 0) {
+            setSubrutinas((actuales) => [
+                ...actuales,
+                ...nuevas.map((firma) => ({ id: nuevoIdSubrutina(), ...firma })),
+            ]);
+        }
+
+        const propia = subrutinas.find((s) => s.id === currentPage?.id);
+        const parametros = propia && parametrosDelAncla(nodes, propia);
+
+        if (parametros) {
+            setSubrutinas((actuales) =>
+                actuales.map((s) => (s.id === propia.id ? { ...s, parametros } : s))
+            );
+        }
+    }, [nodes, subrutinas, currentPage, ocupados]);
+
+
     // Contexto para los nodos: errores a marcar y validación
     // de nombres (una variable no puede llamarse a sí misma).
     // Primero la BNF (sintaxis y uso de variables); los pendientes y
     // las llamadas explican mejor qué hacer, así que tienen prioridad.
     const nodeIssues = useMemo(
         () => ({
-            ...problemasDeSintaxis({ nodes, pagina: currentPage, paginas: pages, variables }),
+            ...problemasDeSintaxis({
+                nodes,
+                pagina: currentPage,
+                paginas: pages,
+                variables: todasLasVariables,
+            }),
+            // Un punto de salida con varias flechas (dos caminos)
+            ...problemasDeSalidas({ nodes, edges }),
             ...problemasDeNodos({ nodes, pagina: currentPage, paginas: pages }),
         }),
-        [nodes, currentPage, pages, variables]
+        [nodes, edges, currentPage, pages, todasLasVariables]
     );
+
+    // Revisión de todo el diagrama antes de interpretarlo: si pasa,
+    // devuelve el programa (JSON) para el motor
+    useEffect(() => {
+        if (!revisionRef) return;
+
+        revisionRef.current = () =>
+            revisarDiagrama({
+                foto: fotoDelDiagrama({
+                    pages,
+                    activePage,
+                    store: pagesStoreRef.current,
+                    activa: { nodes: getNodes(), edges: getEdges() },
+                }),
+                paginas: pages,
+                variables: todasLasVariables,
+            });
+    }, [revisionRef, pages, activePage, getNodes, getEdges, todasLasVariables]);
 
     const validateLabel = useCallback(
         ({ data, nombre }) =>
@@ -298,7 +422,7 @@ function Flow({ active = true, onRun }) {
         pages,
         activePage,
         pagesStoreRef,
-        variables,
+        variables: todasLasVariables,
         edgeType,
     });
 
@@ -358,6 +482,43 @@ function Flow({ active = true, onRun }) {
     );
 
 
+    // Borrar la pestaña de una subrutina que ya no se usa (botón de la
+    // barra de páginas). Si tiene algo dibujado, se pide confirmación.
+    const borrarSubrutina = useCallback(
+        (pageId) => {
+            const pagina = pages.find((p) => p.id === pageId);
+
+            if (pagina?.tipo !== "subrutina") {
+                return;
+            }
+
+            const contenido =
+                pageId === activePage
+                    ? { nodes: getNodes(), edges: getEdges() }
+                    : pagesStoreRef.current[pageId];
+
+            if (
+                contenido &&
+                tieneContenido(contenido) &&
+                !window.confirm(
+                    `¿Borrar la pestaña "${pagina.firma}"? Se pierde lo que dibujaste en ella.`
+                )
+            ) {
+                return;
+            }
+
+            if (pageId === activePage) {
+                switchPage(MAIN_PAGE_ID);
+            }
+
+            delete pagesStoreRef.current[pageId];
+            setSubrutinas((actuales) => actuales.filter((s) => s.id !== pageId));
+            setStoreVersion((v) => v + 1);
+        },
+        [pages, activePage, getNodes, getEdges, switchPage]
+    );
+
+
     // Si la página activa deja de existir, volver a Main
     useEffect(() => {
         if (!pages.some((page) => page.id === activePage)) {
@@ -373,6 +534,77 @@ function Flow({ active = true, onRun }) {
         Object.entries(pagesStoreRef.current).some(
             ([pageId, page]) => pageId !== activePage && tieneContenido(page)
         );
+
+
+    // Botón Importar: reemplaza todo el diagrama por el de un JSON
+    // exportado. Las pestañas de datos salen del Análisis Previo actual
+    // (las del archivo se ubican por nombre) y la tabla también se
+    // sincroniza con él. Ver importar/leerDiagrama.js.
+    const importar = useCallback(
+        async (texto) => {
+            const leido = leerDiagrama(texto, {
+                funciones,
+                tiposDeFlecha: EDGE_TYPES.map((t) => t.type),
+            });
+
+            if (!leido.ok) {
+                return { error: leido.error };
+            }
+
+            if (
+                hasDiagram &&
+                !window.confirm(
+                    "¿Reemplazar el diagrama actual por el del archivo? Se pierde lo que no hayas exportado."
+                )
+            ) {
+                return { importado: false };
+            }
+
+            const { main, datos, subrutinas: importadas, variables: tabla, edgeType: tipo } =
+                leido.diagrama;
+            const avisos = [...leido.avisos];
+
+            // Variables del Análisis Previo: mandan las del análisis actual
+            // (con el valor inicial del archivo)
+            const { variables: nuevasVariables, fuera } = tablaDelArchivo(tabla, analisis);
+
+            if (fuera.length > 0) {
+                avisos.push(
+                    `No están en el Análisis Previo actual (no se importaron): ${fuera.join(", ")}.`
+                );
+            }
+
+            pagesStoreRef.current = {
+                ...Object.fromEntries(
+                    Object.entries(datos).map(([id, pagina]) => [id, { ...pagina, viewport: null }])
+                ),
+                ...Object.fromEntries(
+                    importadas.map((s) => [s.id, { nodes: s.nodes, edges: s.edges, viewport: null }])
+                ),
+            };
+
+            setSubrutinas(
+                importadas.map(({ id, nombre, parametros }) => ({ id, nombre, parametros }))
+            );
+            setVariables(nuevasVariables);
+            setEdgeType(tipo);
+
+            setNodes(main.nodes);
+            setEdges(main.edges);
+            setActivePage(MAIN_PAGE_ID);
+            setViewport(initialViewport(main.nodes, canvasRef.current?.clientWidth ?? 0));
+
+            // Deshacer no vuelve al diagrama anterior
+            history.reset();
+            setShowNotice(false);
+            setStoreVersion((v) => v + 1);
+
+            return { importado: true, avisos };
+        },
+        // hasDiagram cambia en cada render: se lee el de este render
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [funciones, analisis, hasDiagram, history, setNodes, setEdges, setViewport]
+    );
 
 
     // Cambiar el tipo de todos los conectores existentes
@@ -461,9 +693,10 @@ function Flow({ active = true, onRun }) {
 
 
             // Los nodos nacen vacíos: muestran su nombre atenuado
-            // como ayuda (ver nodeNames.js). Una llamada (Preparación)
-            // arranca con una variable de datos que se pueda llamar
-            // desde acá, si hay alguna.
+            // como ayuda (ver nodeNames.js). Una fdp arranca con una
+            // variable de datos que se pueda llamar desde acá, si hay
+            // alguna, y un Random con el primer Rn libre (R1, R2...).
+            // La Subrutina nace vacía: al nombrarla se crea su pestaña.
             const label =
                 type === CALL_NODE_TYPE
                     ? nombreLlamadaPorDefecto({
@@ -471,7 +704,9 @@ function Flow({ active = true, onRun }) {
                         paginas: pages,
                         generico: "",
                     })
-                    : "";
+                    : type === TIPO_RANDOM
+                        ? siguienteRandom(nodosDeTodas)
+                        : "";
 
 
             const newNode = {
@@ -507,6 +742,7 @@ function Flow({ active = true, onRun }) {
             takeSnapshot,
             currentPage,
             pages,
+            nodosDeTodas,
         ]
     );
 
@@ -535,6 +771,7 @@ function Flow({ active = true, onRun }) {
                     onEdgeTypeChange={changeEdgeType}
                     onRun={onRun}
                     onExport={exportar}
+                    onImport={importar}
                     hasDiagram={hasDiagram}
                 />
 
@@ -612,6 +849,7 @@ function Flow({ active = true, onRun }) {
                         pages={pages}
                         activePage={activePage}
                         onSelect={switchPage}
+                        onDelete={borrarSubrutina}
                     />
 
                 </div>
@@ -621,6 +859,8 @@ function Flow({ active = true, onRun }) {
                     variables={variables}
                     onChange={setVariables}
                     reservedNames={nombresDeFunciones}
+                    subroutineNames={nombresDeSubrutinas}
+                    randoms={filasRandom}
                 />
 
             </div>
@@ -633,6 +873,23 @@ export default function Diagrama() {
 
     // Vista activa: editor del diagrama o ejecución
     const [vista, setVista] = useState(VISTAS.editor);
+
+    // Al abrir Ejecución (botón o pestaña) se revisa el diagrama:
+    // si hay errores, se muestran ahí y no se interpreta; si no,
+    // queda el programa listo para el motor
+    const revisionRef = useRef(null);
+    const [revision, setRevision] = useState({ errores: [], programa: null, numero: 0 });
+
+    const cambiarVista = useCallback((nueva) => {
+        if (nueva === VISTAS.ejecucion) {
+            // Cada revisión con su número: la vista de ejecución empieza de cero
+            setRevision((anterior) => ({
+                ...(revisionRef.current?.() ?? { errores: [], programa: null }),
+                numero: anterior.numero + 1,
+            }));
+        }
+        setVista(nueva);
+    }, []);
 
     const enEditor = vista === VISTAS.editor;
 
@@ -655,7 +912,7 @@ export default function Diagrama() {
             <header className="diagram-topbar">
                 <DiagramaTabs
                     value={vista}
-                    onChange={setVista}
+                    onChange={cambiarVista}
                 />
 
                 <ThemeToggle className="diagram-theme-toggle" />
@@ -681,7 +938,8 @@ export default function Diagrama() {
 
                             <Flow
                                 active={enEditor}
-                                onRun={() => setVista(VISTAS.ejecucion)}
+                                onRun={() => cambiarVista(VISTAS.ejecucion)}
+                                revisionRef={revisionRef}
                             />
 
                         </DnDProvider>
@@ -698,6 +956,10 @@ export default function Diagrama() {
                         className="diagram-view diagram-view--overlay"
                     >
                         <ExecutionView
+                            errores={revision.errores}
+                            programa={revision.programa}
+                            graficables={revision.graficables}
+                            revision={revision.numero}
                             onBack={() => setVista(VISTAS.editor)}
                         />
                     </div>
@@ -707,4 +969,4 @@ export default function Diagrama() {
 
         </main>
     );
-}
+}

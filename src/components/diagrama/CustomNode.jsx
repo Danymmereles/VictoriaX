@@ -9,6 +9,8 @@ import { FlowShape } from "./shapes";
 import { useHistory } from "./HistoryContext";
 import { usePageContext } from "./PageContext";
 import { END_NODE_TYPE, NODE_NAMES, placeholderDe } from "./nodeNames";
+import NodoPara from "./para/NodoPara";
+import { TIPO_PARA } from "./para/para.js";
 import "./CustomNode.css";
 
 /*
@@ -51,6 +53,45 @@ function useNodeSize(ref) {
     return size;
 }
 
+// Ayuda de los tres tipos de Función Generada (22/11)
+const TOOLTIPS_FUNCION_GENERADA = {
+    preparation:
+        "fdp: llama a una variable de datos del Análisis Previo (p. ej. IA). Doble clic para cambiarla.",
+    subroutine:
+        "Subrutina: doble clic para escribir su nombre y parámetros, p. ej. calcular() o calcular(A, B). La primera vez crea su pestaña; con el mismo nombre, la llama. Para guardar lo que devuelve su Fin: IN = calcular().",
+    random:
+        "Random: toma un valor nuevo, entre 0 y 1, cada vez que pasa por acá. Doble clic para cambiar su nombre (R1, R2…).",
+};
+
+// Texto de ayuda (tooltip) de un nodo sin problemas
+function ayudaDelNodo({ anchorEditable, isAnchor, type, isContext, isConnector, isEnd, isReturn, multiline }) {
+    if (anchorEditable) {
+        return "Inicio de la subrutina. Doble clic para cambiar sus parámetros (el nombre no cambia).";
+    }
+    if (isAnchor) {
+        return "Inicio de la variable de datos. Su nombre se cambia en el Análisis Previo.";
+    }
+    if (TOOLTIPS_FUNCION_GENERADA[type]) {
+        return TOOLTIPS_FUNCION_GENERADA[type];
+    }
+    if (isContext) {
+        return "Inicio del algoritmo. Doble clic para cambiar valores iniciales de la tabla (una asignación por línea, p. ej. T = 0; Ctrl+Enter guarda).";
+    }
+    if (isConnector) {
+        return "Doble clic para editar la etiqueta (un nombre, p. ej. C1). Los conectores con la misma etiqueta están vinculados.";
+    }
+    if (isReturn) {
+        return "Fin de la subrutina: doble clic para escribir lo que devuelve (una variable o un valor, p. ej. I o 0). Quien la llama lo guarda con IN = nombre().";
+    }
+    if (isEnd) {
+        return "Fin: el algoritmo de esta página termina acá.";
+    }
+    if (multiline) {
+        return "Doble clic para editar: una sentencia por línea (Ctrl+Enter guarda).";
+    }
+    return undefined;
+}
+
 // Tiempo que se muestra el aviso de un nombre rechazado
 const NOTICE_MS = 2800;
 
@@ -90,10 +131,18 @@ function ConnectorHandle({ side }) {
     );
 }
 
-export default function CustomNode({ id, data, selected }) {
+/*
+ * Todos los nodos son de tipo "custom" en React Flow; el Para (for) tiene
+ * su propio componente porque se edita en tres partes (ver para/).
+ */
+export default function CustomNode(props) {
+    return props.data?.type === TIPO_PARA ? <NodoPara {...props} /> : <NodoComun {...props} />;
+}
+
+function NodoComun({ id, data, selected }) {
     const { setNodes } = useReactFlow();
     const { takeSnapshot } = useHistory();
-    const { nodeIssues, validateLabel } = usePageContext();
+    const { page, nodeIssues, validateLabel } = usePageContext();
 
     const nodeRef = useRef(null);
     const size = useNodeSize(nodeRef);
@@ -123,6 +172,10 @@ export default function CustomNode({ id, data, selected }) {
     // de la página (en Main, la simulación).
     const isEnd = data.type === END_NODE_TYPE;
 
+    // v0.17: en una subrutina, el Fin es su return. Se edita (una
+    // variable o un valor) y muestra "Fin" como ayuda mientras está vacío
+    const isReturn = isEnd && page?.tipo === "subrutina";
+
     // Contexto: inicio fijo de Main, donde se declaran variables
     // (una por línea). Solo tiene salida y se edita en varias líneas.
     const isContext = data.type === "context";
@@ -130,6 +183,10 @@ export default function CustomNode({ id, data, selected }) {
     // Nodo ancla: encabeza la página de su variable de datos.
     // Es el inicio (solo salida) y su nombre viene del Análisis Previo.
     const isAnchor = Boolean(data.anchorOf);
+
+    // El ancla de una subrutina sí se edita: ahí se cambian sus
+    // parámetros (el nombre queda fijo, ver pages.js)
+    const anchorEditable = isAnchor && data.type === "subroutine";
 
     // Inicio del algoritmo de la página: no recibe conexiones
     const isStart = isAnchor || isContext;
@@ -159,7 +216,7 @@ export default function CustomNode({ id, data, selected }) {
     const startEditing = () => {
         // Ya editando (p. ej. doble clic dentro del campo para
         // seleccionar una palabra): no reiniciar el texto
-        if (isAnchor || isEnd || editingRef.current) {
+        if ((isAnchor && !anchorEditable) || (isEnd && !isReturn) || editingRef.current) {
             return;
         }
 
@@ -249,30 +306,27 @@ export default function CustomNode({ id, data, selected }) {
         return () => wrapper.removeEventListener("keydown", onKeyDown);
     });
 
-    const tooltip =
-        issue ||
-        (isAnchor
-            ? "Inicio de la variable de datos. Su nombre se cambia en el Análisis Previo."
-            : isContext
-                ? "Inicio del algoritmo. Doble clic para cambiar valores iniciales de la tabla (una asignación por línea, p. ej. T = 0; Ctrl+Enter guarda)."
-                : isConnector
-                    ? "Doble clic para editar la etiqueta (un nombre, p. ej. C1). Los conectores con la misma etiqueta están vinculados."
-                    : isEnd
-                        ? "Fin: el algoritmo de esta página termina acá."
-                        : multiline
-                            ? "Doble clic para editar: una sentencia por línea (Ctrl+Enter guarda)."
-                            : undefined);
+    const tooltip = issue || ayudaDelNodo({
+        anchorEditable,
+        isAnchor,
+        type: data.type,
+        isContext,
+        isConnector,
+        isEnd,
+        isReturn,
+        multiline,
+    });
 
     // Nodo sin texto: muestra su nombre atenuado como ayuda
     // (p. ej. "Asignación"), que desaparece al editar. Los nodos
     // generados traen una ayuda propia (p. ej. "Actualizar estado").
     const placeholder = data.hint || placeholderDe(data.type);
-    const isEmpty = !isEnd && !editing && !String(data.label ?? "").trim();
+    const isEmpty = (!isEnd || isReturn) && !editing && !String(data.label ?? "").trim();
 
     // Texto que define el tamaño del nodo (ver flow-node__label).
     // Al editar un nodo vacío se mide con el texto de ayuda, así
     // la figura no cambia de tamaño al empezar a escribir.
-    const mirrorText = isEnd
+    const mirrorText = isEnd && !isReturn
         ? NODE_NAMES[END_NODE_TYPE]
         : editing
             ? (text || placeholder) + (text.endsWith("\n") ? "\u00a0" : "")

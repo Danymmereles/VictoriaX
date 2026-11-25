@@ -16,11 +16,18 @@
     --dg-blue-fill: #dcecff;
     --dg-orange-fill: #ffe6bd;
     --dg-green-fill: #dcf5df;
+    /* Función Generada: Subrutina y Random (22/11) */
+    --dg-teal-fill: #cdf1ec;
+    --dg-pink-fill: #ffdcea;
+    --dg-yellow-fill: #fff4c2;
 
     --dg-purple-stroke: #444;
     --dg-blue-stroke: #444;
     --dg-orange-stroke: #444;
     --dg-green-stroke: #444;
+    --dg-teal-stroke: #444;
+    --dg-pink-stroke: #444;
+    --dg-yellow-stroke: #444;
 
     --dg-node-text: #1f1f1f;
     --dg-decision-label: #8a8a8a;
@@ -75,6 +82,19 @@
     /* Lienzo */
     --dg-canvas-bg: transparent;
     --dg-canvas-dots: #b4b4bd;
+
+    /* Gráfico de la ejecución (uPlot, ver ejecucion/grafico/):
+       las familias pastel, con más color para leerse sobre blanco */
+    --dg-chart-1: #9a83ea;
+    --dg-chart-2: #4fa3e0;
+    --dg-chart-3: #ea9a3a;
+    --dg-chart-4: #4fb36a;
+    --dg-chart-5: #2fb3a3;
+    --dg-chart-6: #e2779f;
+    --dg-chart-text: hsl(var(--muted-foreground));
+    --dg-chart-grid: rgba(120, 120, 140, 0.16);
+    --dg-chart-select: rgba(175, 155, 239, 0.16);
+    --dg-chart-cursor: rgba(120, 120, 140, 0.55);
 }
 
 .dark {
@@ -83,11 +103,17 @@
     --dg-blue-fill: #172a40;
     --dg-orange-fill: #3a2c17;
     --dg-green-fill: #173325;
+    --dg-teal-fill: #11322f;
+    --dg-pink-fill: #3a1b2b;
+    --dg-yellow-fill: #38331a;
 
     --dg-purple-stroke: #c4b5fd;
     --dg-blue-stroke: #8ccdf2;
     --dg-orange-stroke: #f6cd8b;
     --dg-green-stroke: #97e0a5;
+    --dg-teal-stroke: #7fdccf;
+    --dg-pink-stroke: #f5a9c9;
+    --dg-yellow-stroke: #f1e08e;
 
     --dg-node-text: hsl(var(--foreground));
     --dg-decision-label: #8b93a7;
@@ -136,6 +162,18 @@
     /* Lienzo: mismo fondo que la página */
     --dg-canvas-bg: hsl(var(--background));
     --dg-canvas-dots: hsl(222 15% 26%);
+
+    /* Gráfico de la ejecución: los mismos tonos que los nodos */
+    --dg-chart-1: #c4b5fd;
+    --dg-chart-2: #8ccdf2;
+    --dg-chart-3: #f6cd8b;
+    --dg-chart-4: #97e0a5;
+    --dg-chart-5: #7fdccf;
+    --dg-chart-6: #f5a9c9;
+    --dg-chart-text: hsl(var(--muted-foreground));
+    --dg-chart-grid: rgba(148, 163, 184, 0.14);
+    --dg-chart-select: rgba(175, 155, 239, 0.14);
+    --dg-chart-cursor: rgba(148, 163, 184, 0.5);
 }
 
 
@@ -232,4 +270,19 @@
 .diagram-flow-area .react-flow__minimap-node.minimap-node--connector {
     fill: var(--dg-green-fill) !important;
     stroke: var(--dg-green-stroke) !important;
+}
+
+.diagram-flow-area .react-flow__minimap-node.minimap-node--subroutine {
+    fill: var(--dg-teal-fill) !important;
+    stroke: var(--dg-teal-stroke) !important;
+}
+
+.diagram-flow-area .react-flow__minimap-node.minimap-node--random {
+    fill: var(--dg-pink-fill) !important;
+    stroke: var(--dg-pink-stroke) !important;
+}
+
+.diagram-flow-area .react-flow__minimap-node.minimap-node--for {
+    fill: var(--dg-yellow-fill) !important;
+    stroke: var(--dg-yellow-stroke) !important;
 }

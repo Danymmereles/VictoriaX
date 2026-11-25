@@ -35,6 +35,8 @@ const MEDIDAS = {
     document: { ancho: 160, alto: 90, padX: 16, padY: 32, texto: 220 },
     io: { ancho: 160, alto: 80, padX: 32, padY: 16, texto: 220 },
     preparation: { ancho: 160, alto: 80, padX: 32, padY: 16, texto: 220 },
+    subroutine: { ancho: 160, alto: 80, padX: 32, padY: 16, texto: 220 },
+    random: { ancho: 120, alto: 64, padX: 26, padY: 16, texto: 220 },
     connector: { ancho: 56, alto: 56, padX: 6, padY: 12, texto: 220 },
     context: { ancho: 180, alto: 80, padX: 28, padY: 24, texto: 320 },
     end: { ancho: 100, alto: 48, padX: 22, padY: 16, texto: 220 },

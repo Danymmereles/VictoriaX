@@ -118,12 +118,16 @@ export default function useUndoRedo({
 
     useHistoryShortcuts({ undo, redo, enabled: shortcutsEnabled });
 
+    // Vaciar todos los historiales (p. ej. al importar un diagrama:
+    // deshacer no vuelve al diagrama anterior)
+    const reset = useCallback(() => setStacks({}), []);
+
     const canUndo = past.length > 0;
     const canRedo = future.length > 0;
 
     return useMemo(
-        () => ({ undo, redo, takeSnapshot, canUndo, canRedo }),
-        [undo, redo, takeSnapshot, canUndo, canRedo]
+        () => ({ undo, redo, takeSnapshot, reset, canUndo, canRedo }),
+        [undo, redo, takeSnapshot, reset, canUndo, canRedo]
     );
 }
 

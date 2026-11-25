@@ -4,6 +4,8 @@ import EdgeTypeSelector from "./EdgeTypeSelector";
 import HistoryControls from "./HistoryControls";
 import { SIDEBAR_ITEMS } from "./sidebarItems";
 import BackToAnalysisLink from "./BackToAnalysisLink";
+import ImportarBoton from "./importar/ImportarBoton";
+import FuncionGeneradaMenu from "./FuncionGeneradaMenu";
 import ExportMenu from "./exportar/ExportMenu";
 import "./Sidebar.css";
 
@@ -12,9 +14,11 @@ const PREVIEW_SIZES = {
     input: [35, 35],
     process: [35, 35],
     decision: [38, 38],
+    for: [36, 36],
     document: [46, 34],
-    io: [46, 34],
     preparation: [46, 34],
+    subroutine: [46, 34],
+    random: [46, 34],
     connector: [34, 34],
     end: [44, 30],
 };
@@ -23,6 +27,11 @@ function SidebarItem({ item }) {
     const { id, type, label, data } = item;
     const [, setType] = useDnD();
     const [width, height] = PREVIEW_SIZES[type];
+
+    // Función Generada: abre un menú con sus tipos (no se arrastra)
+    if (item.opciones) {
+        return <FuncionGeneradaMenu item={item} previewSize={[width, height]} />;
+    }
 
     const onDragStart = (event) => {
         // Se arrastra el elemento (p. ej. "connector-left"), no solo el tipo
@@ -56,7 +65,7 @@ function SidebarItem({ item }) {
     );
 }
 
-export default function Sidebar({ edgeType, onEdgeTypeChange, onRun, onExport, hasDiagram }) {
+export default function Sidebar({ edgeType, onEdgeTypeChange, onRun, onExport, onImport, hasDiagram }) {
     return (
         <aside className="sidebar">
             <BackToAnalysisLink hasDiagram={hasDiagram} />
@@ -74,9 +83,14 @@ export default function Sidebar({ edgeType, onEdgeTypeChange, onRun, onExport, h
                 ))}
             </div>
 
-            {/* Exportar (PNG, JPG, JSON) y Ejecutar (abre la vista de ejecución) */}
+            {/* Importar / Exportar (en la misma fila) y Ejecutar */}
             <div className="sidebar-footer">
-                {onExport && <ExportMenu onExport={onExport} />}
+                {(onImport || onExport) && (
+                    <div className="sidebar-archivos">
+                        {onImport && <ImportarBoton onImport={onImport} />}
+                        {onExport && <ExportMenu onExport={onExport} />}
+                    </div>
+                )}
 
                 <button
                     type="button"
@@ -92,4 +106,4 @@ export default function Sidebar({ edgeType, onEdgeTypeChange, onRun, onExport, h
             </div>
         </aside>
     );
-}
+}

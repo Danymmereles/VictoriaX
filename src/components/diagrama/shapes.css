@@ -38,7 +38,25 @@
     stroke: var(--dg-green-stroke);
 }
 
-/* Líneas internas (barras del Contexto, anillo del Fin): solo trazo */
+/* Función Generada: fdp naranja (arriba), Subrutina celeste, Random rosa */
+.flow-shape--subroutine {
+    fill: var(--dg-teal-fill);
+    stroke: var(--dg-teal-stroke);
+}
+
+.flow-shape--random {
+    fill: var(--dg-pink-fill);
+    stroke: var(--dg-pink-stroke);
+}
+
+/* Para (for): amarillo pastel */
+.flow-shape--for {
+    fill: var(--dg-yellow-fill);
+    stroke: var(--dg-yellow-stroke);
+}
+
+/* Líneas internas (barras del Contexto, anillo del Fin, divisiones
+   del Para): solo trazo */
 .flow-shape__line {
     fill: none;
 }

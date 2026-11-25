@@ -1,6 +1,6 @@
 import { useReactFlow } from "@xyflow/react";
 
-import { MAIN_PAGE_ID, crearPaginaFuncion, emptyPage } from "../pages.js";
+import { fotoDelDiagrama } from "../fotoDelDiagrama.js";
 import { elegirDestino, guardarEn, nombreDeArchivo } from "./guardarArchivo.js";
 import { imagenDelDiagrama } from "./imagen.js";
 import { diagramaComoJson, jsonComoBlob } from "./json.js";
@@ -24,16 +24,11 @@ export function useExportar({ canvasRef, pages, activePage, pagesStoreRef, varia
 
     // Todas las páginas: la activa está en React Flow, las demás guardadas
     const todasLasPaginas = () =>
-        pages.map((pagina) => {
-            if (pagina.id === activePage) {
-                return { id: pagina.id, nombre: pagina.nombre, nodes: getNodes(), edges: getEdges() };
-            }
-
-            const guardada =
-                pagesStoreRef.current[pagina.id] ??
-                (pagina.id === MAIN_PAGE_ID ? emptyPage() : crearPaginaFuncion(pagina));
-
-            return { id: pagina.id, nombre: pagina.nombre, nodes: guardada.nodes, edges: guardada.edges };
+        fotoDelDiagrama({
+            pages,
+            activePage,
+            store: pagesStoreRef.current,
+            activa: { nodes: getNodes(), edges: getEdges() },
         });
 
     // La imagen sale sin la selección (brillo, manijas); después se restaura

@@ -2,10 +2,10 @@
 // Modelo y validación del Análisis Previo (Modo Libre)
 // Lógica pura. Usada por la página y los componentes.
 // Las siglas siguen la misma regla de nombres que el diagrama
-// (lib/lenguaje, BNF v0.14), para que el diagrama generado sea válido.
+// (lib/lenguaje, BNF v0.15), para que el diagrama generado sea válido.
 // ===========================================================================
 
-import { motivoNombreInvalido } from "./lenguaje/nombres.js";
+import { motivoNombreDeVariable } from "./lenguaje/nombres.js";
 
 export const METODOLOGIAS = {
   EVENTO_A_EVENTO: "EVENTO_A_EVENTO",
@@ -217,7 +217,7 @@ export const claveEventoFuturo = (e, i) => `eventoFuturo:${e.id || `idx-${i}`}`;
  * Las siglas de las variables y de los Eventos Futuros son los nombres
  * que se usan en el diagrama, así que siguen la regla de nombres de la BNF:
  *   - válidas: letras, números y _, sin empezar con número, sin tildes,
- *     espacios ni palabras reservadas (AND, OR, NOT, TRUE, FALSE, NULL, RND);
+ *     espacios ni palabras reservadas (AND, OR, NOT, TRUE, FALSE, NULL) ni R1, R2… (Random);
  *   - únicas entre todas las secciones. Como en JavaScript, distinguen
  *     mayúsculas: Ic e IC son dos siglas distintas.
  * Los detalles de estos errores llevan tipo "sigla" (para resaltar el campo).
@@ -241,7 +241,7 @@ function validarSiglas(a, { claveVariable, error, detalles, errores }) {
 
   const validas = [];
   entradas.forEach((x) => {
-    const motivo = motivoNombreInvalido(x.sigla);
+    const motivo = motivoNombreDeVariable(x.sigla);
     if (motivo) {
       const detalle = motivo.charAt(0).toLowerCase() + motivo.slice(1);
       errorDeSigla(x.campo, `${x.que} "${x.sigla}" no es válida: ${detalle}`);

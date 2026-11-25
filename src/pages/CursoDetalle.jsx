@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
-import { base44 } from "@/api/base44Client";
+import { cursosClient } from "@/api/cursosClient";
+import { authClient } from "@/api/authClient";
+import { ejerciciosClient } from "@/api/ejerciciosClient";
 import { useSesionUsuario } from "@/lib/sesionUsuario";
 import { ROLES } from "@/lib/permisos";
 import { nombreCurso, esVigente, periodoLabel, anioLectivo } from "@/lib/cursos";
@@ -23,26 +25,33 @@ export default function CursoDetalle() {
   const [usuarios, setUsuarios] = useState([]);
   const [ejercicios, setEjercicios] = useState([]);
   const [entregas, setEntregas] = useState([]);
-  const [cargado, setCargado] = useState(false);
   const [resolucion, setResolucion] = useState(null);
+  const [errorCarga, setErrorCarga] = useState("");
 
+  // La API solo devuelve el curso si el usuario puede verlo (admin de la institución
+  // o integrante); si no, responde 404 y se vuelve al listado.
   async function cargar() {
-    const c = await base44.entities.Curso.get(id);
-    setCurso(c);
-    const ins = await base44.entities.Inscripcion.filter({ curso_id: id });
-    setInscripciones(ins);
-    const us = await base44.entities.Usuario.list();
-    setUsuarios(us);
-    const ejs = await base44.entities.Ejercicio.list("numero");
-    setEjercicios(ejs);
-    const alumnoIds = us
-      .filter((u) => ins.some((i) => i.usuario_id === u.id) && u.rol === ROLES.ESTUDIANTE)
-      .map((u) => u.id);
-    if (alumnoIds.length) {
-      const ents = await base44.entities.Entrega.filter({ usuario_id: { $in: alumnoIds } }, undefined, 1000);
-      setEntregas(ents);
+    try {
+      const { curso: c, integrantes } = await cursosClient.get(id);
+      const gestiona = usuario.rol !== ROLES.ESTUDIANTE;
+      // Para agregar integrantes hacen falta los usuarios de la institución.
+      const institucion = gestiona ? await authClient.listUsers().catch(() => []) : [];
+      // Solo se pueden sumar usuarios de la institución del curso.
+      const candidatos = institucion.filter((u) => u.institucion === c.institucion);
+      const porId = new Map([...candidatos, ...integrantes].map((u) => [u.id, u]));
+      setCurso(c);
+      setInscripciones(integrantes.map((u) => ({ usuario_id: u.id })));
+      setUsuarios([...porId.values()]);
+      setEjercicios(await ejerciciosClient.list().catch(() => []));
+      // El avance sale de las resoluciones del Modo Estudio de los alumnos del curso.
+      setEntregas(gestiona ? await cursosClient.entregas(id).catch(() => []) : []);
+    } catch (e) {
+      if (e.status === 404) {
+        navigate("/cursos");
+        return;
+      }
+      setErrorCarga(e.message || "No se pudo cargar el curso.");
     }
-    setCargado(true);
   }
 
   useEffect(() => {
@@ -53,19 +62,14 @@ export default function CursoDetalle() {
     cargar();
   }, [usuario, id]);
 
-  useEffect(() => {
-    if (cargado && usuario && curso) {
-      const esMiembro = inscripciones.some((i) => i.usuario_id === usuario.id);
-      if (!permisos?.puedoVerTodosLosCursos && !esMiembro) navigate("/cursos");
-    }
-  }, [cargado, usuario, curso, inscripciones]);
-
   if (!usuario) return null;
   if (!curso)
     return (
       <div className="min-h-screen bg-background text-foreground">
         <NavBar />
-        <main className="mx-auto max-w-5xl px-6 py-32 text-center text-muted-foreground">Cargando curso…</main>
+        <main className="mx-auto max-w-5xl px-6 py-32 text-center text-muted-foreground">
+          {errorCarga || "Cargando curso…"}
+        </main>
         <Footer />
       </div>
     );
@@ -103,6 +107,7 @@ export default function CursoDetalle() {
             <h1 className="mt-2 font-heading text-3xl font-semibold tracking-tight">{nombreCurso(curso)}</h1>
             <p className="mt-2 text-sm text-muted-foreground">
               {curso.codigo} · {periodoLabel(curso.periodo_lectivo)} · {anioLectivo(curso)}
+              {permisos?.puedoVerTodasLasInstituciones && ` · ${curso.institucion}`}
             </p>
           </div>
           {esAdmin && (

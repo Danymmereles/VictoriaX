@@ -3,63 +3,15 @@ import {
   clearSessionExpiry,
   ensureSessionExpiry,
   getSessionExpiresAt,
-  startSessionExpiry,
 } from "@/api/sessionExpiry";
+import { getToken, request, setToken } from "@/api/apiClient";
+import { rolDesdeApi } from "@/lib/permisos";
 
-// En desarrollo local se usa la API de la PC; publicado, la del dominio (vía Cloudflare Tunnel).
-// VITE_API_URL permite forzar otra URL.
-const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]"]);
-const DEFAULT_API_URL = LOCAL_HOSTS.has(globalThis.location?.hostname)
-  ? "http://localhost:3001"
-  : "https://api.victoriax-simulate.com";
-const API_URL = (import.meta.env.VITE_API_URL || DEFAULT_API_URL).replace(/\/$/, "");
-const TOKEN_KEY = "victoriax-access-token";
 
-const ROL_APP = { ADMIN: "ADMINISTRADOR", DOCENTE: "DOCENTE", ALUMNO: "ESTUDIANTE" };
-
-function getToken() {
-  return localStorage.getItem(TOKEN_KEY);
-}
-
-function setToken(token) {
-  if (token) {
-    localStorage.setItem(TOKEN_KEY, token);
-    startSessionExpiry();
-  } else {
-    localStorage.removeItem(TOKEN_KEY);
-    clearSessionExpiry();
-  }
-}
-
-async function request(path, { method = "GET", body, auth = true } = {}) {
-  const headers = {};
-  if (body !== undefined) headers["content-type"] = "application/json";
-  const token = auth ? getToken() : null;
-  if (token) headers.authorization = `Bearer ${token}`;
-
-  let response;
-  try {
-    response = await fetch(`${API_URL}${path}`, {
-      method,
-      headers,
-      body: body === undefined ? undefined : JSON.stringify(body),
-    });
-  } catch {
-    throw new Error("No se pudo conectar con el servidor de VictoriaX.");
-  }
-  if (response.status === 204) return null;
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    const error = new Error(data.error || "Ocurrió un error inesperado.");
-    error.status = response.status;
-    throw error;
-  }
-  return data;
-}
 
 // Formato que usan las pantallas de perfil y participantes.
 function toParticipante(user) {
-  return { ...user, id: user.id_usuario, rol: ROL_APP[user.rol] || "ESTUDIANTE" };
+  return { ...user, id: user.id_usuario, rol: rolDesdeApi(user.rol) };
 }
 
 export const authClient = {

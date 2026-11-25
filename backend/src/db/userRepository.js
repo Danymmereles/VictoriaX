@@ -39,6 +39,10 @@ export function createUserRepository(db) {
       return findById(id_usuario);
     },
 
+    async listAll() {
+      return db.select().from(usuario).orderBy(usuario.institucion, usuario.nombre_completo);
+    },
+
     async listByInstitucion(institucion) {
       return db
         .select()

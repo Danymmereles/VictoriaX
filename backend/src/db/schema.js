@@ -1,12 +1,19 @@
 import {
+  boolean,
   char,
+  date,
   datetime,
+  primaryKey,
+  int,
+  json,
+  mediumtext,
   mysqlEnum,
   mysqlTable,
+  unique,
   varchar,
 } from "drizzle-orm/mysql-core";
 
-export const ROLES = ["ADMIN", "DOCENTE", "ALUMNO"];
+export const ROLES = ["SUPER_ADMIN", "ADMIN", "DOCENTE", "ALUMNO"];
 
 export const usuario = mysqlTable("USUARIO", {
   id_usuario: char("id_usuario", { length: 36 }).primaryKey(),
@@ -28,3 +35,81 @@ export const sesion = mysqlTable("SESION", {
   fecha_creacion: datetime("fecha_creacion", { fsp: 3 }),
   fecha_expiracion: datetime("fecha_expiracion", { fsp: 3 }).notNull(),
 });
+
+export const ejercicio = mysqlTable("EJERCICIO", {
+  id_ejercicio: varchar("id_ejercicio", { length: 36 }).primaryKey(),
+  numero: int("numero", { unsigned: true }).notNull(),
+  titulo: varchar("titulo", { length: 255 }).notNull(),
+  consigna_html: mediumtext("consigna_html").notNull(),
+  apoyo: json("apoyo"),
+  institucion: varchar("institucion", { length: 100 }).notNull(),
+  id_usuario_creador: char("id_usuario_creador", { length: 36 })
+    .references(() => usuario.id_usuario, { onDelete: "set null" }),
+  fecha_creacion: datetime("fecha_creacion", { fsp: 3 }),
+  fecha_actualizacion: datetime("fecha_actualizacion", { fsp: 3 }),
+}, (table) => [
+  unique("uq_ejercicio_institucion_numero").on(table.institucion, table.numero),
+]);
+
+export const METODOLOGIAS = ["EVENTO_A_EVENTO", "DELTA_T_CONSTANTE"];
+export const ESTADOS_RESOLUCION = ["BORRADOR", "ENTREGADO", "FINALIZADO"];
+
+// Solo el contenido; las reglas de cada campo se validan en el frontend.
+export const analisisPrevio = mysqlTable("ANALISIS_PREVIO", {
+  id_analisis_previo: char("id_analisis_previo", { length: 36 }).primaryKey(),
+  tipo_metodologia: mysqlEnum("tipo_metodologia", METODOLOGIAS),
+  variables: json("variables").notNull(),
+  tabla_eventos: json("tabla_eventos").notNull(),
+  tabla_eventos_futuros: json("tabla_eventos_futuros").notNull(),
+});
+
+// id_ejercicio NULL = Modo Libre; con ejercicio, una resolución por usuario.
+export const resolucion = mysqlTable("RESOLUCION", {
+  id_resolucion: char("id_resolucion", { length: 36 }).primaryKey(),
+  id_usuario: char("id_usuario", { length: 36 })
+    .notNull()
+    .references(() => usuario.id_usuario, { onDelete: "cascade" }),
+  id_analisis_previo: char("id_analisis_previo", { length: 36 })
+    .notNull()
+    .references(() => analisisPrevio.id_analisis_previo, { onDelete: "cascade" }),
+  id_ejercicio: varchar("id_ejercicio", { length: 36 })
+    .references(() => ejercicio.id_ejercicio, { onDelete: "cascade" }),
+  estado: mysqlEnum("estado", ESTADOS_RESOLUCION).notNull().default("BORRADOR"),
+  fecha_inicio: datetime("fecha_inicio", { fsp: 3 }),
+  fecha_ultima_modificacion: datetime("fecha_ultima_modificacion", { fsp: 3 }),
+}, (table) => [
+  unique("uq_resolucion_analisis").on(table.id_analisis_previo),
+  unique("uq_resolucion_usuario_ejercicio").on(table.id_usuario, table.id_ejercicio),
+]);
+
+export const PERIODOS_LECTIVOS = ["ANUAL", "CUAT1", "CUAT2"];
+
+// Las fechas viajan como "AAAA-MM-DD", igual que en Base44.
+export const curso = mysqlTable("CURSO", {
+  id_curso: varchar("id_curso", { length: 36 }).primaryKey(),
+  codigo: varchar("codigo", { length: 50 }).notNull(),
+  nombre: varchar("nombre", { length: 255 }),
+  periodo_lectivo: mysqlEnum("periodo_lectivo", PERIODOS_LECTIVOS).notNull(),
+  fecha_inicio: date("fecha_inicio", { mode: "string" }).notNull(),
+  fecha_final: date("fecha_final", { mode: "string" }).notNull(),
+  forzar_cierre: boolean("forzar_cierre").notNull().default(false),
+  institucion: varchar("institucion", { length: 100 }).notNull(),
+  id_usuario_creador: char("id_usuario_creador", { length: 36 })
+    .references(() => usuario.id_usuario, { onDelete: "set null" }),
+  fecha_creacion: datetime("fecha_creacion", { fsp: 3 }),
+  fecha_actualizacion: datetime("fecha_actualizacion", { fsp: 3 }),
+}, (table) => [
+  unique("uq_curso_institucion_codigo").on(table.institucion, table.codigo),
+]);
+
+export const inscripcion = mysqlTable("INSCRIPCION", {
+  id_curso: varchar("id_curso", { length: 36 })
+    .notNull()
+    .references(() => curso.id_curso, { onDelete: "cascade" }),
+  id_usuario: char("id_usuario", { length: 36 })
+    .notNull()
+    .references(() => usuario.id_usuario, { onDelete: "cascade" }),
+  fecha_inscripcion: datetime("fecha_inscripcion", { fsp: 3 }),
+}, (table) => [
+  primaryKey({ columns: [table.id_curso, table.id_usuario] }),
+]);

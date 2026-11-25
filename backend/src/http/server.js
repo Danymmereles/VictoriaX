@@ -4,6 +4,15 @@ import { toPublicUser } from "../auth/service.js";
 
 const BODY_LIMIT_BYTES = 1_048_576;
 const USUARIO_PATH = /^\/api\/usuarios\/([0-9a-f-]{36})$/i;
+// Ids importados de Base44 (24 hex) o UUID de los ejercicios nuevos.
+const EJERCICIO_PATH = /^\/api\/ejercicios\/([A-Za-z0-9-]{1,36})$/;
+const RESOLUCION_PATH = /^\/api\/resoluciones\/([0-9a-f-]{36})$/i;
+// Ids importados de Base44 (24 hex) o UUID de los cursos nuevos.
+const CURSO_ID = "([A-Za-z0-9-]{1,36})";
+const CURSO_PATH = new RegExp(`^/api/cursos/${CURSO_ID}$`);
+const CURSO_INTEGRANTES_PATH = new RegExp(`^/api/cursos/${CURSO_ID}/integrantes$`);
+const CURSO_INTEGRANTE_PATH = new RegExp(`^/api/cursos/${CURSO_ID}/integrantes/([0-9a-f-]{36})$`, "i");
+const CURSO_RESOLUCIONES_PATH = new RegExp(`^/api/cursos/${CURSO_ID}/resoluciones$`);
 
 function sendJson(response, statusCode, body) {
   response.writeHead(statusCode, {
@@ -50,7 +59,15 @@ export function parseOrigins(value) {
   );
 }
 
-export function createApiServer({ authService, authMiddleware, frontendOrigin }) {
+export function createApiServer({
+  authService,
+  authMiddleware,
+  ejercicioService,
+  resolucionService,
+  cursoService,
+  institucionService,
+  frontendOrigin,
+}) {
   const allowedOrigins = parseOrigins(frontendOrigin);
   // Rutas protegidas: [método, patrón, handler(request, response, params)].
   const protectedRoutes = [
@@ -67,12 +84,100 @@ export function createApiServer({ authService, authMiddleware, frontendOrigin })
       response.writeHead(204);
       response.end();
     }],
-    ["GET", /^\/api\/usuarios$/, async (request, response) => {
-      sendJson(response, 200, { users: await authService.listUsers(request.user) });
+    // ?institucion=<nombre> solo tiene efecto para el super admin (usuarios, ejercicios y cursos).
+    ["GET", /^\/api\/usuarios$/, async (request, response, _params, url) => {
+      const users = await authService.listUsers(request.user, {
+        institucion: url.searchParams.get("institucion"),
+      });
+      sendJson(response, 200, { users });
+    }],
+    ["GET", /^\/api\/instituciones$/, async (request, response) => {
+      sendJson(response, 200, { instituciones: await institucionService.list(request.user) });
     }],
     ["PATCH", USUARIO_PATH, async (request, response, [id]) => {
       const user = await authService.updateUser(request.user, id.toLowerCase(), await readJson(request));
       sendJson(response, 200, { user });
+    }],
+    ["GET", /^\/api\/ejercicios$/, async (request, response, _params, url) => {
+      const ejercicios = await ejercicioService.list(request.user, {
+        institucion: url.searchParams.get("institucion"),
+      });
+      sendJson(response, 200, { ejercicios });
+    }],
+    ["POST", /^\/api\/ejercicios$/, async (request, response) => {
+      const ejercicio = await ejercicioService.create(request.user, await readJson(request));
+      sendJson(response, 201, { ejercicio });
+    }],
+    ["GET", EJERCICIO_PATH, async (request, response, [id]) => {
+      sendJson(response, 200, { ejercicio: await ejercicioService.get(request.user, id) });
+    }],
+    ["PATCH", EJERCICIO_PATH, async (request, response, [id]) => {
+      const ejercicio = await ejercicioService.update(request.user, id, await readJson(request));
+      sendJson(response, 200, { ejercicio });
+    }],
+    ["DELETE", EJERCICIO_PATH, async (request, response, [id]) => {
+      await ejercicioService.remove(request.user, id);
+      response.writeHead(204);
+      response.end();
+    }],
+    // ?ejercicio=<id> para la del Modo Estudio, ?modo=libre para las del Modo Libre.
+    ["GET", /^\/api\/resoluciones$/, async (request, response, _params, url) => {
+      const resoluciones = await resolucionService.list(request.user, {
+        id_ejercicio: url.searchParams.get("ejercicio"),
+        libre: url.searchParams.get("modo") === "libre",
+      });
+      sendJson(response, 200, { resoluciones });
+    }],
+    ["POST", /^\/api\/resoluciones$/, async (request, response) => {
+      const resolucion = await resolucionService.create(request.user, await readJson(request));
+      sendJson(response, 201, { resolucion });
+    }],
+    ["GET", RESOLUCION_PATH, async (request, response, [id]) => {
+      sendJson(response, 200, { resolucion: await resolucionService.get(request.user, id.toLowerCase()) });
+    }],
+    ["PATCH", RESOLUCION_PATH, async (request, response, [id]) => {
+      const resolucion = await resolucionService.update(request.user, id.toLowerCase(), await readJson(request));
+      sendJson(response, 200, { resolucion });
+    }],
+    ["GET", /^\/api\/cursos$/, async (request, response, _params, url) => {
+      const cursos = await cursoService.list(request.user, {
+        institucion: url.searchParams.get("institucion"),
+      });
+      sendJson(response, 200, { cursos });
+    }],
+    ["POST", /^\/api\/cursos$/, async (request, response) => {
+      const curso = await cursoService.create(request.user, await readJson(request));
+      sendJson(response, 201, { curso });
+    }],
+    ["GET", CURSO_PATH, async (request, response, [id]) => {
+      sendJson(response, 200, await cursoService.get(request.user, id));
+    }],
+    ["PATCH", CURSO_PATH, async (request, response, [id]) => {
+      const curso = await cursoService.update(request.user, id, await readJson(request));
+      sendJson(response, 200, { curso });
+    }],
+    ["DELETE", CURSO_PATH, async (request, response, [id]) => {
+      await cursoService.remove(request.user, id);
+      response.writeHead(204);
+      response.end();
+    }],
+    ["POST", CURSO_INTEGRANTES_PATH, async (request, response, [id]) => {
+      // { ids_usuario: [...] } agrega varios juntos; { id_usuario } sigue aceptando uno.
+      const { id_usuario, ids_usuario } = await readJson(request);
+      const usuarios = await cursoService.agregarIntegrantes(
+        request.user,
+        id,
+        ids_usuario !== undefined ? ids_usuario : [id_usuario],
+      );
+      sendJson(response, 201, { usuarios });
+    }],
+    ["DELETE", CURSO_INTEGRANTE_PATH, async (request, response, [id, idUsuario]) => {
+      await cursoService.quitarIntegrante(request.user, id, idUsuario.toLowerCase());
+      response.writeHead(204);
+      response.end();
+    }],
+    ["GET", CURSO_RESOLUCIONES_PATH, async (request, response, [id]) => {
+      sendJson(response, 200, { resoluciones: await cursoService.resoluciones(request.user, id) });
     }],
   ];
 
@@ -86,7 +191,7 @@ export function createApiServer({ authService, authMiddleware, frontendOrigin })
       response.setHeader("access-control-allow-origin", origin);
       response.setHeader("vary", "Origin");
       response.setHeader("access-control-allow-headers", "authorization, content-type");
-      response.setHeader("access-control-allow-methods", "GET, POST, PATCH, OPTIONS");
+      response.setHeader("access-control-allow-methods", "GET, POST, PATCH, DELETE, OPTIONS");
     }
     if (request.method === "OPTIONS") {
       response.writeHead(204);
@@ -110,7 +215,7 @@ export function createApiServer({ authService, authMiddleware, frontendOrigin })
         const match = request.method === method && url.pathname.match(pattern);
         if (match) {
           await authMiddleware(request, response, () =>
-            handler(request, response, match.slice(1)),
+            handler(request, response, match.slice(1), url),
           );
           return;
         }

@@ -64,12 +64,15 @@ When you use `base44 dev`, the command injects the local Base44 values for you, 
 
 ## Usuarios y autenticación (API propia + MySQL)
 
-Los usuarios, contraseñas y sesiones viven en **MySQL** y se gestionan con la API de `backend/` (Node.js 20+, Drizzle ORM y `mysql2`). El frontend (`src/api/authClient.js`) llama a esa API; ya no usa Supabase ni la entidad `Usuario` de Base44. El resto de los datos (cursos, ejercicios, entregas) todavía está en Base44 y se va a migrar por etapas.
+Los usuarios, contraseñas y sesiones viven en **MySQL** y se gestionan con la API de `backend/` (Node.js 20+, Drizzle ORM y `mysql2`). El frontend (`src/api/authClient.js`) llama a esa API; ya no usa Supabase ni la entidad `Usuario` de Base44. También están en MySQL los ejercicios (`EJERCICIO`) y el análisis previo de cada usuario (`ANALISIS_PREVIO` + `RESOLUCION`, en Modo Estudio y Modo Libre). También los cursos (`CURSO`) y sus integrantes (`INSCRIPCION`): el administrador ve todos los de su institución y es el único que los crea, edita y elimina; docentes y alumnos ven solo los cursos donde están inscriptos, y los docentes gestionan integrantes y ven el avance de sus alumnos. Los cursos de Base44 se importan con `npm run import:cursos -- <archivo.json>` (sin inscripciones).
+
+- Cada análisis previo tiene su `RESOLUCION`: con `id_ejercicio` en Modo Estudio (una por usuario y ejercicio) o sin ejercicio en Modo Libre (sin límite). Estados: `BORRADOR` → `ENTREGADO` (al entregar) → `FINALIZADO` (cuando el alumno ve la resolución; ya no se puede modificar).
 
 - Las contraseñas se guardan con **scrypt**; nunca en claro.
 - Cada login crea una sesión de **7 días** en la tabla `SESION` (se guarda el SHA-256 del token). Cerrar sesión la borra; cambiar la contraseña cierra las demás sesiones.
 - El registro acepta cualquier email válido y crea la cuenta con rol `ALUMNO`. El login y las rutas protegidas exigen `@frba.utn.edu.ar` (Modo Estudio).
-- Solo un `ADMIN` puede editar a otros usuarios, cambiar roles o instituciones. El listado de participantes devuelve solo los usuarios de la misma institución.
+- Solo un `ADMIN` puede editar a otros usuarios de su institución, cambiar roles o instituciones. El listado de participantes devuelve solo los usuarios de la misma institución.
+- `SUPER_ADMIN` ve y administra todas las instituciones: filtra participantes y cursos por institución y elige de qué institución ver la guía del Modo Estudio (`?institucion=` en `/api/usuarios`, `/api/ejercicios` y `/api/cursos`; para el resto de los roles ese parámetro se ignora). Solo otro `SUPER_ADMIN` puede otorgar o quitar el rol; el primero se crea con `npm run set:super-admin -- <email>`.
 
 ### Endpoints
 
@@ -82,6 +85,17 @@ Los usuarios, contraseñas y sesiones viven en **MySQL** y se gestionan con la A
 | POST | `/api/auth/password` | Bearer |
 | GET | `/api/usuarios` | Bearer |
 | PATCH | `/api/usuarios/:id` | Bearer |
+| GET, POST | `/api/ejercicios` | Bearer |
+| GET, PATCH, DELETE | `/api/ejercicios/:id` | Bearer |
+| GET | `/api/resoluciones?ejercicio=:id` · `?modo=libre` | Bearer |
+| POST | `/api/resoluciones` | Bearer |
+| GET, PATCH | `/api/resoluciones/:id` | Bearer |
+| GET | `/api/instituciones` | Bearer |
+| GET, POST | `/api/cursos` | Bearer |
+| GET, PATCH, DELETE | `/api/cursos/:id` | Bearer |
+| POST | `/api/cursos/:id/integrantes` | Bearer |
+| DELETE | `/api/cursos/:id/integrantes/:idUsuario` | Bearer |
+| GET | `/api/cursos/:id/resoluciones` | Bearer |
 
 ### Puesta en marcha local
 
@@ -100,6 +114,7 @@ Cuentas demo (solo para desarrollo local):
 | `alumno@frba.utn.edu.ar` | `VictoriaX123` | `ALUMNO` |
 | `docente@frba.utn.edu.ar` | `VictoriaX123` | `DOCENTE` |
 | `admin@frba.utn.edu.ar` | `VictoriaX123` | `ADMIN` |
+| `superadmin@frba.utn.edu.ar` | `VictoriaX123` | `SUPER_ADMIN` |
 
 ## Publish Your Changes
 

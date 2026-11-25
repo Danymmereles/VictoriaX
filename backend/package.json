@@ -6,7 +6,10 @@
     "start": "node --env-file=.env src/index.js",
     "migrate": "node --env-file=.env scripts/migrate.js",
     "seed:local": "node --env-file=.env scripts/seed-local-user.js",
-    "test": "node --test"
+    "test": "node --test",
+    "import:ejercicios": "node --env-file=.env scripts/import-ejercicios.js",
+    "import:cursos": "node --env-file=.env scripts/import-cursos.js",
+    "set:super-admin": "node --env-file=.env scripts/set-super-admin.js"
   },
   "engines": {
     "node": ">=20"

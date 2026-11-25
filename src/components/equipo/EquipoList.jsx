@@ -4,7 +4,7 @@ import { EQUIPO } from "@/lib/equipo";
 
 export default function EquipoList({ mostrarEmail = false }) {
   return (
-    <ul className="grid gap-6 sm:grid-cols-2">
+    <ul className="grid gap-5">
       {EQUIPO.map((persona) => (
         <li key={persona.nombre} className="flex flex-col gap-2">
           <span className="font-medium text-foreground">{persona.nombre}</span>

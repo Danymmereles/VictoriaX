@@ -20,11 +20,13 @@ export default function Footer() {
             <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">Plataforma</p>
             <ul className="mt-4 space-y-3 text-sm">
               <li><Link to="/modo-libre" className="hover:text-foreground text-muted-foreground">Modo Libre</Link></li>
-              <li>
-                <Link to={usuario ? "/modo-estudio" : "/login"} className="hover:text-foreground text-muted-foreground">
-                  Modo Estudio
-                </Link>
-              </li>
+              {(!usuario || usuario.puedeUsarModoEstudio) && (
+                <li>
+                  <Link to={usuario ? "/modo-estudio" : "/login"} className="hover:text-foreground text-muted-foreground">
+                    Modo Estudio
+                  </Link>
+                </li>
+              )}
               <li><Link to="/#flujo" className="hover:text-foreground text-muted-foreground">Cómo funciona</Link></li>
             </ul>
           </div>

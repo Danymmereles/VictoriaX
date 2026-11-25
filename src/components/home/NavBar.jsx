@@ -60,13 +60,17 @@ export default function NavBar() {
           <div className="hidden lg:flex items-center gap-3">
             {usuario ? (
               <>
-                <Link to="/cursos" className="hidden items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground sm:inline-flex">
-                  <GraduationCap className="w-4 h-4" /> Cursos
-                </Link>
-                {permisos?.puedoVisualizarOtrosPerfiles && (
-                  <Link to="/participantes" className="hidden items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground sm:inline-flex">
-                    <Users className="w-4 h-4" /> Participantes
-                  </Link>
+                {usuario.puedeUsarModoEstudio && (
+                  <>
+                    <Link to="/cursos" className="hidden items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground sm:inline-flex">
+                      <GraduationCap className="w-4 h-4" /> Cursos
+                    </Link>
+                    {permisos?.puedoVisualizarOtrosPerfiles && (
+                      <Link to="/participantes" className="hidden items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground sm:inline-flex">
+                        <Users className="w-4 h-4" /> Participantes
+                      </Link>
+                    )}
+                  </>
                 )}
                 <Link to="/perfil" className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground">
                   <UserCircle className="w-4 h-4" /> Mi perfil
@@ -99,13 +103,17 @@ export default function NavBar() {
           <div className="mt-3 flex flex-col border-t border-border/60 pt-3">
             {usuario ? (
               <>
-                <Link to="/cursos" onClick={cerrarMenu} className={itemMovil}>
-                  <GraduationCap className="w-4 h-4" /> Cursos
-                </Link>
-                {permisos?.puedoVisualizarOtrosPerfiles && (
-                  <Link to="/participantes" onClick={cerrarMenu} className={itemMovil}>
-                    <Users className="w-4 h-4" /> Participantes
-                  </Link>
+                {usuario.puedeUsarModoEstudio && (
+                  <>
+                    <Link to="/cursos" onClick={cerrarMenu} className={itemMovil}>
+                      <GraduationCap className="w-4 h-4" /> Cursos
+                    </Link>
+                    {permisos?.puedoVisualizarOtrosPerfiles && (
+                      <Link to="/participantes" onClick={cerrarMenu} className={itemMovil}>
+                        <Users className="w-4 h-4" /> Participantes
+                      </Link>
+                    )}
+                  </>
                 )}
                 <Link to="/perfil" onClick={cerrarMenu} className={itemMovil}>
                   <UserCircle className="w-4 h-4" /> Mi perfil

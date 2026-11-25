@@ -8,5 +8,5 @@ export const SIN_INSTITUCION = "Sin institución";
 
 export function institucionDesdeEmail(email) {
   const dominio = String(email || "").split("@")[1]?.toLowerCase() || "";
-  return INSTITUCIONES[dominio] || SIN_INSTITUCION;
+  return INSTITUCIONES[dominio] || "Externa";
 }

@@ -7,54 +7,6 @@ import {
 import { getToken, request, setToken } from "@/api/apiClient";
 import { rolDesdeApi } from "@/lib/permisos";
 
-
-const ROL_APP = { ADMIN: "ADMINISTRADOR", DOCENTE: "DOCENTE", ALUMNO: "ESTUDIANTE" };
-
-function getToken() {
-  return localStorage.getItem(TOKEN_KEY);
-}
-
-function setToken(token) {
-  if (token) {
-    localStorage.setItem(TOKEN_KEY, token);
-    startSessionExpiry();
-  } else {
-    localStorage.removeItem(TOKEN_KEY);
-    clearSessionExpiry();
-  }
-}
-
-/**
- * @param {string} path
- * @param {{ method?: string, body?: unknown, auth?: boolean }} [options]
- */
-async function request(path, { method = "GET", body, auth = true } = {}) {
-  const headers = /** @type {Record<string, string>} */ ({});
-  if (body !== undefined) headers["content-type"] = "application/json";
-  const token = auth ? getToken() : null;
-  if (token) headers.authorization = `Bearer ${token}`;
-
-  let response;
-  try {
-    response = await fetch(`${API_URL}${path}`, {
-      method,
-      headers,
-      body: body === undefined ? undefined : JSON.stringify(body),
-    });
-  } catch {
-    throw new Error("No se pudo conectar con el servidor de VictoriaX.");
-  }
-  if (response.status === 204) return null;
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    /** @type {Error & { status?: number }} */
-    const error = new Error(data.error || "Ocurrió un error inesperado.");
-    error.status = response.status;
-    throw error;
-  }
-  return data;
-}
-
 // Formato que usan las pantallas de perfil y participantes.
 function toParticipante(user) {
   return { ...user, id: user.id_usuario, rol: rolDesdeApi(user.rol) };

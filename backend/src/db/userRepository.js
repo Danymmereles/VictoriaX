@@ -41,6 +41,8 @@ export function createUserRepository(db) {
 
     async deleteUser(id_usuario) {
       await db.delete(usuario).where(eq(usuario.id_usuario, id_usuario));
+    },
+
     async listAll() {
       return db.select().from(usuario).orderBy(usuario.institucion, usuario.nombre_completo);
     },

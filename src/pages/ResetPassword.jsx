@@ -1,13 +1,16 @@
 import React, { useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { authClient } from "@/api/authClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Lock, Loader2, AlertTriangle } from "lucide-react";
 import AuthLayout from "@/components/AuthLayout";
+import { validatePassword, PASSWORD_REQUIREMENTS_MESSAGE } from "@/lib/passwordValidation";
+import PasswordRequirements from "@/components/PasswordRequirements";
 
 export default function ResetPassword() {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const resetToken = searchParams.get("token");
 
@@ -19,16 +22,20 @@ export default function ResetPassword() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    if (!validatePassword(newPassword)) {
+      setError(PASSWORD_REQUIREMENTS_MESSAGE);
+      return;
+    }
     if (newPassword !== confirmPassword) {
-      setError("Passwords do not match");
+      setError("Las contraseñas no coinciden.");
       return;
     }
     setLoading(true);
     try {
-      await base44.auth.resetPassword({ resetToken, newPassword });
-      window.location.href = "/login";
+      await authClient.resetPassword({ token: resetToken, newPassword });
+      navigate("/login");
     } catch (err) {
-      setError(err.message || "Failed to reset password");
+      setError(err.message || "No se pudo restablecer la contraseña.");
     } finally {
       setLoading(false);
     }
@@ -38,16 +45,16 @@ export default function ResetPassword() {
     return (
       <AuthLayout
         icon={AlertTriangle}
-        title="Invalid reset link"
-        subtitle="This password reset link is missing or invalid"
+        title="Enlace inválido"
+        subtitle="El enlace de recuperación es inválido o expiró"
         footer={
           <Link to="/forgot-password" className="text-primary font-medium hover:underline">
-            Request a new link
+            Solicitar un nuevo enlace
           </Link>
         }
       >
         <p className="text-sm text-foreground text-center">
-          The link you used appears to be incomplete. Please request a new password reset email.
+          El enlace utilizado no es válido. Por favor solicitá un nuevo correo para restablecer tu contraseña.
         </p>
       </AuthLayout>
     );
@@ -56,8 +63,8 @@ export default function ResetPassword() {
   return (
     <AuthLayout
       icon={Lock}
-      title="New password"
-      subtitle="Enter your new password below"
+      title="Nueva contraseña"
+      subtitle="Ingresá tu nueva contraseña segura"
     >
       {error && (
         <div className="mb-4 p-3 rounded-lg bg-destructive/10 dark:bg-destructive/20 text-destructive text-sm">
@@ -66,7 +73,7 @@ export default function ResetPassword() {
       )}
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="password">New Password</Label>
+          <Label htmlFor="password">Nueva contraseña</Label>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
             <Input
@@ -74,6 +81,7 @@ export default function ResetPassword() {
               type="password"
               autoComplete="new-password"
               autoFocus
+              minLength={8}
               placeholder="••••••••"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
@@ -81,15 +89,17 @@ export default function ResetPassword() {
               required
             />
           </div>
+          <PasswordRequirements password={newPassword} className="mt-2" />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="confirm">Confirm Password</Label>
+          <Label htmlFor="confirm">Confirmar nueva contraseña</Label>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
             <Input
               id="confirm"
               type="password"
               autoComplete="new-password"
+              minLength={8}
               placeholder="••••••••"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
@@ -102,10 +112,10 @@ export default function ResetPassword() {
           {loading ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Resetting...
+              Restableciendo…
             </>
           ) : (
-            "Reset password"
+            "Restablecer contraseña"
           )}
         </Button>
       </form>

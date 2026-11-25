@@ -84,6 +84,12 @@ export function createApiServer({
       response.writeHead(204);
       response.end();
     }],
+    ["DELETE", /^\/api\/auth\/account$/, async (request, response) => {
+      await authService.deleteAccount(request.user, await readJson(request));
+      response.setHeader("set-cookie", "session=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Lax");
+      response.writeHead(204);
+      response.end();
+    }],
     // ?institucion=<nombre> solo tiene efecto para el super admin (usuarios, ejercicios y cursos).
     ["GET", /^\/api\/usuarios$/, async (request, response, _params, url) => {
       const users = await authService.listUsers(request.user, {
@@ -209,6 +215,29 @@ export function createApiServer({
       if (request.method === "POST" && url.pathname === "/api/auth/login") {
         const result = await authService.login(await readJson(request));
         sendJson(response, 200, result);
+        return;
+      }
+      if (request.method === "POST" && url.pathname === "/api/auth/verify-email") {
+        await authService.verifyEmail(await readJson(request));
+        sendJson(response, 200, { message: "Email verificado correctamente." });
+        return;
+      }
+      if (request.method === "POST" && url.pathname === "/api/auth/resend-verification") {
+        const result = await authService.resendVerification(await readJson(request));
+        sendJson(response, 200, result);
+        return;
+      }
+      if (request.method === "POST" && url.pathname === "/api/auth/forgot-password") {
+        await authService.forgotPassword(await readJson(request));
+        sendJson(response, 200, {
+          message: "Si existe una cuenta activa con ese email, recibirá instrucciones para restablecer la contraseña.",
+        });
+        return;
+      }
+      if (request.method === "POST" && url.pathname === "/api/auth/reset-password") {
+        await authService.resetPassword(await readJson(request));
+        response.writeHead(204);
+        response.end();
         return;
       }
       for (const [method, pattern, handler] of protectedRoutes) {

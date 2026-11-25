@@ -19,16 +19,10 @@ export function createAuthMiddleware(authService) {
       respond(response, 401, "Se requiere un Bearer Token válido.");
       return;
     }
-    if (!isAcademicEmail(session.user.email.trim().toLowerCase())) {
-      respond(
-        response,
-        403,
-        "El Modo Estudio es exclusivo para la comunidad académica de UTN (dominio @frba.utn.edu.ar).",
-      );
-      return;
-    }
-
-    request.user = session.user;
+    request.user = {
+      ...session.user,
+      puedeUsarModoEstudio: isAcademicEmail(session.user.email),
+    };
     request.sessionId = session.sessionId;
     await next();
   };

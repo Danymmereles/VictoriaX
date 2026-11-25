@@ -76,7 +76,8 @@ export default function ModoLibre() {
   const variablesConError = [...campos].some((c) => c.startsWith("variables.") || c.startsWith("variable:"));
 
   function setMetodologia(m) {
-    setAnalisis((a) => ({...a, metodologia: m, eventos: eventosVacio() }));
+    // Al cambiar de metodología se vacían las tablas de eventos y de eventos futuros.
+    setAnalisis((a) => (a.metodologia === m ? a : { ...a, metodologia: m, eventos: eventosVacio(), eventosFuturos: [] }));
   }
   
   function setVariables(patch) {
@@ -284,7 +285,7 @@ function Validacion({ validacion }) {
       {validacion.errores.length > 0 && (
         <div className="rounded-xl border border-destructive/30 dark:border-destructive bg-destructive/5 dark:bg-destructive/20 p-4">
           <p className="flex items-center gap-2 text-sm font-medium text-destructive"><AlertTriangle className="w-4 h-4" /> Errores bloqueantes</p>
-          <ul className="mt-2 list-disc pl-8 text-sm text-destructive/90">
+          <ul className="mt-2 list-disc pl-8 text-sm text-destructive dark:text-white">
             {validacion.errores.map((e, i) => <li key={i}>{e}</li>)}
           </ul>
         </div>

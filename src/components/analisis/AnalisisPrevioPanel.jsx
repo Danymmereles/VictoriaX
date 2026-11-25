@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo } from "react";
 import { AlertTriangle } from "lucide-react";
-import { camposConError, eventosVacio, validarAnalisis } from "@/lib/analisisPrevio";
+import { camposConError, claveEventoFuturo, erroresPorCampo, eventosVacio, validarAnalisis } from "@/lib/analisisPrevio";
 import MetodologiaSelector from "./MetodologiaSelector";
 import VariableList from "./VariableList";
 import VariableControlImplicita from "./VariableControlImplicita";
@@ -12,7 +12,8 @@ import EventosFuturos from "./EventosFuturos";
 // checkbox de "implícita" en vez del popup de confirmación al pasar a diagramar.
 export default function AnalisisPrevioPanel({ analisis, setAnalisis, onValidacionChange }) {
   function setMetodologia(m) {
-    setAnalisis((a) => ({ ...a, metodologia: m, eventos: eventosVacio() }));
+    // Al cambiar de metodología se vacían las tablas de eventos y de eventos futuros.
+    setAnalisis((a) => (a.metodologia === m ? a : { ...a, metodologia: m, eventos: eventosVacio(), eventosFuturos: [] }));
   }
   function setVariables(patch) {
     setAnalisis((a) => ({ ...a, variables: { ...a.variables, ...patch } }));
@@ -34,6 +35,12 @@ export default function AnalisisPrevioPanel({ analisis, setAnalisis, onValidacio
   const idsConError = (lista) => lista.filter((v) => campos.has(`variable:${v.id}`)).map((v) => v.id);
   const filasConError = (analisis.eventos.filas || []).filter((f) => campos.has(`evento:${f.id}`)).map((f) => f.id);
   const variablesConError = [...campos].some((c) => c.startsWith("variables.") || c.startsWith("variable:"));
+  const porCampo = useMemo(() => erroresPorCampo(validacion), [validacion]);
+  const erroresFuturos = Object.fromEntries(
+    (analisis.eventosFuturos || [])
+      .map((e, i) => [e.id, porCampo.get(claveEventoFuturo(e, i))])
+      .filter(([, e]) => e)
+  );
 
   useEffect(() => {
     onValidacionChange?.({ ...validacion, esValido: validacion.esValido && controlOk });
@@ -98,8 +105,8 @@ export default function AnalisisPrevioPanel({ analisis, setAnalisis, onValidacio
         <TablaEventos analisis={analisis} onChange={setEventos} error={campos.has("eventos")} filasConError={filasConError} />
       </Seccion>
 
-      <Seccion titulo="Tabla de Eventos Futuros" desc="Listado de siglas de tiempo ligadas a eventos." error={campos.has("eventosFuturos")}>
-        <EventosFuturos analisis={analisis} onChange={setEventosFuturos} />
+      <Seccion titulo="Tabla de Eventos Futuros" desc="Listado de siglas de tiempo ligadas a eventos." error={campos.has("eventosFuturos") || Object.keys(erroresFuturos).length > 0}>
+        <EventosFuturos analisis={analisis} onChange={setEventosFuturos} errores={erroresFuturos} />
       </Seccion>
 
       <Validacion validacion={validacion} controlOk={controlOk} />
@@ -126,7 +133,7 @@ function Validacion({ validacion, controlOk }) {
       {errores.length > 0 && (
         <div className="rounded-xl border border-destructive/30 dark:border-destructive bg-destructive/5 dark:bg-destructive/20 p-4">
           <p className="flex items-center gap-2 text-sm font-medium text-destructive"><AlertTriangle className="w-4 h-4" /> Errores bloqueantes</p>
-          <ul className="mt-2 list-disc pl-8 text-sm text-destructive/90">
+          <ul className="mt-2 list-disc pl-8 text-sm text-destructive dark:text-white">
             {errores.map((e, i) => <li key={i}>{e}</li>)}
           </ul>
         </div>

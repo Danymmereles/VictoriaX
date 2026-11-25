@@ -6,6 +6,9 @@ import { useSesionUsuario } from "@/lib/sesionUsuario";
 
 export default function Modes() {
   const { usuario } = useSesionUsuario();
+  const puedeUsarModoEstudio = Boolean(usuario?.puedeUsarModoEstudio);
+  const mostrarModoEstudio = !usuario || puedeUsarModoEstudio;
+
   const modes = [
     {
       id: "libre",
@@ -20,31 +23,40 @@ export default function Modes() {
       accent: "#73C3EE",
       state: { icon: Unlock, label: "Acceso libre" },
     },
-    {
-      id: "estudio",
-      tag: "Requiere sesión",
-      icon: RouteIcon,
-      title: "Modo Estudio",
-      desc: "Un camino de aprendizaje con ejercicios analizados por la cátedra: resolvelos, envialos y compará tu solución con la resolución propuesta.",
-      bullets: ["Ejercicios oficiales de la cátedra", "Envío y seguimiento del progreso", "Resolución propuesta al finalizar"],
-      img: "https://media.base44.com/images/public/6a71341ab9dae936a9cf65a7/08266ca5c_generated_22613875.png",
-      to: usuario ? "/modo-estudio" : "/login",
-      cta: usuario ? "Ir a Modo Estudio" : "Iniciar sesión para acceder",
-      accent: "#AF9BEF",
-      state: { icon: usuario ? Unlock : Lock, label: usuario ? "Sesión iniciada" : "Sesión requerida" },
-    },
+    ...(mostrarModoEstudio
+      ? [
+          {
+            id: "estudio",
+            tag: "Requiere sesión",
+            icon: RouteIcon,
+            title: "Modo Estudio",
+            desc: "Un camino de aprendizaje con ejercicios analizados por la cátedra: resolvelos, envialos y compará tu solución con la resolución propuesta.",
+            bullets: ["Ejercicios oficiales de la cátedra", "Envío y seguimiento del progreso", "Resolución propuesta al finalizar"],
+            img: "https://media.base44.com/images/public/6a71341ab9dae936a9cf65a7/08266ca5c_generated_22613875.png",
+            to: !usuario ? "/login" : "/modo-estudio",
+            cta: !usuario ? "Iniciar sesión para acceder" : "Ir a Modo Estudio",
+            accent: "#AF9BEF",
+            state: {
+              icon: puedeUsarModoEstudio ? Unlock : Lock,
+              label: !usuario ? "Sesión requerida" : "Sesión iniciada",
+            },
+          },
+        ]
+      : []),
   ];
 
   return (
     <section id="modos" className="mx-auto max-w-[100rem] px-6 py-24 lg:px-12">
       <div className="max-w-2xl">
-        <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Dos puertas de entrada</p>
+        <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
+          {modes.length === 1 ? "Modo disponible" : "Dos puertas de entrada"}
+        </p>
         <h2 className="mt-4 font-heading text-4xl font-semibold tracking-tight sm:text-5xl">
-          Modelar o aprender. O ambas.
+          {modes.length === 1 ? "Modelá tu simulación." : "Modelar o aprender. O ambas."}
         </h2>
       </div>
 
-      <div className="mt-16 grid gap-8 lg:grid-cols-2">
+      <div className={`mt-16 grid gap-8 ${modes.length === 1 ? "max-w-2xl" : "lg:grid-cols-2"}`}>
         {modes.map((m) => (
           <div
             key={m.id}
@@ -72,12 +84,18 @@ export default function Modes() {
               ))}
             </ul>
             <Image src={m.img} alt={m.title} className="mt-8 h-56 w-full rounded-2xl object-cover" />
-            <Link
-              to={m.to}
-              className="mt-8 inline-flex items-center gap-2 rounded-full border border-border px-6 py-3 text-sm font-medium transition-colors hover:bg-foreground hover:text-background"
-            >
-              {m.cta}
-            </Link>
+            {m.to ? (
+              <Link
+                to={m.to}
+                className="mt-8 inline-flex items-center gap-2 rounded-full border border-border px-6 py-3 text-sm font-medium transition-colors hover:bg-foreground hover:text-background"
+              >
+                {m.cta}
+              </Link>
+            ) : (
+              <span className="mt-8 inline-flex items-center gap-2 rounded-full border border-border px-6 py-3 text-sm text-muted-foreground" aria-disabled="true">
+                {m.cta}
+              </span>
+            )}
           </div>
         ))}
       </div>

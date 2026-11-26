@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
-import { ArrowLeft, CheckCircle2, Lock, FileText, BarChart3 } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Lock, FileText } from "lucide-react";
 import { ejerciciosClient } from "@/api/ejerciciosClient";
 import { resolucionesClient, ESTADOS } from "@/api/resolucionesClient";
 import { useSesionUsuario } from "@/lib/sesionUsuario";
@@ -11,7 +11,6 @@ import NavBar from "@/components/home/NavBar";
 import Footer from "@/components/home/Footer";
 import AnalisisPrevioPanel from "@/components/analisis/AnalisisPrevioPanel";
 import ResolucionEjemplo from "@/components/estudio/ResolucionEjemplo";
-import EstadisticasPlaceholder from "@/components/estudio/EstadisticasPlaceholder";
 import NavegacionEjercicio from "@/components/estudio/NavegacionEjercicio";
 
 export default function EjercicioEstudio() {
@@ -23,7 +22,6 @@ export default function EjercicioEstudio() {
   const [analisis, setAnalisis] = useState(analisisVacio());
   const [validacion, setValidacion] = useState({ errores: [], esValido: false });
   const [mostrarResolucion, setMostrarResolucion] = useState(false);
-  const [mostrarEstadisticas, setMostrarEstadisticas] = useState(false);
   const [guia, setGuia] = useState([]);
   const [errorEjercicio, setErrorEjercicio] = useState("");
   const [errorCarga, setErrorCarga] = useState("");
@@ -56,7 +54,6 @@ export default function EjercicioEstudio() {
     setErrorCarga("");
     setAnalisis(analisisVacio());
     setMostrarResolucion(false);
-    setMostrarEstadisticas(false);
     (async () => {
       try {
         const ej = await ejerciciosClient.get(id);
@@ -208,16 +205,10 @@ export default function EjercicioEstudio() {
                 <button onClick={toggleResolucion} className="inline-flex items-center gap-2 rounded-full border border-border px-6 py-3 text-sm hover:border-[#AF9BEF]">
                   <FileText className="w-4 h-4" /> {mostrarResolucion ? "Ocultar resolución" : "Ver resolución"}
                 </button>
-                {esDocenteOAdmin && (
-                  <button onClick={() => setMostrarEstadisticas((v) => !v)} className="inline-flex items-center gap-2 rounded-full border border-border px-6 py-3 text-sm hover:border-[#AF9BEF]">
-                    <BarChart3 className="w-4 h-4" /> Estadísticas
-                  </button>
-                )}
               </div>
             )}
 
             {mostrarResolucion && <ResolucionEjemplo />}
-            {mostrarEstadisticas && <EstadisticasPlaceholder />}
           </>
         )}
 

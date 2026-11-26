@@ -142,7 +142,7 @@ export function validarAnalisis(a) {
   if (a.metodologia === METODOLOGIAS.EVENTO_A_EVENTO) {
     const eventosCargados = a.eventos.filas.filter((f) => f.evento?.nombre?.trim());
     if (eventosCargados.length === 0) {
-      error("eventos", "Debe haber al menos un evento en la Tabla de Eventos.");
+      error("eventos", "Debe haber al menos un evento en la Tabla de Eventos Independientes.");
     }
     const futurosCargados = (a.eventosFuturos || []).filter((e) => e.sigla?.trim());
     if (futurosCargados.length === 0) {
@@ -154,6 +154,12 @@ export function validarAnalisis(a) {
         error(claveEventoFuturo(e, i), "Cada evento futuro debe indicar el evento al que corresponde.");
       }
     });
+
+    // Dos eventos de la tabla no pueden llamarse igual.
+    validarNombresDeEventos(
+      a.eventos.filas.map((f, i) => ({ campo: claveFila(f, i), nombre: f.evento?.nombre })),
+      { detalles, errores }
+    );
 
     const declarados = a.eventos.filas.map((f) => f.evento?.nombre).filter((n) => n && n.trim());
     a.eventos.filas.forEach((f, i) => {
@@ -188,13 +194,18 @@ export function validarAnalisis(a) {
   } else if (a.metodologia === METODOLOGIAS.DELTA_T_CONSTANTE) {
     const { propios, anteriores, posteriores } = deltaTDe(a.eventos);
     if (!propios.some((p) => p.nombre?.trim())) {
-      error("eventos", "Debe haber al menos un evento propio en la Tabla de Eventos.");
+      error("eventos", "Debe haber al menos un evento propio en la Tabla de Eventos Independientes.");
     }
     const totalAnt = anteriores.filter((x) => x.nombre?.trim()).length;
     const totalPost = posteriores.filter((x) => x.nombre?.trim()).length;
     if (totalAnt !== totalPost) {
       error("eventos", `La cantidad de eventos comprometidos anteriores (${totalAnt}) y posteriores (${totalPost}) debe ser igual.`);
     }
+    // Dos eventos de la tabla no pueden llamarse igual (columna Evento).
+    validarNombresDeEventos(
+      propios.map((p) => ({ campo: `eventoPropio:${p.id}`, nombre: p.nombre })),
+      { detalles, errores }
+    );
     // En Δt constante cada evento futuro liga un comprometido anterior con uno posterior.
     (a.eventosFuturos || []).forEach((e, i) => {
       const campo = claveEventoFuturo(e, i);
@@ -222,6 +233,42 @@ export const claveEventoFuturo = (e, i) => `eventoFuturo:${e.id || `idx-${i}`}`;
  *     mayúsculas: Ic e IC son dos siglas distintas.
  * Los detalles de estos errores llevan tipo "sigla" (para resaltar el campo).
  */
+/*
+ * Nombres de eventos repetidos: dentro de la Tabla de Eventos Independientes no
+ * puede haber dos eventos con el mismo nombre (se comparan sin distinguir
+ * mayúsculas ni espacios sobrantes). Se marca el bloque y cada evento repetido.
+ */
+function validarNombresDeEventos(entradas, { detalles, errores }) {
+  const porNombre = new Map();
+  entradas.forEach((x) => {
+    const nombre = (x.nombre || "").trim();
+    if (!nombre) return;
+    const clave = nombre.toLowerCase();
+    porNombre.set(clave, [...(porNombre.get(clave) || []), { ...x, nombre }]);
+  });
+  porNombre.forEach((lista) => {
+    if (lista.length < 2) return;
+    const mensaje = `El evento "${lista[0].nombre}" está repetido: no puede haber dos eventos con el mismo nombre.`;
+    errores.push(mensaje);
+    detalles.push({ campo: "eventos", mensaje });
+    lista.forEach((x) => detalles.push({ campo: x.campo, mensaje, tipo: "duplicado" }));
+  });
+}
+
+// ids de los eventos marcados como duplicados (para rotular el error como "Duplicado")
+export function idsConErrorDuplicado(validacion) {
+  return (validacion?.detalles || [])
+    .filter((d) => d.tipo === "duplicado")
+    .map((d) => d.campo.slice(d.campo.indexOf(":") + 1));
+}
+
+// ids de los eventos de la tabla marcados con error (para resaltarlos en pantalla)
+export function idsEventosConError(campos) {
+  return [...(campos || [])]
+    .filter((c) => /^(evento|eventoPropio|eventoAnterior|eventoPosterior):/.test(c))
+    .map((c) => c.slice(c.indexOf(":") + 1));
+}
+
 function validarSiglas(a, { claveVariable, error, detalles, errores }) {
   const errorDeSigla = (campo, mensaje) => {
     error(campo, mensaje);

@@ -3,7 +3,7 @@ import { METODOLOGIAS } from "@/lib/analisisPrevio";
 import TablaEventosEaE from "./TablaEventosEaE";
 import TablaEventosDeltaT from "./TablaEventosDeltaT";
 
-export default function TablaEventos({ analisis, onChange, error = false, filasConError = [] }) {
+export default function TablaEventos({ analisis, onChange, error = false, filasConError = [], idsDuplicados = [] }) {
   const { metodologia, eventos, variables } = analisis;
   function setFilas(filas) {
     onChange({ ...eventos, filas });
@@ -17,7 +17,7 @@ export default function TablaEventos({ analisis, onChange, error = false, filasC
     );
   }
   if (metodologia === METODOLOGIAS.EVENTO_A_EVENTO) {
-    return <TablaEventosEaE filas={eventos.filas || []} onChange={setFilas} controlVars={variables.control} filasConError={filasConError} />;
+    return <TablaEventosEaE filas={eventos.filas || []} onChange={setFilas} controlVars={variables.control} filasConError={filasConError} idsDuplicados={idsDuplicados} />;
   }
-  return <TablaEventosDeltaT eventos={eventos} onChange={onChange} />;
+  return <TablaEventosDeltaT eventos={eventos} onChange={onChange} idsConError={filasConError} idsDuplicados={idsDuplicados} />;
 }

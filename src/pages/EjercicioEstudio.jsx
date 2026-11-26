@@ -208,7 +208,7 @@ export default function EjercicioEstudio() {
               </div>
             )}
 
-            {mostrarResolucion && <ResolucionEjemplo />}
+            {mostrarResolucion && <ResolucionEjemplo numero={ejercicio.numero} />}
           </>
         )}
 

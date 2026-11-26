@@ -1,10 +1,20 @@
 import React from "react";
 import { Construction } from "lucide-react";
 import { Image } from "@/components/ui/image";
+import useTheme from "@/hooks/useTheme";
+
+// Imagen de la resolución del ejercicio 1, según el tema activo.
+const IMAGEN_EJERCICIO_1 = {
+  light:
+    "https://base44.app/api/apps/6a71341ab9dae936a9cf65a7/files/mp/public/6a71341ab9dae936a9cf65a7/1a935d9141a0dbb1b1b797aa7fd9f299_resolucion-ej1-pastel.png",
+  dark:
+    "https://base44.app/api/apps/6a71341ab9dae936a9cf65a7/files/mp/public/6a71341ab9dae936a9cf65a7/2ca43110df39bd3dc857737383d64152_resolucion-ej1-neon.png",
+};
 
 // Ejemplo del formato de resolución (texto + foto). Contenido real por ejercicio
-// se cargará más adelante — por ahora es el mismo ejemplo para todos.
-export default function ResolucionEjemplo() {
+// se cargará más adelante — por ahora el ejercicio 1 ya tiene su imagen.
+export default function ResolucionEjemplo({ numero }) {
+  const theme = useTheme();
   return (
     <section className="mt-6 rounded-2xl border border-border bg-card/40 p-6">
       <p className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
@@ -24,12 +34,21 @@ export default function ResolucionEjemplo() {
           cálculo de las f.d.p. involucradas hasta llegar a los resultados pedidos.
         </p>
       </div>
-      <Image
-        src="https://media.base44.com/images/public/6a71341ab9dae936a9cf65a7/d86758d03_generated_image.png"
-        alt="Ejemplo ilustrativo de resolución"
-        className="mt-5 h-56 w-full max-w-md rounded-xl border border-border"
-        fittingType="fit"
-      />
+      {numero === 1 ? (
+        <Image
+          src={IMAGEN_EJERCICIO_1[theme]}
+          alt="Clasificación de variables y tablas de eventos del ejercicio 1"
+          className="mt-5 w-full rounded-xl border border-border"
+          fittingType="fit"
+        />
+      ) : (
+        <Image
+          src="https://media.base44.com/images/public/6a71341ab9dae936a9cf65a7/d86758d03_generated_image.png"
+          alt="Ejemplo ilustrativo de resolución"
+          className="mt-5 h-56 w-full max-w-md rounded-xl border border-border"
+          fittingType="fit"
+        />
+      )}
     </section>
   );
 }

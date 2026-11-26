@@ -54,7 +54,7 @@ export default function Hero() {
           </div>
           <p className="mt-6 text-sm text-muted-foreground">
             {(!usuario || usuario.puedeUsarModoEstudio)
-              ? "Modo Libre está disponible para todos · Modo Estudio requiere cuenta académica FRBA o FRRE"
+              ? "Modo Libre está disponible para todos · Modo Estudio requiere cuenta académica"
               : "Modo Libre está disponible para todos"}
           </p>
         </motion.div>

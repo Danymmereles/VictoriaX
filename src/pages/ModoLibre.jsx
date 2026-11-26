@@ -9,6 +9,7 @@ import {
   claveEventoFuturo,
   eventosVacio,
   idsEventosConError,
+  idsConErrorDuplicado,
   METODOLOGIAS
 } from "@/lib/analisisPrevio";
 import { cargarAnalisis, guardarAnalisis, limpiarAnalisis } from "@/lib/analisisPrevioStorage";
@@ -74,6 +75,7 @@ export default function ModoLibre() {
   const erroresVariables = (lista) => erroresDe(lista, (v) => `variable:${v.id}`);
   const erroresFuturos = erroresDe(analisis.eventosFuturos || [], claveEventoFuturo);
   const filasConError = idsEventosConError(campos);
+  const idsDuplicados = idsConErrorDuplicado(validacion);
   const variablesConError = [...campos].some((c) => c.startsWith("variables.") || c.startsWith("variable:"));
 
   function setMetodologia(m) {
@@ -196,7 +198,7 @@ export default function ModoLibre() {
         </Seccion>
 
         <Seccion titulo="3 · Tabla de Eventos Independientes" desc={analisis.metodologia === METODOLOGIAS.DELTA_T_CONSTANTE ? "Delta T Constante." : "Evento a Evento."} error={campos.has("eventos") || filasConError.length > 0}>
-          <TablaEventos analisis={analisis} onChange={setEventos} error={campos.has("eventos")} filasConError={filasConError} />
+          <TablaEventos analisis={analisis} onChange={setEventos} error={campos.has("eventos")} filasConError={filasConError} idsDuplicados={idsDuplicados} />
         </Seccion>
 
         <Seccion titulo="4 · Tabla de Eventos Futuros" desc="Listado de siglas de tiempo ligadas a eventos." error={campos.has("eventosFuturos") || Object.keys(erroresFuturos).length > 0}>

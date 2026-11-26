@@ -251,8 +251,15 @@ function validarNombresDeEventos(entradas, { detalles, errores }) {
     const mensaje = `El evento "${lista[0].nombre}" está repetido: no puede haber dos eventos con el mismo nombre.`;
     errores.push(mensaje);
     detalles.push({ campo: "eventos", mensaje });
-    lista.forEach((x) => detalles.push({ campo: x.campo, mensaje }));
+    lista.forEach((x) => detalles.push({ campo: x.campo, mensaje, tipo: "duplicado" }));
   });
+}
+
+// ids de los eventos marcados como duplicados (para rotular el error como "Duplicado")
+export function idsConErrorDuplicado(validacion) {
+  return (validacion?.detalles || [])
+    .filter((d) => d.tipo === "duplicado")
+    .map((d) => d.campo.slice(d.campo.indexOf(":") + 1));
 }
 
 // ids de los eventos de la tabla marcados con error (para resaltarlos en pantalla)

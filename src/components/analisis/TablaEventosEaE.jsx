@@ -4,7 +4,7 @@ import { nuevoEventoEaE } from "@/lib/analisisPrevio";
 import VectorConfigDialog from "./VectorConfigDialog";
 import ErrorBadge from "./ErrorBadge";
 
-export default function TablaEventosEaE({ filas, onChange, controlVars, filasConError = [] }) {
+export default function TablaEventosEaE({ filas, onChange, controlVars, filasConError = [], idsDuplicados = [] }) {
   const [vectorPara, setVectorPara] = useState(null);
 
   function actualizar(i, patch) {
@@ -98,7 +98,9 @@ export default function TablaEventosEaE({ filas, onChange, controlVars, filasCon
                   </td>
                   <td className="px-3 py-3 text-right">
                     <div className="flex flex-col items-end gap-2">
-                      {conError && <ErrorBadge />}
+                      {conError && (
+                        <ErrorBadge>{idsDuplicados.includes(f.id) ? "Duplicado" : "Falta cargar"}</ErrorBadge>
+                      )}
                       <button onClick={() => quitar(i)} className="grid place-items-center rounded-lg border border-border px-2 py-2 hover:bg-destructive/10 hover:text-destructive">
                         <Trash2 className="w-4 h-4" />
                       </button>

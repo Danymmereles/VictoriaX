@@ -2,10 +2,11 @@ import React from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { deltaTDe, nuevoEventoPropio } from "@/lib/analisisPrevio";
 import ListaComprometidos from "./ListaComprometidos";
+import ErrorBadge from "./ErrorBadge";
 
 // Δt constante: tres listas (eventos propios y comprometidos anteriores /
 // posteriores). En esta metodología los eventos no pueden ser vectores.
-export default function TablaEventosDeltaT({ eventos, onChange, idsConError = [] }) {
+export default function TablaEventosDeltaT({ eventos, onChange, idsConError = [], idsDuplicados = [] }) {
   const { propios, anteriores, posteriores } = deltaTDe(eventos);
 
   function emitir(patch) {
@@ -28,20 +29,23 @@ export default function TablaEventosDeltaT({ eventos, onChange, idsConError = []
           <div className="mt-3 space-y-2">
             {propios.length === 0 && <p className="text-xs text-muted-foreground">Sin eventos.</p>}
             {propios.map((p, i) => (
-              <div key={p.id} className="flex items-center gap-2">
-                <input
-                  value={p.nombre}
-                  onChange={(e) => actualizarPropio(i, e.target.value)}
-                  placeholder="Nombre"
-                  className={`w-full rounded-lg border bg-background px-3 py-2 text-sm ${idsConError.includes(p.id) ? "border-destructive" : "border-input"}`}
-                />
-                <button
-                  onClick={() => emitir({ propios: propios.filter((_, k) => k !== i) })}
-                  aria-label={`Quitar ${p.nombre || "evento propio"}`}
-                  className="grid place-items-center rounded-lg border border-border px-2 py-2 hover:bg-destructive/10 hover:text-destructive"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+              <div key={p.id} className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <input
+                    value={p.nombre}
+                    onChange={(e) => actualizarPropio(i, e.target.value)}
+                    placeholder="Nombre"
+                    className={`w-full rounded-lg border bg-background px-3 py-2 text-sm ${idsConError.includes(p.id) ? "border-destructive" : "border-input"}`}
+                  />
+                  <button
+                    onClick={() => emitir({ propios: propios.filter((_, k) => k !== i) })}
+                    aria-label={`Quitar ${p.nombre || "evento propio"}`}
+                    className="grid place-items-center rounded-lg border border-border px-2 py-2 hover:bg-destructive/10 hover:text-destructive"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+                {idsDuplicados.includes(p.id) && <ErrorBadge>Duplicado</ErrorBadge>}
               </div>
             ))}
             <button

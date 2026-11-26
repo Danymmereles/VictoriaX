@@ -55,6 +55,8 @@ export function crearNodoContexto(posicion = { x: 0, y: 0 }) {
         type: "custom",
         position: posicion,
         deletable: false,
+        // Fijo: no se arrastra en el lienzo
+        draggable: false,
         data: {
             type: CONTEXT_NODE_TYPE,
             label: "",

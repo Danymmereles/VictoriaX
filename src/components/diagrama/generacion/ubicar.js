@@ -394,6 +394,7 @@ export function ubicar(bloque, { prefijo, edgeType = "smoothstep" }) {
         position: { x: Math.round(n.x), y: Math.round(n.y) },
         origin: [0.5, 0],
         ...(n.spec.deletable === false && { deletable: false }),
+        ...(n.spec.draggable === false && { draggable: false }),
         data: datosDe(n.spec),
     }));
 

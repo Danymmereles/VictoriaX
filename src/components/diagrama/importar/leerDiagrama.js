@@ -126,6 +126,11 @@ export function leerDiagrama(texto, { funciones = [], tiposDeFlecha = [] } = {})
         aviso("Main no tenía el Contexto: se agregó.");
     }
 
+    // El Contexto es fijo: no se arrastra, aunque venga del archivo
+    main.nodes = main.nodes.map((n) =>
+        n.data.type === CONTEXT_NODE_TYPE ? { ...n, draggable: false } : n
+    );
+
     // ---- Pestañas de las variables de datos (por nombre) ----
     const datos = {};
 

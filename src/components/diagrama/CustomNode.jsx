@@ -75,7 +75,7 @@ function ayudaDelNodo({ anchorEditable, isAnchor, type, isContext, isConnector, 
         return TOOLTIPS_FUNCION_GENERADA[type];
     }
     if (isContext) {
-        return "Inicio del algoritmo. Doble clic para cambiar valores iniciales de la tabla (una asignación por línea, p. ej. T = 0; Ctrl+Enter guarda).";
+        return "Inicio del algoritmo. Su texto y su posición son fijos.";
     }
     if (isConnector) {
         return "Doble clic para editar la etiqueta (un nombre, p. ej. C1). Los conectores con la misma etiqueta están vinculados.";
@@ -216,7 +216,12 @@ function NodoComun({ id, data, selected }) {
     const startEditing = () => {
         // Ya editando (p. ej. doble clic dentro del campo para
         // seleccionar una palabra): no reiniciar el texto
-        if ((isAnchor && !anchorEditable) || (isEnd && !isReturn) || editingRef.current) {
+        if (
+            (isAnchor && !anchorEditable) ||
+            (isEnd && !isReturn) ||
+            isContext ||
+            editingRef.current
+        ) {
             return;
         }
 
@@ -340,6 +345,8 @@ function NodoComun({ id, data, selected }) {
                 `flow-node--${data.type}`,
                 selected && "is-selected",
                 isAnchor && "is-anchor",
+                // Contexto: texto y posición fijos (no se arrastra)
+                isContext && "nodrag",
                 issue && "has-issue",
             ]
                 .filter(Boolean)

@@ -14,7 +14,7 @@ export const etiquetaConector = (n) => `C${n}`;
 export const ETIQUETA_CICLO = etiquetaConector(1);
 
 export const contexto = () =>
-    nodo("context", "", { id: CONTEXT_NODE_ID, deletable: false });
+    nodo("context", "", { id: CONTEXT_NODE_ID, deletable: false, draggable: false });
 
 const lista = (nombres) => (nombres.length ? ` (${nombres.join(", ")})` : "");
 

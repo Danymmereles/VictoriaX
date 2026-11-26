@@ -72,6 +72,12 @@
     cursor: default;
 }
 
+/* Contexto: texto y posición fijos */
+.flow-node.nodrag,
+.flow-node.nodrag .flow-node__text {
+    cursor: default;
+}
+
 
 /* =====================================================
    AVISO DE NOMBRE RECHAZADO

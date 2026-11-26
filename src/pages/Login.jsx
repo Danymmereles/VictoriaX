@@ -44,8 +44,8 @@ export default function Login() {
 
     setLoading(true);
     try {
-      await login({ email, password });
-      navigate("/");
+      const usuario = await login({ email, password });
+      navigate(usuario?.puedeUsarModoEstudio ? "/modo-estudio" : "/");
     } catch (authError) {
       setError(authError.message || "No se pudo iniciar sesión.");
     } finally {

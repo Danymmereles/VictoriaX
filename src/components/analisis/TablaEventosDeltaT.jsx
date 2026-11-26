@@ -5,7 +5,7 @@ import ListaComprometidos from "./ListaComprometidos";
 
 // Δt constante: tres listas (eventos propios y comprometidos anteriores /
 // posteriores). En esta metodología los eventos no pueden ser vectores.
-export default function TablaEventosDeltaT({ eventos, onChange }) {
+export default function TablaEventosDeltaT({ eventos, onChange, idsConError = [] }) {
   const { propios, anteriores, posteriores } = deltaTDe(eventos);
 
   function emitir(patch) {
@@ -33,7 +33,7 @@ export default function TablaEventosDeltaT({ eventos, onChange }) {
                   value={p.nombre}
                   onChange={(e) => actualizarPropio(i, e.target.value)}
                   placeholder="Nombre"
-                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
+                  className={`w-full rounded-lg border bg-background px-3 py-2 text-sm ${idsConError.includes(p.id) ? "border-destructive" : "border-input"}`}
                 />
                 <button
                   onClick={() => emitir({ propios: propios.filter((_, k) => k !== i) })}
@@ -56,11 +56,13 @@ export default function TablaEventosDeltaT({ eventos, onChange }) {
         <ListaComprometidos
           titulo="Comprometidos Anteriores"
           items={anteriores}
+          idsConError={idsConError}
           onChange={(lista) => emitir({ anteriores: lista })}
         />
         <ListaComprometidos
           titulo="Comprometidos Posteriores"
           items={posteriores}
+          idsConError={idsConError}
           onChange={(lista) => emitir({ posteriores: lista })}
         />
       </div>

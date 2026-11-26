@@ -167,7 +167,7 @@ export default function ResolucionEstudiante({ open, onClose, entrega, alumno, e
               </div>
             </section>
             <section className="rounded-xl border border-border bg-card/40 p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Tabla de Eventos</p>
+              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Tabla de Eventos Independientes</p>
               <div className="mt-3">
                 <EventosResumen analisis={a} />
               </div>

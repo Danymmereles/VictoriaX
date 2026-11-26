@@ -4,7 +4,7 @@ import { nuevoComprometido } from "@/lib/analisisPrevio";
 
 // Una de las dos columnas de eventos comprometidos (anteriores / posteriores)
 // de la tabla Δt constante.
-export default function ListaComprometidos({ titulo, items, onChange }) {
+export default function ListaComprometidos({ titulo, items, idsConError = [], onChange }) {
   const cargados = items.filter((x) => (x.nombre || "").trim()).length;
 
   function actualizar(i, nombre) {
@@ -25,7 +25,7 @@ export default function ListaComprometidos({ titulo, items, onChange }) {
               value={it.nombre}
               onChange={(e) => actualizar(i, e.target.value)}
               placeholder="Evento"
-              className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
+              className={`w-full rounded-lg border bg-background px-3 py-2 text-sm ${idsConError.includes(it.id) ? "border-destructive" : "border-input"}`}
             />
             <button
               onClick={() => onChange(items.filter((_, k) => k !== i))}

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo } from "react";
 import { AlertTriangle } from "lucide-react";
-import { camposConError, claveEventoFuturo, erroresPorCampo, eventosVacio, validarAnalisis } from "@/lib/analisisPrevio";
+import { camposConError, claveEventoFuturo, erroresPorCampo, eventosVacio, idsEventosConError, validarAnalisis } from "@/lib/analisisPrevio";
 import MetodologiaSelector from "./MetodologiaSelector";
 import VariableList from "./VariableList";
 import VariableControlImplicita from "./VariableControlImplicita";
@@ -33,7 +33,7 @@ export default function AnalisisPrevioPanel({ analisis, setAnalisis, onValidacio
   const controlOk = Boolean(analisis.controlImplicita) || analisis.variables.control.length > 0;
 
   const idsConError = (lista) => lista.filter((v) => campos.has(`variable:${v.id}`)).map((v) => v.id);
-  const filasConError = (analisis.eventos.filas || []).filter((f) => campos.has(`evento:${f.id}`)).map((f) => f.id);
+  const filasConError = idsEventosConError(campos);
   const variablesConError = [...campos].some((c) => c.startsWith("variables.") || c.startsWith("variable:"));
   const porCampo = useMemo(() => erroresPorCampo(validacion), [validacion]);
   const erroresFuturos = Object.fromEntries(
@@ -101,7 +101,7 @@ export default function AnalisisPrevioPanel({ analisis, setAnalisis, onValidacio
         </div>
       </Seccion>
 
-      <Seccion titulo="Tabla de Eventos" desc="Según la metodología seleccionada." error={campos.has("eventos") || filasConError.length > 0}>
+      <Seccion titulo="Tabla de Eventos Independientes" desc="Según la metodología seleccionada." error={campos.has("eventos") || filasConError.length > 0}>
         <TablaEventos analisis={analisis} onChange={setEventos} error={campos.has("eventos")} filasConError={filasConError} />
       </Seccion>
 
